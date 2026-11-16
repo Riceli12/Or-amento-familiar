@@ -6,7 +6,6 @@
     <title>Painel Financeiro Consolidado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Biblioteca do Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -23,7 +22,7 @@
         <header class="flex flex-col lg:flex-row justify-between items-center bg-gray-800 px-6 py-4 rounded-2xl shadow-lg border border-gray-700 gap-4">
             <div>
                 <h1 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-wallet mr-2"></i> Painel Financeiro Consolidado (Nuvem)</h1>
-                <p class="text-xs text-gray-400">Controle Unificado Sincronizado em Tempo Real</p>
+                <p class="text-xs text-gray-400">Controle Unificado: Débito, Crédito, Parcelas e Gastos Fixos</p>
             </div>
             
             <div class="flex flex-wrap items-center gap-2">
@@ -156,21 +155,18 @@
                     <div class="flex items-center gap-2">
                         <label for="filtroCategoriaSub" class="text-xs font-semibold text-gray-400">Filtrar Categoria:</label>
                         <select id="filtroCategoriaSub" onchange="atualizarGraficoSubcategorias()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 border border-gray-600">
-                            <!-- Preenchido dinamicamente -->
                         </select>
                     </div>
                 </div>
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraSubcategorias"></canvas></div>
             </div>
 
-            <!-- NOVOS GRÁFICOS: Top 10 Categoria e Top 10 Subcategoria (Lado a Lado) -->
+            <!-- Top 10 Categoria e Top 10 Subcategoria -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Top 10 Categorias -->
                 <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
                     <h3 id="tituloTop10Cat" class="text-md font-semibold mb-4 text-gray-300">Top 10 Gastos por Categoria</h3>
                     <div class="relative h-[420px] w-full"><canvas id="graficoTop10Cat"></canvas></div>
                 </div>
-                <!-- Top 10 Subcategorias -->
                 <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
                     <h3 id="tituloTop10Sub" class="text-md font-semibold mb-4 text-gray-300">Top 10 Gastos por Subcategoria</h3>
                     <div class="relative h-[420px] w-full"><canvas id="graficoTop10Sub"></canvas></div>
@@ -178,7 +174,7 @@
             </div>
         </div>
 
-        <!-- Tabela de Histórico com Subtotal sem quebra de linha no sinal -->
+        <!-- Tabela de Histórico -->
         <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-md overflow-hidden relative">
             <div class="p-6 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <h3 class="text-md font-semibold text-gray-300">Histórico de Lançamentos</h3>
@@ -198,7 +194,6 @@
                     <button type="button" onclick="limparFiltroExcelData()" class="text-xs text-rose-400 hover:underline">Limpar Filtro</button>
                 </div>
                 <div id="excelTreeContainer" class="excel-tree max-h-64 overflow-y-auto bg-gray-800/80 p-2 rounded-lg border border-gray-700 mb-3">
-                    <!-- Árvore gerada dinamicamente -->
                 </div>
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="fecharFiltroExcel()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg font-semibold cursor-pointer">Cancelar</button>
@@ -225,7 +220,6 @@
                             </th>
                             <th class="p-3 text-center">Ações</th>
                         </tr>
-                        <!-- Linha de Filtros por Select Unificada na Mesma Linha -->
                         <tr class="bg-gray-700/30 border-t border-gray-700">
                             <th class="p-2">
                                 <button type="button" onclick="abrirFiltroExcelDireto(event)" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 flex justify-between items-center focus:outline-none focus:border-emerald-500 font-normal cursor-pointer">
@@ -250,7 +244,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = 'https://llinwbhphpozhianpays.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_pefL475b5oBO9vEtugWHTQ_zVN-V-q5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -286,51 +279,51 @@
             }
         }
 
-async function carregarTransacoesDaNuvem() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('transacoes')
-                .select('*')
-                .range(0, 1999)
-                .order('data', { ascending: false });
+        // Busca todos os registros em páginas de 1000 para contornar o limite da API
+        async function carregarTransacoesDaNuvem() {
+            try {
+                let todosRegistros = [];
+                let inicio = 0;
+                const tamanhoPagina = 1000;
+                let temMais = true;
 
-            if (error) {
-                alert('Erro do Supabase: ' + error.message);
-                console.error('Erro ao buscar dados do Supabase:', error);
-                return;
-            }
+                while (temMais) {
+                    const { data, error } = await supabaseClient
+                        .from('transacoes')
+                        .select('*')
+                        .order('id', { ascending: true })
+                        .range(inicio, inicio + tamanhoPagina - 1);
 
-            // Normaliza valores (texto -> número) e datas (DD/MM/AAAA -> AAAA-MM-DD)
-            transacoes = (data || []).map(t => {
-                let valorNum = t.valor;
-                if (typeof valorNum === 'string') {
-                    valorNum = parseValorExcel(valorNum);
-                } else {
-                    valorNum = Number(valorNum) || 0;
-                }
+                    if (error) {
+                        alert('Erro do Supabase: ' + error.message);
+                        console.error('Erro ao buscar dados:', error);
+                        return;
+                    }
 
-                let dataIso = (t.data || '').toString().trim();
-                if (dataIso.includes('/')) {
-                    const partes = dataIso.split('/');
-                    if (partes.length === 3) {
-                        dataIso = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                    if (data && data.length > 0) {
+                        todosRegistros = todosRegistros.concat(data);
+                        inicio += tamanhoPagina;
+                        if (data.length < tamanhoPagina) {
+                            temMais = false;
+                        }
+                    } else {
+                        temMais = false;
                     }
                 }
 
-                return {
+                transacoes = todosRegistros.map(t => ({
                     ...t,
-                    valor: valorNum,
-                    data: dataIso
-                };
-            });
+                    valor: Number(t.valor) || 0,
+                    data: (t.data || '').toString().trim()
+                }));
 
-            popularFiltroMeses();
-            atualizarDashboard();
-        } catch (err) {
-            alert('Erro de conexão: ' + err.message);
-            console.error('Erro de conexão:', err);
+                popularFiltroMeses();
+                atualizarDashboard();
+            } catch (err) {
+                alert('Erro de conexão: ' + err.message);
+                console.error('Erro de conexão:', err);
+            }
         }
-    }
 
         function popularFiltroMeses() {
             const select = document.getElementById('filtroPeriodo');
@@ -709,7 +702,7 @@ async function carregarTransacoesDaNuvem() {
                                 } else if (dataStr.includes('/')) {
                                     const partes = dataStr.split('/');
                                     if (partes.length === 3) {
-                                        dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                                        dataFormatada = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
                                     }
                                 }
 
@@ -728,10 +721,15 @@ async function carregarTransacoesDaNuvem() {
                     });
 
                     if (novosLotes.length > 0) {
-                        const { error } = await supabaseClient.from('transacoes').insert(novosLotes);
-                        if (error) {
-                            alert('Erro ao importar para o Supabase: ' + error.message);
-                            return;
+                        // Envia em lotes de 500 para garantir estabilidade no Supabase
+                        const tamanhoLote = 500;
+                        for (let i = 0; i < novosLotes.length; i += tamanhoLote) {
+                            const lote = novosLotes.slice(i, i + tamanhoLote);
+                            const { error } = await supabaseClient.from('transacoes').insert(lote);
+                            if (error) {
+                                alert('Erro ao importar para o Supabase: ' + error.message);
+                                return;
+                            }
                         }
                         carregarTransacoesDaNuvem();
                         alert(`${novosLotes.length} transações importadas com sucesso para a nuvem!`);
@@ -1224,7 +1222,6 @@ async function carregarTransacoesDaNuvem() {
             });
         }
 
-// Inicialização garantida assim que o DOM carregar
         document.addEventListener("DOMContentLoaded", () => {
             carregarTransacoesDaNuvem();
         });
