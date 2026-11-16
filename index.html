@@ -287,27 +287,50 @@
         }
 
 async function carregarTransacoesDaNuvem() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('transacoes')
-                    .select('*')
-                    .range(0, 1999)
-                    .order('data', { ascending: false });
+        try {
+            const { data, error } = await supabaseClient
+                .from('transacoes')
+                .select('*')
+                .range(0, 1999)
+                .order('data', { ascending: false });
 
-                if (error) {
-                    alert('Erro do Supabase: ' + error.message);
-                    console.error('Erro ao buscar dados do Supabase:', error);
-                    return;
+            if (error) {
+                alert('Erro do Supabase: ' + error.message);
+                console.error('Erro ao buscar dados do Supabase:', error);
+                return;
+            }
+
+            // Normaliza valores (texto -> número) e datas (DD/MM/AAAA -> AAAA-MM-DD)
+            transacoes = (data || []).map(t => {
+                let valorNum = t.valor;
+                if (typeof valorNum === 'string') {
+                    valorNum = parseValorExcel(valorNum);
+                } else {
+                    valorNum = Number(valorNum) || 0;
                 }
 
-                transacoes = data || [];
-                popularFiltroMeses();
-                atualizarDashboard();
-            } catch (err) {
-                alert('Erro de conexão: ' + err.message);
-                console.error('Erro de conexão:', err);
-            }
+                let dataIso = (t.data || '').toString().trim();
+                if (dataIso.includes('/')) {
+                    const partes = dataIso.split('/');
+                    if (partes.length === 3) {
+                        dataIso = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                    }
+                }
+
+                return {
+                    ...t,
+                    valor: valorNum,
+                    data: dataIso
+                };
+            });
+
+            popularFiltroMeses();
+            atualizarDashboard();
+        } catch (err) {
+            alert('Erro de conexão: ' + err.message);
+            console.error('Erro de conexão:', err);
         }
+    }
 
         function popularFiltroMeses() {
             const select = document.getElementById('filtroPeriodo');
