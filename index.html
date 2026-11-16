@@ -286,11 +286,12 @@
             }
         }
 
-        async function carregarTransacoesDaNuvem() {
+async function carregarTransacoesDaNuvem() {
             try {
                 const { data, error } = await supabaseClient
                     .from('transacoes')
                     .select('*')
+                    .range(0, 2000)
                     .order('data', { ascending: false });
 
                 if (error) {
