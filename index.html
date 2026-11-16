@@ -1198,7 +1198,10 @@
             });
         }
 
-        carregarTransacoesDaNuvem();
+// Inicialização garantida assim que o DOM carregar
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarTransacoesDaNuvem();
+        });
     </script>
 </body>
 </html>
