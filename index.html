@@ -291,11 +291,12 @@ async function carregarTransacoesDaNuvem() {
                 const { data, error } = await supabaseClient
                     .from('transacoes')
                     .select('*')
-                    .range(0, 2000)
+                    .range(0, 1999)
                     .order('data', { ascending: false });
 
                 if (error) {
-                    console.error('Erro ao buscar dados do Supabase:', error.message);
+                    alert('Erro do Supabase: ' + error.message);
+                    console.error('Erro ao buscar dados do Supabase:', error);
                     return;
                 }
 
@@ -303,6 +304,7 @@ async function carregarTransacoesDaNuvem() {
                 popularFiltroMeses();
                 atualizarDashboard();
             } catch (err) {
+                alert('Erro de conexão: ' + err.message);
                 console.error('Erro de conexão:', err);
             }
         }
