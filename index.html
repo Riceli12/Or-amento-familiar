@@ -15,13 +15,13 @@
         .excel-tree details > summary:hover { color: #34d399; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen p-6">
+<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen p-1.5 sm:p-2.5">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="w-full mx-auto space-y-3 sm:space-y-4">
         <!-- Cabeçalho Compacto com Todos os Botões na Mesma Linha -->
-        <header class="flex flex-col lg:flex-row justify-between items-center bg-gray-800 px-6 py-4 rounded-2xl shadow-lg border border-gray-700 gap-4">
+        <header class="flex flex-col lg:flex-row justify-between items-center bg-gray-800 px-3 sm:px-5 py-3 rounded-xl sm:rounded-2xl shadow-lg border border-gray-700 gap-3">
             <div>
-                <h1 class="text-xl font-bold text-emerald-400"><i class="fa-solid fa-wallet mr-2"></i> Painel Financeiro Consolidado (Nuvem)</h1>
+                <h1 class="text-lg sm:text-xl font-bold text-emerald-400"><i class="fa-solid fa-wallet mr-2"></i> Painel Financeiro Consolidado (Nuvem)</h1>
                 <p class="text-xs text-gray-400">Controle Unificado: Débito, Crédito, Parcelas e Gastos Fixos</p>
             </div>
             
@@ -53,37 +53,37 @@
         </header>
 
         <!-- Cards de Resumo Compactos -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm">
                 <p class="text-xs text-gray-400 font-medium">Total de Entradas</p>
                 <h3 id="lblEntradas" class="text-2xl font-bold text-emerald-400 mt-1">R$ 0,00</h3>
             </div>
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm">
                 <p class="text-xs text-gray-400 font-medium">Total de Saídas</p>
                 <h3 id="lblSaidas" class="text-2xl font-bold text-rose-400 mt-1">R$ 0,00</h3>
             </div>
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm">
                 <p class="text-xs text-gray-400 font-medium">Saldo Atual</p>
                 <h3 id="lblSaldo" class="text-2xl font-bold text-blue-400 mt-1">R$ 0,00</h3>
             </div>
 
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-indigo-500">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-indigo-500">
                 <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-thumbtack mr-1 text-indigo-400"></i> Total Despesas Fixas</p>
                 <h3 id="lblFixas" class="text-xl font-bold text-indigo-400 mt-1">R$ 0,00</h3>
             </div>
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-purple-500">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-purple-500">
                 <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-credit-card mr-1 text-purple-400"></i> Total Cartão de Crédito</p>
                 <h3 id="lblCartao" class="text-xl font-bold text-purple-400 mt-1">R$ 0,00</h3>
             </div>
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-cyan-500">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-cyan-500">
                 <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-money-bill-transfer mr-1 text-cyan-400"></i> Total Despesas Débito / Pix</p>
                 <h3 id="lblDebitoPix" class="text-xl font-bold text-cyan-400 mt-1">R$ 0,00</h3>
             </div>
         </div>
 
         <!-- MODAL / PAINEL FLUTUANTE DE ADICIONAR TRANSAÇÃO -->
-        <div id="modalTransacao" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-            <div class="bg-gray-800 border border-gray-700 w-full max-w-3xl rounded-2xl shadow-2xl p-6 relative animate-fadeIn">
+        <div id="modalTransacao" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+            <div class="bg-gray-800 border border-gray-700 w-full max-w-3xl rounded-2xl shadow-2xl p-5 relative animate-fadeIn">
                 <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
                     <h2 class="text-lg font-semibold text-emerald-400"><i class="fa-solid fa-plus-circle mr-2"></i> Adicionar Nova Transação</h2>
                     <button type="button" onclick="alternarModalTransacao(false)" class="text-gray-400 hover:text-white text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
@@ -137,30 +137,30 @@
         </div>
 
         <!-- Gráficos empilhados -->
-        <div class="space-y-6">
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 class="text-md font-semibold mb-4 text-gray-300">Fluxo Mensal de Entradas e Saídas</h3>
-                <div class="relative h-80 w-full"><canvas id="graficoLinha"></canvas></div>
+        <div class="space-y-3 sm:space-y-4">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 class="text-md font-semibold mb-3 text-gray-300">Fluxo Mensal de Entradas e Saídas</h3>
+                <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoLinha"></canvas></div>
             </div>
 
             <!-- GRÁFICO: Evolução do Saldo Acumulado (Mês a Mês e Previsão) -->
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-5">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
                     <div>
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
                         <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 1.865,60) — novos lançamentos alteram o saldo normalmente</p>
                     </div>
-                    <div class="flex flex-col items-start xl:items-end gap-3">
-                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-2 rounded-xl border border-gray-600">
+                    <div class="flex flex-col items-start xl:items-end gap-2.5">
+                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
                             <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
-                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1.5 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
-                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 1.865,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1.5 rounded-lg cursor-pointer">
+                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 1.865,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1 rounded-lg cursor-pointer">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
-                            <div id="cardSaldoAtual" class="bg-sky-500/20 border-2 border-sky-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full sm:w-auto">
+                            <div id="cardSaldoAtual" class="bg-sky-500/20 border-2 border-sky-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]">
                                 <div class="bg-sky-500/25 text-sky-300 p-2.5 rounded-xl" id="iconeCardSaldoAtual">
                                     <i class="fa-solid fa-wallet text-lg"></i>
                                 </div>
@@ -170,7 +170,7 @@
                                 </div>
                             </div>
 
-                            <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]">
+                            <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]">
                                 <div class="bg-rose-500/25 text-rose-300 p-2.5 rounded-xl" id="iconeCardPrevFimMes">
                                     <i class="fa-solid fa-chart-line text-lg"></i>
                                 </div>
@@ -182,14 +182,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="relative h-80 w-full"><canvas id="graficoSaldoAcumulado"></canvas></div>
+                <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoSaldoAcumulado"></canvas></div>
             </div>
 
             <!-- GRÁFICO 1: Média Gastos Fixos por Mês -->
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <h3 class="text-md font-semibold text-gray-300">Média Gastos Fixos por Mês</h3>
-                    <div class="bg-amber-500/20 border-2 border-amber-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]">
+                    <div class="bg-amber-500/20 border-2 border-amber-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]">
                         <div class="bg-amber-500/25 text-amber-300 p-2.5 rounded-xl">
                             <i class="fa-solid fa-thumbtack text-lg"></i>
                         </div>
@@ -199,12 +199,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="relative h-80 w-full"><canvas id="graficoGastosFixosMensal"></canvas></div>
+                <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoGastosFixosMensal"></canvas></div>
             </div>
 
             <!-- GRÁFICO 2: Detalhamento de Gastos Fixos por Categoria (Cascata) -->
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <h3 id="tituloCascataFixos" class="text-md font-semibold text-gray-300">Detalhamento de Gastos Fixos por Categoria (Cascata)</h3>
                     <div class="flex items-center gap-2">
                         <label for="filtroMesFixos" class="text-xs font-semibold text-gray-400">Filtrar Mês:</label>
@@ -217,19 +217,19 @@
             </div>
 
             <!-- GRÁFICO 3: Cartão de Crédito por Mês -->
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 class="text-md font-semibold mb-4 text-gray-300">Cartão de Crédito por Mês</h3>
-                <div class="relative h-80 w-full"><canvas id="graficoCartaoMensal"></canvas></div>
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 class="text-md font-semibold mb-3 text-gray-300">Cartão de Crédito por Mês</h3>
+                <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoCartaoMensal"></canvas></div>
             </div>
 
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 id="tituloGraficoCategorias" class="text-md font-semibold mb-4 text-gray-300">Saídas por Categoria</h3>
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 id="tituloGraficoCategorias" class="text-md font-semibold mb-3 text-gray-300">Saídas por Categoria</h3>
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraCategorias"></canvas></div>
             </div>
 
             <!-- GRÁFICO: Detalhamento de Subcategorias -->
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <h3 id="tituloGraficoSubcategorias" class="text-md font-semibold text-gray-300">Detalhamento de Subcategorias</h3>
                     <div class="flex items-center gap-2">
                         <label for="filtroCategoriaSub" class="text-xs font-semibold text-gray-400">Filtrar Categoria:</label>
@@ -241,21 +241,21 @@
             </div>
 
             <!-- Top 10 Categoria e Top 10 Subcategoria -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                    <h3 id="tituloTop10Cat" class="text-md font-semibold mb-4 text-gray-300">Top 10 Gastos por Categoria</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+                <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                    <h3 id="tituloTop10Cat" class="text-md font-semibold mb-3 text-gray-300">Top 10 Gastos por Categoria</h3>
                     <div class="relative h-[420px] w-full"><canvas id="graficoTop10Cat"></canvas></div>
                 </div>
-                <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                    <h3 id="tituloTop10Sub" class="text-md font-semibold mb-4 text-gray-300">Top 10 Gastos por Subcategoria</h3>
+                <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                    <h3 id="tituloTop10Sub" class="text-md font-semibold mb-3 text-gray-300">Top 10 Gastos por Subcategoria</h3>
                     <div class="relative h-[420px] w-full"><canvas id="graficoTop10Sub"></canvas></div>
                 </div>
             </div>
         </div>
 
         <!-- Tabela de Histórico -->
-        <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-md overflow-hidden relative">
-            <div class="p-6 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="bg-gray-800 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md overflow-hidden relative">
+            <div class="p-3 sm:p-4 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <h3 class="text-md font-semibold text-gray-300">Histórico de Lançamentos</h3>
                 <span id="contadorTransacoes" class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full whitespace-nowrap">0 registros</span>
             </div>
@@ -284,36 +284,36 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-700/50 text-gray-400 text-xs uppercase tracking-wider">
-                            <th class="p-3">Data</th>
-                            <th class="p-3">Forma Pagto</th>
-                            <th class="p-3">Parcela CC</th>
-                            <th class="p-3">Descrição</th>
-                            <th class="p-3">Categoria</th>
-                            <th class="p-3">Subcategoria</th>
-                            <th class="p-3">Fixo</th>
-                            <th class="p-3 text-right">
+                            <th class="p-2.5 sm:p-3">Data</th>
+                            <th class="p-2.5 sm:p-3">Forma Pagto</th>
+                            <th class="p-2.5 sm:p-3">Parcela CC</th>
+                            <th class="p-2.5 sm:p-3">Descrição</th>
+                            <th class="p-2.5 sm:p-3">Categoria</th>
+                            <th class="p-2.5 sm:p-3">Subcategoria</th>
+                            <th class="p-2.5 sm:p-3">Fixo</th>
+                            <th class="p-2.5 sm:p-3 text-right">
                                 <div class="flex flex-col items-end whitespace-nowrap">
                                     <span>VALOR</span>
                                     <span id="lblSubtotalValor" class="text-[11px] font-semibold text-emerald-400 normal-case mt-0.5">Subtotal: R$ 0,00</span>
                                 </div>
                             </th>
-                            <th class="p-3 text-center">Ações</th>
+                            <th class="p-2.5 sm:p-3 text-center">Ações</th>
                         </tr>
                         <tr class="bg-gray-700/30 border-t border-gray-700">
-                            <th class="p-2">
+                            <th class="p-1.5 sm:p-2">
                                 <button type="button" onclick="abrirFiltroExcelDireto(event)" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 flex justify-between items-center focus:outline-none focus:border-emerald-500 font-normal cursor-pointer">
                                     <span id="labelFiltroDataBtn">Todas as Datas</span>
                                     <i class="fa-solid fa-filter text-emerald-400 text-[10px]" id="iconeFiltroDataAtivo"></i>
                                 </button>
                             </th>
-                            <th class="p-2"><select id="filtroForma" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2"><select id="filtroParcela" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2"><select id="filtroDescricao" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2"><select id="filtroCategoria" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2"><select id="filtroSubcategoria" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2"><select id="filtroFixo" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2"><select id="filtroValor" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
-                            <th class="p-2 text-center"></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroForma" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroParcela" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroDescricao" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroCategoria" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroSubcategoria" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroFixo" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2"><select id="filtroValor" onchange="atualizarDashboard()" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-emerald-500 font-normal"><option value="">Todos</option></select></th>
+                            <th class="p-1.5 sm:p-2 text-center"></th>
                         </tr>
                     </thead>
                     <tbody id="tabelaTransacoes" class="divide-y divide-gray-700 text-sm"></tbody>
@@ -960,15 +960,15 @@
                 const badgeFixo = t.fixo ? '<span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded text-xs font-semibold">FIXO</span>' : '';
 
                 tr.innerHTML = `
-                    <td class="p-4 text-gray-300">${dataExibir}</td>
-                    <td class="p-4 text-xs font-medium text-gray-300">${t.forma_pagamento}</td>
-                    <td class="p-4 text-xs">${badgeParcela}</td>
-                    <td class="p-4 font-medium text-gray-200">${t.descricao}</td>
-                    <td class="p-4 text-xs"><span class="bg-gray-700 text-emerald-300 px-2.5 py-1 rounded-md font-semibold">${t.categoria || 'OUTROS'}</span></td>
-                    <td class="p-4 text-xs text-gray-400">${t.subcategoria || 'Geral'}</td>
-                    <td class="p-4 text-xs">${badgeFixo}</td>
-                    <td class="p-4 text-right font-semibold ${ehEntrada ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(t.valor)}</td>
-                    <td class="p-4 text-center"><button type="button" onclick="excluirTransacao(${t.id})" class="text-gray-500 hover:text-rose-400 transition cursor-pointer"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 sm:p-4 text-gray-300">${dataExibir}</td>
+                    <td class="p-3 sm:p-4 text-xs font-medium text-gray-300">${t.forma_pagamento}</td>
+                    <td class="p-3 sm:p-4 text-xs">${badgeParcela}</td>
+                    <td class="p-3 sm:p-4 font-medium text-gray-200">${t.descricao}</td>
+                    <td class="p-3 sm:p-4 text-xs"><span class="bg-gray-700 text-emerald-300 px-2.5 py-1 rounded-md font-semibold">${t.categoria || 'OUTROS'}</span></td>
+                    <td class="p-3 sm:p-4 text-xs text-gray-400">${t.subcategoria || 'Geral'}</td>
+                    <td class="p-3 sm:p-4 text-xs">${badgeFixo}</td>
+                    <td class="p-3 sm:p-4 text-right font-semibold ${ehEntrada ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(t.valor)}</td>
+                    <td class="p-3 sm:p-4 text-center"><button type="button" onclick="excluirTransacao(${t.id})" class="text-gray-500 hover:text-rose-400 transition cursor-pointer"><i class="fa-solid fa-trash"></i></button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1188,11 +1188,11 @@
             lblHojeEl.innerText = formatarMoeda(saldoHojeExibir);
 
             if (saldoHojeExibir < 0) {
-                cardAtual.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
+                cardAtual.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
                 iconeAtual.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
                 lblHojeEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
             } else {
-                cardAtual.className = 'bg-sky-500/20 border-2 border-sky-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
+                cardAtual.className = 'bg-sky-500/20 border-2 border-sky-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
                 iconeAtual.className = 'bg-sky-500/25 text-sky-300 p-2.5 rounded-xl';
                 lblHojeEl.className = 'text-xl font-extrabold text-sky-400 leading-tight';
             }
@@ -1204,11 +1204,11 @@
             lblFimMesEl.innerText = formatarMoeda(saldoFimMesExibir);
 
             if (saldoFimMesExibir < 0) {
-                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
+                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
                 iconePrev.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
                 lblFimMesEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
             } else {
-                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
+                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
                 iconePrev.className = 'bg-emerald-500/25 text-emerald-300 p-2.5 rounded-xl';
                 lblFimMesEl.className = 'text-xl font-extrabold text-emerald-400 leading-tight';
             }
@@ -1289,7 +1289,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 24, bottom: 16, left: 12, right: 24 } },
+                    layout: { padding: { top: 24, bottom: 16, left: 6, right: 16 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
