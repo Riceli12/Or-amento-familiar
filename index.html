@@ -381,6 +381,10 @@
         const SALDO_BASE_CALIBRACAO = 1865.60;
         const STORAGE_KEY_SALDO_INICIAL = 'orcamento_familiar_saldo_inicial_fixo_v2';
 
+        // Cores padronizadas para gráficos em cascata: Total (Azul Royal) e Composições (Azul Claro)
+        const COR_CASCATA_TOTAL = '#2563eb';
+        const COR_CASCATA_ITEM = '#7dd3fc';
+
         let transacoes = [];
         let graficoLinhaObj = null;
         let graficoSaldoAcumuladoObj = null;
@@ -1544,7 +1548,8 @@
 
             const labelsCascata = ['[TOTAL] GASTOS FIXOS', ...catOrdenadas.map(item => `   •  ${item[0]}`)];
             const valoresCascata = [totalGastosFixos, ...catOrdenadas.map(item => item[1])];
-            const coresCascata = ['#3b82f6', ...catOrdenadas.map((_, i) => ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123'][i % 9])];
+            // Total em Azul Royal e demais categorias da cascata em Azul Claro correlacionado
+            const coresCascata = [COR_CASCATA_TOTAL, ...catOrdenadas.map(() => COR_CASCATA_ITEM)];
 
             const lblPeriodo = mesSelecionado === 'todos' ? 'Consolidado Ano' : mesSelecionado.split('-').reverse().join('/');
             document.getElementById('tituloCascataFixos').innerText = `Detalhamento de Gastos Fixos por Categoria (${lblPeriodo})`;
@@ -1812,7 +1817,8 @@
             const labelsCascata = [`[TOTAL] ${document.getElementById('filtroCategoriaSub').value}`, ...subcatOrdenadas.map(item => `   •  ${item[0]}`)];
             const valoresCascata = [totalCategoria, ...subcatOrdenadas.map(item => item[1])];
             
-            const coresCascata = ['#3b82f6', ...subcatOrdenadas.map((_, i) => ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123'][i % 9])];
+            // Total em Azul Royal e demais subcategorias da cascata em Azul Claro correlacionado
+            const coresCascata = [COR_CASCATA_TOTAL, ...subcatOrdenadas.map(() => COR_CASCATA_ITEM)];
 
             document.getElementById('tituloGraficoSubcategorias').innerText = `Detalhamento de Subcategorias`;
 
