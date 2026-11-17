@@ -143,6 +143,34 @@
                 <div class="relative h-80 w-full"><canvas id="graficoLinha"></canvas></div>
             </div>
 
+            <!-- GRÁFICO: Evolução do Saldo Acumulado (Mês a Mês e Previsão) -->
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
+                        <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 765,60) — novos lançamentos alteram o saldo normalmente</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
+                            <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
+                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 765,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2 py-1 rounded-lg cursor-pointer">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                        <div class="bg-sky-500/15 border border-sky-500/40 px-3 py-1.5 rounded-xl text-xs">
+                            <span class="text-gray-300">Saldo Atual: </span>
+                            <strong id="lblSaldoAcumuladoHoje" class="text-sky-400">R$ 765,60</strong>
+                        </div>
+                        <div class="bg-rose-500/15 border border-rose-500/40 px-3 py-1.5 rounded-xl text-xs">
+                            <span class="text-gray-300">Prev. Fim Mês: </span>
+                            <strong id="lblSaldoPrevistoFimMes" class="text-rose-400">R$ 0,00</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative h-80 w-full"><canvas id="graficoSaldoAcumulado"></canvas></div>
+            </div>
+
             <!-- GRÁFICO 1: Média Gastos Fixos por Mês -->
             <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
@@ -277,8 +305,14 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_pefL475b5oBO9vEtugWHTQ_zVN-V-q5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Data de referência fixa em que o saldo real era R$ 765,60
+        const DATA_BASE_CALIBRACAO = '2026-11-17';
+        const SALDO_BASE_CALIBRACAO = 765.60;
+        const STORAGE_KEY_SALDO_INICIAL = 'orcamento_familiar_saldo_inicial_fixo_v1';
+
         let transacoes = [];
         let graficoLinhaObj = null;
+        let graficoSaldoAcumuladoObj = null;
         let graficoGastosFixosMensalObj = null;
         let graficoCascataFixosCatObj = null;
         let graficoCartaoMensalObj = null;
@@ -290,8 +324,27 @@
 
         document.getElementById('data').valueAsDate = new Date();
 
+        function obterDataHojeLocalISO() {
+            const agora = new Date();
+            const local = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000);
+            return local.toISOString().split('T')[0];
+        }
+
         function formatarMoeda(valor) {
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function alterarSaldoInicialManual() {
+            const val = parseFloat(document.getElementById('inputSaldoInicial').value);
+            if (!isNaN(val)) {
+                localStorage.setItem(STORAGE_KEY_SALDO_INICIAL, val.toFixed(2));
+            }
+            atualizarGraficoSaldoAcumulado();
+        }
+
+        function recalibrarSaldoInicialBase() {
+            localStorage.removeItem(STORAGE_KEY_SALDO_INICIAL);
+            atualizarGraficoSaldoAcumulado();
         }
 
         function acionarSeletorArquivo() {
@@ -912,6 +965,7 @@
 
             popularFiltroCategoriasSub(transacoesPeriodo);
             atualizarGraficos(transacoesPeriodo, lblMes);
+            atualizarGraficoSaldoAcumulado();
             atualizarGraficoGastosFixosMensal();
             atualizarGraficoCascataFixos();
             atualizarGraficoCartaoMensal();
@@ -964,6 +1018,220 @@
             }
         };
 
+        const pluginValoresLinhaSaldoAcumulado = {
+            id: 'pluginValoresLinhaSaldoAcumulado',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data) return;
+
+                ctx.save();
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+
+                meta.data.forEach((ponto, index) => {
+                    const valorNum = data.datasets[0].data[index];
+                    const ehHoje = data.datasets[0].pontoHojeIndex === index;
+                    const ehProj = index > data.datasets[0].pontoHojeIndex;
+
+                    ctx.fillStyle = ehHoje ? '#38bdf8' : (ehProj ? '#fb7185' : '#e5e7eb');
+                    const texto = valorNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const offsetY = valorNum >= 0 ? -10 : 16;
+                    ctx.fillText(texto, ponto.x, ponto.y + offsetY);
+                });
+
+                ctx.restore();
+            }
+        };
+
+        // GRÁFICO: Evolução do Saldo Acumulado (Mês a Mês e Previsão)
+        function atualizarGraficoSaldoAcumulado() {
+            const hojeStr = obterDataHojeLocalISO();
+            const mesAtualStr = hojeStr.substring(0, 7);
+
+            // 1. Calcula e trava o Saldo Inicial com base na data de referência (17/11/2026 = R$ 765,60)
+            const saldoSalvo = localStorage.getItem(STORAGE_KEY_SALDO_INICIAL);
+            const inputInicial = document.getElementById('inputSaldoInicial');
+            let saldoInicial = 0;
+
+            if (saldoSalvo !== null && !isNaN(parseFloat(saldoSalvo))) {
+                saldoInicial = parseFloat(saldoSalvo);
+                inputInicial.value = saldoInicial.toFixed(2);
+            } else {
+                let somaAteDataBase = 0;
+                transacoes.forEach(t => {
+                    if (t.data && t.data <= DATA_BASE_CALIBRACAO) {
+                        somaAteDataBase += t.valor;
+                    }
+                });
+                saldoInicial = Number((SALDO_BASE_CALIBRACAO - somaAteDataBase).toFixed(2));
+                inputInicial.value = saldoInicial.toFixed(2);
+                if (transacoes.length > 0) {
+                    localStorage.setItem(STORAGE_KEY_SALDO_INICIAL, saldoInicial.toFixed(2));
+                }
+            }
+
+            // 2. Soma todas as entradas e saídas acumuladas até a data atual real (hojeStr)
+            let somaAteHoje = 0;
+            transacoes.forEach(t => {
+                if (t.data && t.data <= hojeStr) {
+                    somaAteHoje += t.valor;
+                }
+            });
+
+            const mesesSet = new Set([mesAtualStr]);
+            transacoes.forEach(t => {
+                if (t.data && t.data.length >= 7) {
+                    mesesSet.add(t.data.substring(0, 7));
+                }
+            });
+            const mesesOrdenados = Array.from(mesesSet).sort();
+
+            const labels = [];
+            const valores = [];
+            const coresPontos = [];
+            const raiosPontos = [];
+            let indiceHoje = -1;
+
+            mesesOrdenados.forEach(mes => {
+                const [ano, mm] = mes.split('-');
+                if (mes < mesAtualStr) {
+                    let somaMes = 0;
+                    transacoes.forEach(t => {
+                        if (t.data && t.data.substring(0, 7) <= mes) {
+                            somaMes += t.valor;
+                        }
+                    });
+                    labels.push(`${mm}/${ano}`);
+                    valores.push(Number((saldoInicial + somaMes).toFixed(2)));
+                    coresPontos.push('#34d399');
+                    raiosPontos.push(4);
+                } else if (mes === mesAtualStr) {
+                    // Ponto 1: Saldo acumulado real até hoje (reflete imediatamente novas despesas lançadas!)
+                    const saldoHoje = Number((saldoInicial + somaAteHoje).toFixed(2));
+                    const [, , dd] = hojeStr.split('-');
+                    labels.push(`Hoje (${dd}/${mm})`);
+                    valores.push(saldoHoje);
+                    coresPontos.push('#38bdf8');
+                    raiosPontos.push(6);
+                    indiceHoje = labels.length - 1;
+
+                    // Ponto 2: Previsão até o final do mês atual (inclui fatura CC e débitos futuros do mês)
+                    let somaFimMesAtual = 0;
+                    transacoes.forEach(t => {
+                        if (t.data && t.data.substring(0, 7) <= mesAtualStr) {
+                            somaFimMesAtual += t.valor;
+                        }
+                    });
+                    const saldoFimMesAtual = Number((saldoInicial + somaFimMesAtual).toFixed(2));
+                    labels.push(`Prev. Fim ${mm}/${ano}`);
+                    valores.push(saldoFimMesAtual);
+                    coresPontos.push(saldoFimMesAtual >= 0 ? '#34d399' : '#f43f5e');
+                    raiosPontos.push(5);
+                } else {
+                    // Meses futuros já lançados
+                    let somaFuturo = 0;
+                    transacoes.forEach(t => {
+                        if (t.data && t.data.substring(0, 7) <= mes) {
+                            somaFuturo += t.valor;
+                        }
+                    });
+                    const saldoFuturo = Number((saldoInicial + somaFuturo).toFixed(2));
+                    labels.push(`Prev. ${mm}/${ano}`);
+                    valores.push(saldoFuturo);
+                    coresPontos.push(saldoFuturo >= 0 ? '#34d399' : '#f43f5e');
+                    raiosPontos.push(4);
+                }
+            });
+
+            const saldoHojeExibir = indiceHoje >= 0 ? valores[indiceHoje] : SALDO_BASE_CALIBRACAO;
+            const saldoFimMesExibir = indiceHoje >= 0 && valores[indiceHoje + 1] !== undefined ? valores[indiceHoje + 1] : saldoHojeExibir;
+
+            const lblHojeEl = document.getElementById('lblSaldoAcumuladoHoje');
+            lblHojeEl.innerText = formatarMoeda(saldoHojeExibir);
+            lblHojeEl.className = saldoHojeExibir >= 0 ? 'text-sky-400' : 'text-rose-400';
+
+            const lblFimMesEl = document.getElementById('lblSaldoPrevistoFimMes');
+            lblFimMesEl.innerText = formatarMoeda(saldoFimMesExibir);
+            lblFimMesEl.className = saldoFimMesExibir >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+            const minVal = Math.min(...valores, 0);
+            const maxVal = Math.max(...valores, 1000);
+            const margem = Math.max(Math.abs(maxVal - minVal) * 0.18, 500);
+
+            if (graficoSaldoAcumuladoObj) graficoSaldoAcumuladoObj.destroy();
+            const ctx = document.getElementById('graficoSaldoAcumulado').getContext('2d');
+            graficoSaldoAcumuladoObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo Acumulado (R$)',
+                        data: valores,
+                        pontoHojeIndex: indiceHoje,
+                        borderColor: '#34d399',
+                        backgroundColor: 'rgba(52, 211, 153, 0.12)',
+                        borderWidth: 2.5,
+                        tension: 0.25,
+                        fill: true,
+                        pointBackgroundColor: coresPontos,
+                        pointBorderColor: '#111827',
+                        pointBorderWidth: 1.5,
+                        pointRadius: raiosPontos,
+                        pointHoverRadius: 7,
+                        segment: {
+                            borderColor: function(ctxSeg) {
+                                return ctxSeg.p1DataIndex > indiceHoje ? '#f43f5e' : '#34d399';
+                            },
+                            borderDash: function(ctxSeg) {
+                                return ctxSeg.p1DataIndex > indiceHoje ? [6, 6] : undefined;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 24, bottom: 16, left: 12, right: 24 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Saldo Acumulado: ${formatarMoeda(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: minVal - margem,
+                            max: maxVal + margem,
+                            ticks: {
+                                color: '#9ca3af',
+                                callback: function(val) {
+                                    return formatarMoeda(val);
+                                }
+                            },
+                            grid: {
+                                color: function(ctxGrid) {
+                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? '#6b7280' : '#374151';
+                                },
+                                lineWidth: function(ctxGrid) {
+                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? 1.5 : 1;
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af', font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                },
+                plugins: [pluginValoresLinhaSaldoAcumulado]
+            });
+        }
+
         // GRÁFICO 1: Média Gastos Fixos por Mês
         function atualizarGraficoGastosFixosMensal() {
             const mesesMap = {};
@@ -983,7 +1251,6 @@
             const mediaAnual = meses.length > 0 ? (somaTotal / meses.length) : 0;
             const linhaMediaData = meses.map(() => mediaAnual);
 
-            // Atualiza o valor da média anual no canto superior direito com a mesma cor da linha (#fbbf24)
             document.getElementById('lblMediaGastoFixoAnual').innerText = `Média Anual: ${formatarMoeda(mediaAnual)}`;
 
             const maxVal = Math.max(...valoresMensais, mediaAnual, 100);
@@ -1003,8 +1270,8 @@
                             backgroundColor: '#fbbf24',
                             borderWidth: 2,
                             borderDash: [6, 6],
-                            pointRadius: 4,
-                            pointBackgroundColor: '#fbbf24',
+                            pointRadius: 0,
+                            pointHoverRadius: 0,
                             fill: false,
                             order: 0
                         },
