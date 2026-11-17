@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- Card 2: Total de Saídas (com Cartão de Crédito e Débito / Pix internos, descontando estornos) -->
+            <!-- Card 2: Total de Saídas (Líquido de estornos e resgates de investimentos) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium">Total de Saídas (Líquido)</p>
@@ -98,13 +98,13 @@
                 </div>
             </div>
 
-            <!-- Card 3: Resultado Líquido do Período (Renda - Saídas, com detalhe de movimentações de investimentos) -->
+            <!-- Card 3: Balanço Líquido do Período (Entradas - Saídas) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Resultado Líquido (Renda - Saídas)</p>
+                    <p class="text-xs text-gray-400 font-medium">Balanço Líquido do Período</p>
                     <h3 id="lblSaldo" class="text-2xl font-bold text-blue-400 mt-1">R$ 0,00</h3>
                 </div>
-                <p id="lblDetalheCaixa" class="text-[11px] text-gray-400 mt-2">Entradas menos saídas do período</p>
+                <p id="lblDetalheCaixa" class="text-[11px] text-gray-400 mt-2">Entradas menos saídas líquidas</p>
             </div>
 
             <!-- Card 4: Total Despesas Fixas (com Fixas Riceli e Fixas Juliana internos) -->
@@ -984,16 +984,11 @@
             let totalFixasRiceli = 0;
             let totalFixasJuliana = 0;
 
-            let balancoLiquidoCaixa = 0;
-
             transacoesPeriodo.forEach(t => {
                 const forma = (t.forma_pagamento || '').toLowerCase();
                 const desc = (t.descricao || '').toLowerCase();
                 const ehCartao = forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito');
                 const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
-
-                // Balanço real de caixa soma todas as entradas e saídas financeiras
-                balancoLiquidoCaixa += t.valor;
 
                 if (t.valor > 0) {
                     if (ehRendaReal(t)) {
@@ -1004,14 +999,14 @@
                         } else if (forma.includes('juliana') || desc.includes('juliana')) {
                             totalEntradasJuliana += t.valor;
                         }
-                    } else if (!ehMovimentoInvestimento(t)) {
-                        // Valores positivos fora de RENDA e fora de INVESTIMENTOS (ex: estornos de Pix/compras) abatem as despesas
+                    } else {
+                        // Estornos e resgates de investimentos abatem das Saídas para fechar o saldo líquido exato
                         if (ehCartao) {
                             totalCartao -= t.valor;
                         } else {
                             totalDebitoPixDespesas -= t.valor;
                         }
-                        if (ehFixo) {
+                        if (ehFixo && !ehMovimentoInvestimento(t)) {
                             totalFixas -= t.valor;
                             if (forma.includes('riceli')) totalFixasRiceli -= t.valor;
                             else if (forma.includes('juliana')) totalFixasJuliana -= t.valor;
@@ -1038,6 +1033,7 @@
             });
 
             const totalSaidas = totalCartao + totalDebitoPixDespesas;
+            const balancoLiquido = totalEntradas - totalSaidas;
 
             let subtotalFiltrado = 0;
             transacoesFiltradas.forEach(t => {
@@ -1083,18 +1079,9 @@
             document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
             document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
 
-            const resultadoOperacional = totalEntradas - totalSaidas;
             const lblSaldo = document.getElementById('lblSaldo');
-            lblSaldo.innerText = formatarMoeda(resultadoOperacional);
-            lblSaldo.className = `text-2xl font-bold mt-1 ${resultadoOperacional >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
-
-            const difInvestimentos = balancoLiquidoCaixa - resultadoOperacional;
-            const lblDetalheCaixa = document.getElementById('lblDetalheCaixa');
-            if (Math.abs(difInvestimentos) >= 0.01) {
-                lblDetalheCaixa.innerText = `Com mov. investimentos (${formatarMoeda(difInvestimentos)}): ${formatarMoeda(balancoLiquidoCaixa)}`;
-            } else {
-                lblDetalheCaixa.innerText = 'Entradas menos saídas do período';
-            }
+            lblSaldo.innerText = formatarMoeda(balancoLiquido);
+            lblSaldo.className = `text-2xl font-bold mt-1 ${balancoLiquido >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
 
             document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
             document.getElementById('lblFixasRiceli').innerText = formatarMoeda(totalFixasRiceli);
@@ -1661,7 +1648,7 @@
                 if (t.valor > 0) {
                     if (ehRendaReal(t)) {
                         mesesMap[mes].entrada += t.valor;
-                    } else if (!ehMovimentoInvestimento(t)) {
+                    } else {
                         mesesMap[mes].saida -= t.valor;
                     }
                 } else if (t.valor < 0) {
@@ -1682,7 +1669,7 @@
                     labels: meses.map(m => m.split('-').reverse().join('/')),
                     datasets: [
                         { label: 'Entradas (Renda)', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
-                        { label: 'Saídas', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
+                        { label: 'Saídas (Líquido)', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
                     ]
                 },
                 options: { 
