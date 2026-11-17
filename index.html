@@ -98,13 +98,13 @@
                 </div>
             </div>
 
-            <!-- Card 3: Saldo Atual (Balanço de Caixa Real) -->
+            <!-- Card 3: Resultado Líquido do Período (Renda - Saídas, com detalhe de movimentações de investimentos) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Balanço Líquido do Período</p>
+                    <p class="text-xs text-gray-400 font-medium">Resultado Líquido (Renda - Saídas)</p>
                     <h3 id="lblSaldo" class="text-2xl font-bold text-blue-400 mt-1">R$ 0,00</h3>
                 </div>
-                <p class="text-[11px] text-gray-400 mt-2">Considera todas as movimentações de caixa</p>
+                <p id="lblDetalheCaixa" class="text-[11px] text-gray-400 mt-2">Entradas menos saídas do período</p>
             </div>
 
             <!-- Card 4: Total Despesas Fixas (com Fixas Riceli e Fixas Juliana internos) -->
@@ -1083,9 +1083,18 @@
             document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
             document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
 
+            const resultadoOperacional = totalEntradas - totalSaidas;
             const lblSaldo = document.getElementById('lblSaldo');
-            lblSaldo.innerText = formatarMoeda(balancoLiquidoCaixa);
-            lblSaldo.className = `text-2xl font-bold mt-1 ${balancoLiquidoCaixa >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
+            lblSaldo.innerText = formatarMoeda(resultadoOperacional);
+            lblSaldo.className = `text-2xl font-bold mt-1 ${resultadoOperacional >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
+
+            const difInvestimentos = balancoLiquidoCaixa - resultadoOperacional;
+            const lblDetalheCaixa = document.getElementById('lblDetalheCaixa');
+            if (Math.abs(difInvestimentos) >= 0.01) {
+                lblDetalheCaixa.innerText = `Com mov. investimentos (${formatarMoeda(difInvestimentos)}): ${formatarMoeda(balancoLiquidoCaixa)}`;
+            } else {
+                lblDetalheCaixa.innerText = 'Entradas menos saídas do período';
+            }
 
             document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
             document.getElementById('lblFixasRiceli').innerText = formatarMoeda(totalFixasRiceli);
