@@ -54,11 +54,25 @@
 
         <!-- Cards de Resumo Consolidados -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-            <!-- Card 1: Total de Entradas -->
+            <!-- Card 1: Total de Entradas (com Riceli e Juliana internos) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium">Total de Entradas</p>
                     <h3 id="lblEntradas" class="text-2xl font-bold text-emerald-400 mt-1">R$ 0,00</h3>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
+                    <div class="bg-gray-900/50 px-2.5 py-1.5 rounded-lg border-l-2 border-emerald-500">
+                        <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-user text-emerald-400 text-[10px]"></i> Entradas Riceli
+                        </p>
+                        <span id="lblEntradasRiceli" class="text-xs sm:text-sm font-bold text-emerald-400 block mt-0.5">R$ 0,00</span>
+                    </div>
+                    <div class="bg-gray-900/50 px-2.5 py-1.5 rounded-lg border-l-2 border-teal-400">
+                        <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-user text-teal-400 text-[10px]"></i> Entradas Juliana
+                        </p>
+                        <span id="lblEntradasJuliana" class="text-xs sm:text-sm font-bold text-teal-400 block mt-0.5">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
 
@@ -92,13 +106,26 @@
                 </div>
             </div>
 
-            <!-- Card 4: Total Despesas Fixas -->
+            <!-- Card 4: Total Despesas Fixas (com Fixas Riceli e Fixas Juliana internos) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-indigo-500 flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-thumbtack mr-1 text-indigo-400"></i> Total Despesas Fixas</p>
                     <h3 id="lblFixas" class="text-2xl font-bold text-indigo-400 mt-1">R$ 0,00</h3>
                 </div>
-                <p class="text-[11px] text-gray-400 mt-2">Subconjunto das saídas marcado como FIXO</p>
+                <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
+                    <div class="bg-gray-900/50 px-2.5 py-1.5 rounded-lg border-l-2 border-sky-400">
+                        <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-user text-sky-400 text-[10px]"></i> Fixas Riceli
+                        </p>
+                        <span id="lblFixasRiceli" class="text-xs sm:text-sm font-bold text-sky-400 block mt-0.5">R$ 0,00</span>
+                    </div>
+                    <div class="bg-gray-900/50 px-2.5 py-1.5 rounded-lg border-l-2 border-fuchsia-400">
+                        <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-user text-fuchsia-400 text-[10px]"></i> Fixas Juliana
+                        </p>
+                        <span id="lblFixasJuliana" class="text-xs sm:text-sm font-bold text-fuchsia-400 block mt-0.5">R$ 0,00</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -933,23 +960,41 @@
             });
 
             let totalEntradas = 0;
+            let totalEntradasRiceli = 0;
+            let totalEntradasJuliana = 0;
+
             let totalSaidas = 0;
-            let totalFixas = 0;
             let totalCartao = 0;
             let totalDebitoPixDespesas = 0;
 
+            let totalFixas = 0;
+            let totalFixasRiceli = 0;
+            let totalFixasJuliana = 0;
+
             transacoesPeriodo.forEach(t => {
+                const forma = (t.forma_pagamento || '').toLowerCase();
+                const desc = (t.descricao || '').toLowerCase();
+
                 if (t.valor > 0) {
                     totalEntradas += t.valor;
+                    if (forma.includes('riceli') || (!forma.includes('juliana') && desc.includes('riceli'))) {
+                        totalEntradasRiceli += t.valor;
+                    } else if (forma.includes('juliana') || desc.includes('juliana')) {
+                        totalEntradasJuliana += t.valor;
+                    }
                 } else if (t.valor < 0) {
                     const absVal = Math.abs(t.valor);
                     totalSaidas += absVal;
 
                     if (t.fixo && t.fixo.toUpperCase() === 'FIXO') {
                         totalFixas += absVal;
+                        if (forma.includes('riceli')) {
+                            totalFixasRiceli += absVal;
+                        } else if (forma.includes('juliana')) {
+                            totalFixasJuliana += absVal;
+                        }
                     }
 
-                    const forma = (t.forma_pagamento || '').toLowerCase();
                     if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
                         totalCartao += absVal;
                     } else {
@@ -995,15 +1040,21 @@
             });
 
             document.getElementById('lblEntradas').innerText = formatarMoeda(totalEntradas);
+            document.getElementById('lblEntradasRiceli').innerText = formatarMoeda(totalEntradasRiceli);
+            document.getElementById('lblEntradasJuliana').innerText = formatarMoeda(totalEntradasJuliana);
+
             document.getElementById('lblSaidas').innerText = formatarMoeda(totalSaidas);
+            document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
+            document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
+
             const saldo = totalEntradas - totalSaidas;
             const lblSaldo = document.getElementById('lblSaldo');
             lblSaldo.innerText = formatarMoeda(saldo);
             lblSaldo.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
 
             document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
-            document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
-            document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
+            document.getElementById('lblFixasRiceli').innerText = formatarMoeda(totalFixasRiceli);
+            document.getElementById('lblFixasJuliana').innerText = formatarMoeda(totalFixasJuliana);
 
             document.getElementById('contadorTransacoes').innerText = `${transacoesFiltradas.length} de ${transacoes.length} registros`;
 
