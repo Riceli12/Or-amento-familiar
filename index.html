@@ -143,6 +143,32 @@
                 <div class="relative h-80 w-full"><canvas id="graficoLinha"></canvas></div>
             </div>
 
+            <!-- NOVO GRÁFICO 1: Gastos Fixos por Mês vs Média Anual -->
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 class="text-md font-semibold mb-4 text-gray-300">Média Anual vs. Gastos Fixos por Mês</h3>
+                <div class="relative h-80 w-full"><canvas id="graficoGastosFixosMensal"></canvas></div>
+            </div>
+
+            <!-- NOVO GRÁFICO 2: Detalhamento de Gastos Fixos por Categoria (Cascata) -->
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <h3 id="tituloCascataFixos" class="text-md font-semibold text-gray-300">Detalhamento de Gastos Fixos por Categoria (Cascata)</h3>
+                    <div class="flex items-center gap-2">
+                        <label for="filtroMesFixos" class="text-xs font-semibold text-gray-400">Filtrar Mês:</label>
+                        <select id="filtroMesFixos" onchange="atualizarGraficoCascataFixos()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 border border-gray-600">
+                            <option value="todos">Total Ano Consolidado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="relative h-[450px] w-full"><canvas id="graficoCascataFixosCat"></canvas></div>
+            </div>
+
+            <!-- NOVO GRÁFICO 3: Histórico de Gastos com Cartão de Crédito por Mês -->
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 class="text-md font-semibold mb-4 text-gray-300">Histórico de Gastos com Cartão de Crédito por Mês</h3>
+                <div class="relative h-80 w-full"><canvas id="graficoCartaoMensal"></canvas></div>
+            </div>
+
             <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
                 <h3 id="tituloGraficoCategorias" class="text-md font-semibold mb-4 text-gray-300">Saídas por Categoria</h3>
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraCategorias"></canvas></div>
@@ -250,6 +276,9 @@
 
         let transacoes = [];
         let graficoLinhaObj = null;
+        let graficoGastosFixosMensalObj = null;
+        let graficoCascataFixosCatObj = null;
+        let graficoCartaoMensalObj = null;
         let graficoBarraCategoriasObj = null;
         let graficoBarraSubcategoriasObj = null;
         let graficoTop10CatObj = null;
@@ -279,7 +308,6 @@
             }
         }
 
-        // Busca todos os registros em páginas de 1000 para contornar o limite da API
         async function carregarTransacoesDaNuvem() {
             try {
                 let todosRegistros = [];
@@ -327,7 +355,9 @@
 
         function popularFiltroMeses() {
             const select = document.getElementById('filtroPeriodo');
+            const selectFixos = document.getElementById('filtroMesFixos');
             const valorAtual = select.value;
+            const valorFixosAtual = selectFixos.value;
             
             const mesesSet = new Set();
             transacoes.forEach(t => {
@@ -337,17 +367,28 @@
             const mesesOrdenados = Array.from(mesesSet).sort().reverse();
 
             select.innerHTML = '<option value="todos">Total Ano Consolidado</option>';
+            selectFixos.innerHTML = '<option value="todos">Total Ano Consolidado</option>';
+
             mesesOrdenados.forEach(m => {
                 const partes = m.split('-');
                 const label = `${partes[1]}/${partes[0]}`;
+                
                 const opt = document.createElement('option');
                 opt.value = m;
                 opt.innerText = label;
                 select.appendChild(opt);
+
+                const optFixo = document.createElement('option');
+                optFixo.value = m;
+                optFixo.innerText = label;
+                selectFixos.appendChild(optFixo);
             });
 
             if (mesesOrdenados.includes(valorAtual) || valorAtual === 'todos') {
                 select.value = valorAtual;
+            }
+            if (mesesOrdenados.includes(valorFixosAtual) || valorFixosAtual === 'todos') {
+                selectFixos.value = valorFixosAtual;
             }
         }
 
@@ -642,6 +683,11 @@
             document.getElementById('filtroSubcategoria').value = "";
             document.getElementById('filtroFixo').value = "";
             document.getElementById('filtroValor').value = "";
+
+            // Sincroniza o seletor do gráfico de cascata de gastos fixos com o filtro global do topo
+            const periodoGlobal = document.getElementById('filtroPeriodo').value;
+            document.getElementById('filtroMesFixos').value = periodoGlobal;
+
             atualizarDashboard();
         }
 
@@ -721,7 +767,6 @@
                     });
 
                     if (novosLotes.length > 0) {
-                        // Envia em lotes de 500 para garantir estabilidade no Supabase
                         const tamanhoLote = 500;
                         for (let i = 0; i < novosLotes.length; i += tamanhoLote) {
                             const lote = novosLotes.slice(i, i + tamanhoLote);
@@ -865,6 +910,9 @@
 
             popularFiltroCategoriasSub(transacoesPeriodo);
             atualizarGraficos(transacoesPeriodo, lblMes);
+            atualizarGraficoGastosFixosMensal();
+            atualizarGraficoCascataFixos();
+            atualizarGraficoCartaoMensal();
             atualizarGraficoSubcategorias();
             atualizarGraficosTop10(transacoesPeriodo, lblMes);
         }
@@ -900,6 +948,8 @@
                 ctx.textBaseline = 'bottom';
 
                 chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    // Exibe o valor no topo apenas para datasets do tipo barra (ignora linha de média)
+                    if (dataset.type === 'line') return;
                     const meta = chart.getDatasetMeta(datasetIndex);
                     meta.data.forEach((barra, index) => {
                         const valorNum = dataset.data[index];
@@ -912,6 +962,225 @@
                 ctx.restore();
             }
         };
+
+        // GRÁFICO 1: Gastos Fixos por Mês (Coluna) + Média Anual (Linha)
+        function atualizarGraficoGastosFixosMensal() {
+            const mesesMap = {};
+            transacoes.forEach(t => {
+                if (!t.data) return;
+                const mes = t.data.substring(0, 7);
+                if (!mesesMap[mes]) mesesMap[mes] = 0;
+
+                if (t.valor < 0 && t.fixo && t.fixo.toUpperCase() === 'FIXO') {
+                    mesesMap[mes] += Math.abs(t.valor);
+                }
+            });
+
+            const meses = Object.keys(mesesMap).sort();
+            const valoresMensais = meses.map(m => mesesMap[m]);
+            const somaTotal = valoresMensais.reduce((acc, v) => acc + v, 0);
+            const mediaAnual = meses.length > 0 ? (somaTotal / meses.length) : 0;
+            const linhaMediaData = meses.map(() => mediaAnual);
+
+            const maxVal = Math.max(...valoresMensais, mediaAnual, 100);
+
+            if (graficoGastosFixosMensalObj) graficoGastosFixosMensalObj.destroy();
+            const ctx = document.getElementById('graficoGastosFixosMensal').getContext('2d');
+            graficoGastosFixosMensalObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: `Média Anual (${formatarMoeda(mediaAnual)})`,
+                            data: linhaMediaData,
+                            borderColor: '#fbbf24',
+                            backgroundColor: '#fbbf24',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fbbf24',
+                            fill: false,
+                            order: 0
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Gasto Fixo Mensal',
+                            data: valoresMensais,
+                            backgroundColor: '#34d399',
+                            borderRadius: 6,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            max: maxVal * 1.2,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false }
+                        }
+                    }
+                },
+                plugins: [pluginValoresEmCimaDaColunaSemRS]
+            });
+        }
+
+        // GRÁFICO 2: Detalhamento de Gastos Fixos por Categoria (Cascata)
+        function atualizarGraficoCascataFixos() {
+            const mesSelecionado = document.getElementById('filtroMesFixos').value;
+
+            const dadosFixos = transacoes.filter(t => {
+                if (!t.data) return false;
+                const matchMes = (mesSelecionado === 'todos' || t.data.startsWith(mesSelecionado));
+                const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
+                return matchMes && ehFixo;
+            });
+
+            const catMapObj = {};
+            dadosFixos.forEach(t => {
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
+                if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
+                else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
+            });
+
+            const catMapFinal = {};
+            let totalGastosFixos = 0;
+
+            Object.keys(catMapObj).forEach(cat => {
+                let negs = [...catMapObj[cat].negativas];
+                let poss = [...catMapObj[cat].positivas];
+
+                for (let i = negs.length - 1; i >= 0; i--) {
+                    const idxPos = poss.indexOf(negs[i]);
+                    if (idxPos !== -1) {
+                        negs.splice(i, 1);
+                        poss.splice(idxPos, 1);
+                    }
+                }
+                const totalNeg = negs.reduce((a, b) => a + b, 0);
+                if (totalNeg > 0) {
+                    catMapFinal[cat] = totalNeg;
+                    totalGastosFixos += totalNeg;
+                }
+            });
+
+            const catOrdenadas = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]);
+
+            const labelsCascata = ['[TOTAL] GASTOS FIXOS', ...catOrdenadas.map(item => `   •  ${item[0]}`)];
+            const valoresCascata = [totalGastosFixos, ...catOrdenadas.map(item => item[1])];
+            const coresCascata = ['#3b82f6', ...catOrdenadas.map((_, i) => ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123'][i % 9])];
+
+            const lblPeriodo = mesSelecionado === 'todos' ? 'Consolidado Ano' : mesSelecionado.split('-').reverse().join('/');
+            document.getElementById('tituloCascataFixos').innerText = `Detalhamento de Gastos Fixos por Categoria (${lblPeriodo})`;
+
+            if (graficoCascataFixosCatObj) graficoCascataFixosCatObj.destroy();
+            const ctx = document.getElementById('graficoCascataFixosCat').getContext('2d');
+            graficoCascataFixosCatObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelsCascata,
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: valoresCascata,
+                        backgroundColor: coresCascata,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 95 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
+                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresNasBarra]
+            });
+        }
+
+        // GRÁFICO 3: Histórico de Gastos com Cartão de Crédito por Mês
+        function atualizarGraficoCartaoMensal() {
+            const mesesMap = {};
+            transacoes.forEach(t => {
+                if (!t.data) return;
+                const mes = t.data.substring(0, 7);
+                if (!mesesMap[mes]) mesesMap[mes] = 0;
+
+                if (t.valor < 0) {
+                    const forma = (t.forma_pagamento || '').toLowerCase();
+                    if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
+                        mesesMap[mes] += Math.abs(t.valor);
+                    }
+                }
+            });
+
+            const meses = Object.keys(mesesMap).sort();
+            const valoresCartao = meses.map(m => mesesMap[m]);
+            const maxVal = Math.max(...valoresCartao, 100);
+
+            if (graficoCartaoMensalObj) graficoCartaoMensalObj.destroy();
+            const ctx = document.getElementById('graficoCartaoMensal').getContext('2d');
+            graficoCartaoMensalObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    datasets: [{
+                        label: 'Gastos com Cartão de Crédito',
+                        data: valoresCartao,
+                        backgroundColor: '#a78bfa',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Cartão de Crédito: ${formatarMoeda(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            max: maxVal * 1.2,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false }
+                        }
+                    }
+                },
+                plugins: [pluginValoresEmCimaDaColunaSemRS]
+            });
+        }
 
         function atualizarGraficos(dadosPeriodo, lblMes) {
             const mesesMap = {};
