@@ -54,10 +54,10 @@
 
         <!-- Cards de Resumo Consolidados -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-            <!-- Card 1: Total de Entradas (com Riceli e Juliana internos) -->
+            <!-- Card 1: Total de Entradas (Apenas Categoria RENDA) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Total de Entradas</p>
+                    <p class="text-xs text-gray-400 font-medium">Total de Entradas (Renda Real)</p>
                     <h3 id="lblEntradas" class="text-2xl font-bold text-emerald-400 mt-1">R$ 0,00</h3>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
@@ -76,10 +76,10 @@
                 </div>
             </div>
 
-            <!-- Card 2: Total de Saídas (com Cartão de Crédito e Débito / Pix internos) -->
+            <!-- Card 2: Total de Saídas (com Cartão de Crédito e Débito / Pix internos, descontando estornos) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Total de Saídas</p>
+                    <p class="text-xs text-gray-400 font-medium">Total de Saídas (Líquido)</p>
                     <h3 id="lblSaidas" class="text-2xl font-bold text-rose-400 mt-1">R$ 0,00</h3>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
@@ -98,12 +98,13 @@
                 </div>
             </div>
 
-            <!-- Card 3: Saldo Atual -->
+            <!-- Card 3: Saldo Atual (Balanço de Caixa Real) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Saldo Atual</p>
+                    <p class="text-xs text-gray-400 font-medium">Balanço Líquido do Período</p>
                     <h3 id="lblSaldo" class="text-2xl font-bold text-blue-400 mt-1">R$ 0,00</h3>
                 </div>
+                <p class="text-[11px] text-gray-400 mt-2">Considera todas as movimentações de caixa</p>
             </div>
 
             <!-- Card 4: Total Despesas Fixas (com Fixas Riceli e Fixas Juliana internos) -->
@@ -163,12 +164,12 @@
                         <input type="text" id="descricao" placeholder="Ex: Supermercado" required class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-sm w-full focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 mb-1 block">Categoria</label>
-                        <input type="text" id="categoria" placeholder="Ex: ALIMENTAÇÃO" required class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-sm w-full focus:outline-none focus:border-emerald-500">
+                        <label class="text-xs text-gray-400 mb-1 block">Categoria (Use RENDA para entradas reais)</label>
+                        <input type="text" id="categoria" placeholder="Ex: ALIMENTAÇÃO ou RENDA" required class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-sm w-full focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
                         <label class="text-xs text-gray-400 mb-1 block">Subcategoria</label>
-                        <input type="text" id="subcategoria" placeholder="Ex: Supermercado" required class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-sm w-full focus:outline-none focus:border-emerald-500">
+                        <input type="text" id="subcategoria" placeholder="Ex: Supermercado ou Salário" required class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-sm w-full focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
                         <label class="text-xs text-gray-400 mb-1 block">Gasto Fixo?</label>
@@ -187,7 +188,7 @@
         <!-- Gráficos empilhados -->
         <div class="space-y-3 sm:space-y-4">
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 class="text-md font-semibold mb-3 text-gray-300">Fluxo Mensal de Entradas e Saídas</h3>
+                <h3 class="text-md font-semibold mb-3 text-gray-300">Fluxo Mensal de Entradas (Renda Real) e Saídas</h3>
                 <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoLinha"></canvas></div>
             </div>
 
@@ -393,6 +394,19 @@
         let diasSelecionadosExcel = null;
 
         document.getElementById('data').valueAsDate = new Date();
+
+        // Verifica se a transação é uma Renda Real (Salário / Receita) e não resgate/estorno
+        function ehRendaReal(t) {
+            if (!t || t.valor <= 0) return false;
+            const cat = (t.categoria || '').toUpperCase().trim();
+            return cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS';
+        }
+
+        // Verifica se é movimento interno de investimentos (aporte ou resgate)
+        function ehMovimentoInvestimento(t) {
+            const cat = (t.categoria || '').toUpperCase().trim();
+            return cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO';
+        }
 
         function obterDataHojeLocalISO() {
             const agora = new Date();
@@ -963,7 +977,6 @@
             let totalEntradasRiceli = 0;
             let totalEntradasJuliana = 0;
 
-            let totalSaidas = 0;
             let totalCartao = 0;
             let totalDebitoPixDespesas = 0;
 
@@ -971,22 +984,43 @@
             let totalFixasRiceli = 0;
             let totalFixasJuliana = 0;
 
+            let balancoLiquidoCaixa = 0;
+
             transacoesPeriodo.forEach(t => {
                 const forma = (t.forma_pagamento || '').toLowerCase();
                 const desc = (t.descricao || '').toLowerCase();
+                const ehCartao = forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito');
+                const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
+
+                // Balanço real de caixa soma todas as entradas e saídas financeiras
+                balancoLiquidoCaixa += t.valor;
 
                 if (t.valor > 0) {
-                    totalEntradas += t.valor;
-                    if (forma.includes('riceli') || (!forma.includes('juliana') && desc.includes('riceli'))) {
-                        totalEntradasRiceli += t.valor;
-                    } else if (forma.includes('juliana') || desc.includes('juliana')) {
-                        totalEntradasJuliana += t.valor;
+                    if (ehRendaReal(t)) {
+                        // Apenas categoria RENDA entra como Entrada Real
+                        totalEntradas += t.valor;
+                        if (forma.includes('riceli') || (!forma.includes('juliana') && desc.includes('riceli'))) {
+                            totalEntradasRiceli += t.valor;
+                        } else if (forma.includes('juliana') || desc.includes('juliana')) {
+                            totalEntradasJuliana += t.valor;
+                        }
+                    } else if (!ehMovimentoInvestimento(t)) {
+                        // Valores positivos fora de RENDA e fora de INVESTIMENTOS (ex: estornos de Pix/compras) abatem as despesas
+                        if (ehCartao) {
+                            totalCartao -= t.valor;
+                        } else {
+                            totalDebitoPixDespesas -= t.valor;
+                        }
+                        if (ehFixo) {
+                            totalFixas -= t.valor;
+                            if (forma.includes('riceli')) totalFixasRiceli -= t.valor;
+                            else if (forma.includes('juliana')) totalFixasJuliana -= t.valor;
+                        }
                     }
                 } else if (t.valor < 0) {
                     const absVal = Math.abs(t.valor);
-                    totalSaidas += absVal;
 
-                    if (t.fixo && t.fixo.toUpperCase() === 'FIXO') {
+                    if (ehFixo) {
                         totalFixas += absVal;
                         if (forma.includes('riceli')) {
                             totalFixasRiceli += absVal;
@@ -995,13 +1029,15 @@
                         }
                     }
 
-                    if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
+                    if (ehCartao) {
                         totalCartao += absVal;
                     } else {
                         totalDebitoPixDespesas += absVal;
                     }
                 }
             });
+
+            const totalSaidas = totalCartao + totalDebitoPixDespesas;
 
             let subtotalFiltrado = 0;
             transacoesFiltradas.forEach(t => {
@@ -1047,10 +1083,9 @@
             document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
             document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
 
-            const saldo = totalEntradas - totalSaidas;
             const lblSaldo = document.getElementById('lblSaldo');
-            lblSaldo.innerText = formatarMoeda(saldo);
-            lblSaldo.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
+            lblSaldo.innerText = formatarMoeda(balancoLiquidoCaixa);
+            lblSaldo.className = `text-2xl font-bold mt-1 ${balancoLiquidoCaixa >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
 
             document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
             document.getElementById('lblFixasRiceli').innerText = formatarMoeda(totalFixasRiceli);
@@ -1613,8 +1648,16 @@
                 if (!t.data) return;
                 const mes = t.data.substring(0, 7);
                 if (!mesesMap[mes]) mesesMap[mes] = { entrada: 0, saida: 0 };
-                if (t.valor > 0) mesesMap[mes].entrada += t.valor;
-                else if (t.valor < 0) mesesMap[mes].saida += Math.abs(t.valor);
+
+                if (t.valor > 0) {
+                    if (ehRendaReal(t)) {
+                        mesesMap[mes].entrada += t.valor;
+                    } else if (!ehMovimentoInvestimento(t)) {
+                        mesesMap[mes].saida -= t.valor;
+                    }
+                } else if (t.valor < 0) {
+                    mesesMap[mes].saida += Math.abs(t.valor);
+                }
             });
 
             const meses = Object.keys(mesesMap).sort();
@@ -1629,7 +1672,7 @@
                 data: {
                     labels: meses.map(m => m.split('-').reverse().join('/')),
                     datasets: [
-                        { label: 'Entradas', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
+                        { label: 'Entradas (Renda)', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
                         { label: 'Saídas', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
                     ]
                 },
@@ -1658,10 +1701,12 @@
 
             const catMapFinal = {};
             Object.keys(catMapObj).forEach(cat => {
+                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+
                 let negs = [...catMapObj[cat].negativas];
                 let poss = [...catMapObj[cat].positivas];
 
-                if (cat === 'INVESTIMENTOS') {
+                if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
                     const totalNeg = negs.reduce((a, b) => a + b, 0);
                     const totalPos = poss.reduce((a, b) => a + b, 0);
                     const saldoInv = totalNeg - totalPos;
@@ -1742,7 +1787,7 @@
                 let negs = [...subcatObj[subcat].negativas];
                 let poss = [...subcatObj[subcat].positivas];
 
-                if (categoriaSelecionada === 'INVESTIMENTOS') {
+                if (categoriaSelecionada === 'INVESTIMENTOS' || categoriaSelecionada === 'INVESTIMENTO') {
                     const totalNeg = negs.reduce((a, b) => a + b, 0);
                     const totalPos = poss.reduce((a, b) => a + b, 0);
                     const saldoSub = totalNeg - totalPos;
@@ -1815,10 +1860,12 @@
 
             const catMapFinal = {};
             Object.keys(catMapObj).forEach(cat => {
+                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+
                 let negs = [...catMapObj[cat].negativas];
                 let poss = [...catMapObj[cat].positivas];
 
-                if (cat === 'INVESTIMENTOS') {
+                if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
                     const totalNeg = negs.reduce((a, b) => a + b, 0);
                     const totalPos = poss.reduce((a, b) => a + b, 0);
                     const saldoInv = totalNeg - totalPos;
@@ -1866,6 +1913,9 @@
 
             const subMapObj = {};
             dadosPeriodo.forEach(t => {
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+
                 const sub = t.subcategoria || 'Geral';
                 if (!subMapObj[sub]) subMapObj[sub] = { negativas: [], positivas: [] };
                 if (t.valor < 0) subMapObj[sub].negativas.push(Math.abs(t.valor));
