@@ -145,26 +145,33 @@
 
             <!-- GRÁFICO: Evolução do Saldo Acumulado (Mês a Mês e Previsão) -->
             <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-5">
                     <div>
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
                         <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 765,60) — novos lançamentos alteram o saldo normalmente</p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-2 rounded-xl border border-gray-600">
                             <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
-                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
-                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 765,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2 py-1 rounded-lg cursor-pointer">
+                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1.5 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 765,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1.5 rounded-lg cursor-pointer">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
-                        <div class="bg-sky-500/15 border border-sky-500/40 px-3 py-1.5 rounded-xl text-xs">
-                            <span class="text-gray-300">Saldo Atual: </span>
-                            <strong id="lblSaldoAcumuladoHoje" class="text-sky-400">R$ 765,60</strong>
+
+                        <div class="bg-sky-500/15 border border-sky-500/40 px-4 py-2 rounded-xl flex flex-col justify-center">
+                            <span class="text-[11px] uppercase tracking-wider text-sky-300/80 font-semibold">Saldo Atual</span>
+                            <strong id="lblSaldoAcumuladoHoje" class="text-base font-extrabold text-sky-400">R$ 765,60</strong>
                         </div>
-                        <div class="bg-rose-500/15 border border-rose-500/40 px-3 py-1.5 rounded-xl text-xs">
-                            <span class="text-gray-300">Prev. Fim Mês: </span>
-                            <strong id="lblSaldoPrevistoFimMes" class="text-rose-400">R$ 0,00</strong>
+
+                        <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3">
+                            <div class="bg-rose-500/25 text-rose-300 p-2.5 rounded-xl" id="iconeCardPrevFimMes">
+                                <i class="fa-solid fa-chart-line text-lg"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Previsão Fim do Mês</span>
+                                <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 10.787,91</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -332,6 +339,10 @@
 
         function formatarMoeda(valor) {
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formatarNumeroSemRS(valor) {
+            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function alterarSaldoInicialManual() {
@@ -1032,10 +1043,17 @@
                 meta.data.forEach((ponto, index) => {
                     const valorNum = data.datasets[0].data[index];
                     const ehHoje = data.datasets[0].pontoHojeIndex === index;
-                    const ehProj = index > data.datasets[0].pontoHojeIndex;
 
-                    ctx.fillStyle = ehHoje ? '#38bdf8' : (ehProj ? '#fb7185' : '#e5e7eb');
-                    const texto = valorNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    if (ehHoje) {
+                        ctx.fillStyle = '#38bdf8';
+                    } else if (valorNum < 0) {
+                        ctx.fillStyle = '#fb7185';
+                    } else {
+                        ctx.fillStyle = '#34d399';
+                    }
+
+                    // Exibe somente o valor positivo ou negativo, sem o "R$"
+                    const texto = formatarNumeroSemRS(valorNum);
                     const offsetY = valorNum >= 0 ? -10 : 16;
                     ctx.fillText(texto, ponto.x, ponto.y + offsetY);
                 });
@@ -1102,12 +1120,13 @@
                             somaMes += t.valor;
                         }
                     });
+                    const valMes = Number((saldoInicial + somaMes).toFixed(2));
                     labels.push(`${mm}/${ano}`);
-                    valores.push(Number((saldoInicial + somaMes).toFixed(2)));
-                    coresPontos.push('#34d399');
+                    valores.push(valMes);
+                    coresPontos.push(valMes < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(4);
                 } else if (mes === mesAtualStr) {
-                    // Ponto 1: Saldo acumulado real até hoje (reflete imediatamente novas despesas lançadas!)
+                    // Ponto 1: Saldo acumulado real até hoje
                     const saldoHoje = Number((saldoInicial + somaAteHoje).toFixed(2));
                     const [, , dd] = hojeStr.split('-');
                     labels.push(`Hoje (${dd}/${mm})`);
@@ -1116,7 +1135,7 @@
                     raiosPontos.push(6);
                     indiceHoje = labels.length - 1;
 
-                    // Ponto 2: Previsão até o final do mês atual (inclui fatura CC e débitos futuros do mês)
+                    // Ponto 2: Previsão até o final do mês atual
                     let somaFimMesAtual = 0;
                     transacoes.forEach(t => {
                         if (t.data && t.data.substring(0, 7) <= mesAtualStr) {
@@ -1126,7 +1145,7 @@
                     const saldoFimMesAtual = Number((saldoInicial + somaFimMesAtual).toFixed(2));
                     labels.push(`Prev. Fim ${mm}/${ano}`);
                     valores.push(saldoFimMesAtual);
-                    coresPontos.push(saldoFimMesAtual >= 0 ? '#34d399' : '#f43f5e');
+                    coresPontos.push(saldoFimMesAtual < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(5);
                 } else {
                     // Meses futuros já lançados
@@ -1139,7 +1158,7 @@
                     const saldoFuturo = Number((saldoInicial + somaFuturo).toFixed(2));
                     labels.push(`Prev. ${mm}/${ano}`);
                     valores.push(saldoFuturo);
-                    coresPontos.push(saldoFuturo >= 0 ? '#34d399' : '#f43f5e');
+                    coresPontos.push(saldoFuturo < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(4);
                 }
             });
@@ -1149,11 +1168,23 @@
 
             const lblHojeEl = document.getElementById('lblSaldoAcumuladoHoje');
             lblHojeEl.innerText = formatarMoeda(saldoHojeExibir);
-            lblHojeEl.className = saldoHojeExibir >= 0 ? 'text-sky-400' : 'text-rose-400';
+            lblHojeEl.className = saldoHojeExibir >= 0 ? 'text-base font-extrabold text-sky-400' : 'text-base font-extrabold text-rose-400';
 
+            // Atualiza a janelinha de destaque da Previsão Fim do Mês
+            const cardPrev = document.getElementById('cardPrevFimMes');
+            const iconePrev = document.getElementById('iconeCardPrevFimMes');
             const lblFimMesEl = document.getElementById('lblSaldoPrevistoFimMes');
             lblFimMesEl.innerText = formatarMoeda(saldoFimMesExibir);
-            lblFimMesEl.className = saldoFimMesExibir >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+            if (saldoFimMesExibir < 0) {
+                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3';
+                iconePrev.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
+                lblFimMesEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
+            } else {
+                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3';
+                iconePrev.className = 'bg-emerald-500/25 text-emerald-300 p-2.5 rounded-xl';
+                lblFimMesEl.className = 'text-xl font-extrabold text-emerald-400 leading-tight';
+            }
 
             const minVal = Math.min(...valores, 0);
             const maxVal = Math.max(...valores, 1000);
@@ -1166,14 +1197,17 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Saldo Acumulado (R$)',
+                        label: 'Saldo Acumulado',
                         data: valores,
                         pontoHojeIndex: indiceHoje,
                         borderColor: '#34d399',
-                        backgroundColor: 'rgba(52, 211, 153, 0.12)',
                         borderWidth: 2.5,
                         tension: 0.25,
-                        fill: true,
+                        fill: {
+                            target: 'origin',
+                            above: 'rgba(52, 211, 153, 0.18)',
+                            below: 'rgba(244, 63, 94, 0.18)'
+                        },
                         pointBackgroundColor: coresPontos,
                         pointBorderColor: '#111827',
                         pointBorderWidth: 1.5,
@@ -1181,7 +1215,43 @@
                         pointHoverRadius: 7,
                         segment: {
                             borderColor: function(ctxSeg) {
-                                return ctxSeg.p1DataIndex > indiceHoje ? '#f43f5e' : '#34d399';
+                                const v0 = ctxSeg.p0.parsed.y;
+                                const v1 = ctxSeg.p1.parsed.y;
+                                const ehProjecao = ctxSeg.p1DataIndex > indiceHoje;
+
+                                // Se for projeção (após Hoje), cor acompanha o destino (vermelho se negativo, verde se positivo)
+                                if (ehProjecao) {
+                                    return v1 < 0 ? '#f43f5e' : '#34d399';
+                                }
+
+                                // Histórico consolidado: se ambos <= 0 é vermelho; se ambos >= 0 é verde
+                                if (v0 <= 0 && v1 <= 0) return '#f43f5e';
+                                if (v0 >= 0 && v1 >= 0) return '#34d399';
+
+                                // Trecho que cruza exatamente a linha do zero: gradiente dinâmico entre vermelho e verde
+                                const chart = ctxSeg.chart;
+                                const yScale = chart.scales.y;
+                                const yZero = yScale.getPixelForValue(0);
+                                const y0 = ctxSeg.p0.y;
+                                const y1 = ctxSeg.p1.y;
+
+                                if (Math.abs(y1 - y0) > 0.5) {
+                                    const grad = chart.ctx.createLinearGradient(0, y0, 0, y1);
+                                    const ratio = Math.max(0, Math.min(1, (yZero - y0) / (y1 - y0)));
+                                    if (v0 < 0) {
+                                        grad.addColorStop(0, '#f43f5e');
+                                        grad.addColorStop(ratio, '#f43f5e');
+                                        grad.addColorStop(ratio, '#34d399');
+                                        grad.addColorStop(1, '#34d399');
+                                    } else {
+                                        grad.addColorStop(0, '#34d399');
+                                        grad.addColorStop(ratio, '#34d399');
+                                        grad.addColorStop(ratio, '#f43f5e');
+                                        grad.addColorStop(1, '#f43f5e');
+                                    }
+                                    return grad;
+                                }
+                                return v1 < 0 ? '#f43f5e' : '#34d399';
                             },
                             borderDash: function(ctxSeg) {
                                 return ctxSeg.p1DataIndex > indiceHoje ? [6, 6] : undefined;
@@ -1198,7 +1268,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Saldo Acumulado: ${formatarMoeda(context.parsed.y)}`;
+                                    return `Saldo Acumulado: ${formatarNumeroSemRS(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -1210,7 +1280,7 @@
                             ticks: {
                                 color: '#9ca3af',
                                 callback: function(val) {
-                                    return formatarMoeda(val);
+                                    return formatarNumeroSemRS(val);
                                 }
                             },
                             grid: {
