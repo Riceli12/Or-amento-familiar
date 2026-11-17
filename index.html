@@ -150,7 +150,7 @@
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
                         <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 1.865,60) — novos lançamentos alteram o saldo normalmente</p>
                     </div>
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex flex-col items-start xl:items-end gap-3">
                         <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-2 rounded-xl border border-gray-600">
                             <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
                             <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1.5 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
@@ -159,18 +159,25 @@
                             </button>
                         </div>
 
-                        <div class="bg-sky-500/15 border border-sky-500/40 px-4 py-2 rounded-xl flex flex-col justify-center">
-                            <span class="text-[11px] uppercase tracking-wider text-sky-300/80 font-semibold">Saldo Atual</span>
-                            <strong id="lblSaldoAcumuladoHoje" class="text-base font-extrabold text-sky-400">R$ 1.865,60</strong>
-                        </div>
-
-                        <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3">
-                            <div class="bg-rose-500/25 text-rose-300 p-2.5 rounded-xl" id="iconeCardPrevFimMes">
-                                <i class="fa-solid fa-chart-line text-lg"></i>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
+                            <div id="cardSaldoAtual" class="bg-sky-500/20 border-2 border-sky-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]">
+                                <div class="bg-sky-500/25 text-sky-300 p-2.5 rounded-xl" id="iconeCardSaldoAtual">
+                                    <i class="fa-solid fa-wallet text-lg"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Saldo Atual</span>
+                                    <strong id="lblSaldoAcumuladoHoje" class="text-xl font-extrabold text-sky-400 leading-tight">R$ 1.865,60</strong>
+                                </div>
                             </div>
-                            <div class="flex flex-col">
-                                <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Previsão Fim do Mês</span>
-                                <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 9.687,91</strong>
+
+                            <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]">
+                                <div class="bg-rose-500/25 text-rose-300 p-2.5 rounded-xl" id="iconeCardPrevFimMes">
+                                    <i class="fa-solid fa-chart-line text-lg"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Previsão Fim do Mês</span>
+                                    <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 9.687,91</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -180,9 +187,17 @@
 
             <!-- GRÁFICO 1: Média Gastos Fixos por Mês -->
             <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-md w-full">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                     <h3 class="text-md font-semibold text-gray-300">Média Gastos Fixos por Mês</h3>
-                    <span id="lblMediaGastoFixoAnual" class="text-sm font-bold" style="color: #fbbf24;">Média Anual: R$ 0,00</span>
+                    <div class="bg-amber-500/20 border-2 border-amber-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]">
+                        <div class="bg-amber-500/25 text-amber-300 p-2.5 rounded-xl">
+                            <i class="fa-solid fa-thumbtack text-lg"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Média Anual</span>
+                            <strong id="lblMediaGastoFixoAnual" class="text-xl font-extrabold text-amber-400 leading-tight">R$ 0,00</strong>
+                        </div>
+                    </div>
                 </div>
                 <div class="relative h-80 w-full"><canvas id="graficoGastosFixosMensal"></canvas></div>
             </div>
@@ -1166,9 +1181,21 @@
             const saldoHojeExibir = indiceHoje >= 0 ? valores[indiceHoje] : SALDO_BASE_CALIBRACAO;
             const saldoFimMesExibir = indiceHoje >= 0 && valores[indiceHoje + 1] !== undefined ? valores[indiceHoje + 1] : saldoHojeExibir;
 
+            // Atualiza a janelinha de destaque do Saldo Atual (mesmo tamanho e formato da Previsão Fim do Mês)
+            const cardAtual = document.getElementById('cardSaldoAtual');
+            const iconeAtual = document.getElementById('iconeCardSaldoAtual');
             const lblHojeEl = document.getElementById('lblSaldoAcumuladoHoje');
             lblHojeEl.innerText = formatarMoeda(saldoHojeExibir);
-            lblHojeEl.className = saldoHojeExibir >= 0 ? 'text-base font-extrabold text-sky-400' : 'text-base font-extrabold text-rose-400';
+
+            if (saldoHojeExibir < 0) {
+                cardAtual.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
+                iconeAtual.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
+                lblHojeEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
+            } else {
+                cardAtual.className = 'bg-sky-500/20 border-2 border-sky-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
+                iconeAtual.className = 'bg-sky-500/25 text-sky-300 p-2.5 rounded-xl';
+                lblHojeEl.className = 'text-xl font-extrabold text-sky-400 leading-tight';
+            }
 
             // Atualiza a janelinha de destaque da Previsão Fim do Mês
             const cardPrev = document.getElementById('cardPrevFimMes');
@@ -1177,11 +1204,11 @@
             lblFimMesEl.innerText = formatarMoeda(saldoFimMesExibir);
 
             if (saldoFimMesExibir < 0) {
-                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3';
+                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
                 iconePrev.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
                 lblFimMesEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
             } else {
-                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3';
+                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[235px]';
                 iconePrev.className = 'bg-emerald-500/25 text-emerald-300 p-2.5 rounded-xl';
                 lblFimMesEl.className = 'text-xl font-extrabold text-emerald-400 leading-tight';
             }
@@ -1321,7 +1348,7 @@
             const mediaAnual = meses.length > 0 ? (somaTotal / meses.length) : 0;
             const linhaMediaData = meses.map(() => mediaAnual);
 
-            document.getElementById('lblMediaGastoFixoAnual').innerText = `Média Anual: ${formatarMoeda(mediaAnual)}`;
+            document.getElementById('lblMediaGastoFixoAnual').innerText = formatarMoeda(mediaAnual);
 
             const maxVal = Math.max(...valoresMensais, mediaAnual, 100);
 
