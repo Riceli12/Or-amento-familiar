@@ -148,20 +148,20 @@
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-5">
                     <div>
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
-                        <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 765,60) — novos lançamentos alteram o saldo normalmente</p>
+                        <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 1.865,60) — novos lançamentos alteram o saldo normalmente</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-2 rounded-xl border border-gray-600">
                             <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
                             <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1.5 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
-                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 765,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1.5 rounded-lg cursor-pointer">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 1.865,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1.5 rounded-lg cursor-pointer">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
 
                         <div class="bg-sky-500/15 border border-sky-500/40 px-4 py-2 rounded-xl flex flex-col justify-center">
                             <span class="text-[11px] uppercase tracking-wider text-sky-300/80 font-semibold">Saldo Atual</span>
-                            <strong id="lblSaldoAcumuladoHoje" class="text-base font-extrabold text-sky-400">R$ 765,60</strong>
+                            <strong id="lblSaldoAcumuladoHoje" class="text-base font-extrabold text-sky-400">R$ 1.865,60</strong>
                         </div>
 
                         <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3">
@@ -170,7 +170,7 @@
                             </div>
                             <div class="flex flex-col">
                                 <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Previsão Fim do Mês</span>
-                                <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 10.787,91</strong>
+                                <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 9.687,91</strong>
                             </div>
                         </div>
                     </div>
@@ -312,10 +312,10 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_pefL475b5oBO9vEtugWHTQ_zVN-V-q5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Data de referência fixa em que o saldo real era R$ 765,60
+        // Data de referência fixa em que o saldo real era R$ 1.865,60
         const DATA_BASE_CALIBRACAO = '2026-11-17';
-        const SALDO_BASE_CALIBRACAO = 765.60;
-        const STORAGE_KEY_SALDO_INICIAL = 'orcamento_familiar_saldo_inicial_fixo_v1';
+        const SALDO_BASE_CALIBRACAO = 1865.60;
+        const STORAGE_KEY_SALDO_INICIAL = 'orcamento_familiar_saldo_inicial_fixo_v2';
 
         let transacoes = [];
         let graficoLinhaObj = null;
@@ -1067,7 +1067,7 @@
             const hojeStr = obterDataHojeLocalISO();
             const mesAtualStr = hojeStr.substring(0, 7);
 
-            // 1. Calcula e trava o Saldo Inicial com base na data de referência (17/11/2026 = R$ 765,60)
+            // 1. Calcula e trava o Saldo Inicial com base na data de referência (17/11/2026 = R$ 1.865,60)
             const saldoSalvo = localStorage.getItem(STORAGE_KEY_SALDO_INICIAL);
             const inputInicial = document.getElementById('inputSaldoInicial');
             let saldoInicial = 0;
