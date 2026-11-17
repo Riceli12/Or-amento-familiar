@@ -150,34 +150,27 @@
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
                         <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 765,60) — novos lançamentos alteram o saldo normalmente</p>
                     </div>
-                    <div class="flex flex-col items-start xl:items-end gap-3">
-                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-2 rounded-xl border border-gray-600">
                             <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
-                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
-                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 765,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2 py-1 rounded-lg cursor-pointer">
+                            <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1.5 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 765,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1.5 rounded-lg cursor-pointer">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
-                            <div id="cardSaldoAtual" class="bg-emerald-500/20 border-2 border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[230px]">
-                                <div class="bg-emerald-500/25 text-emerald-300 p-2.5 rounded-xl" id="iconeCardSaldoAtual">
-                                    <i class="fa-solid fa-wallet text-lg"></i>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Saldo Atual</span>
-                                    <strong id="lblSaldoAcumuladoHoje" class="text-xl font-extrabold text-emerald-400 leading-tight">R$ 765,60</strong>
-                                </div>
-                            </div>
+                        <div class="bg-sky-500/15 border border-sky-500/40 px-4 py-2 rounded-xl flex flex-col justify-center">
+                            <span class="text-[11px] uppercase tracking-wider text-sky-300/80 font-semibold">Saldo Atual</span>
+                            <strong id="lblSaldoAcumuladoHoje" class="text-base font-extrabold text-sky-400">R$ 765,60</strong>
+                        </div>
 
-                            <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 min-w-[230px]">
-                                <div class="bg-rose-500/25 text-rose-300 p-2.5 rounded-xl" id="iconeCardPrevFimMes">
-                                    <i class="fa-solid fa-chart-line text-lg"></i>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Previsão Fim do Mês</span>
-                                    <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 10.787,91</strong>
-                                </div>
+                        <div id="cardPrevFimMes" class="bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3">
+                            <div class="bg-rose-500/25 text-rose-300 p-2.5 rounded-xl" id="iconeCardPrevFimMes">
+                                <i class="fa-solid fa-chart-line text-lg"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Previsão Fim do Mês</span>
+                                <strong id="lblSaldoPrevistoFimMes" class="text-xl font-extrabold text-rose-400 leading-tight">-R$ 10.787,91</strong>
                             </div>
                         </div>
                     </div>
@@ -429,4 +422,1419 @@
 
         function popularFiltroMeses() {
             const select = document.getElementById('filtroPeriodo');
-            const selectFixos = document.getElementById('filtroMesFix
+            const selectFixos = document.getElementById('filtroMesFixos');
+            const valorAtual = select.value;
+            const valorFixosAtual = selectFixos.value;
+            
+            const mesesSet = new Set();
+            transacoes.forEach(t => {
+                if (t.data) mesesSet.add(t.data.substring(0, 7));
+            });
+
+            const mesesOrdenados = Array.from(mesesSet).sort().reverse();
+
+            select.innerHTML = '<option value="todos">Total Ano Consolidado</option>';
+            selectFixos.innerHTML = '<option value="todos">Total Ano Consolidado</option>';
+
+            mesesOrdenados.forEach(m => {
+                const partes = m.split('-');
+                const label = `${partes[1]}/${partes[0]}`;
+                
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = label;
+                select.appendChild(opt);
+
+                const optFixo = document.createElement('option');
+                optFixo.value = m;
+                optFixo.innerText = label;
+                selectFixos.appendChild(optFixo);
+            });
+
+            if (mesesOrdenados.includes(valorAtual) || valorAtual === 'todos') {
+                select.value = valorAtual;
+            }
+            if (mesesOrdenados.includes(valorFixosAtual) || valorFixosAtual === 'todos') {
+                selectFixos.value = valorFixosAtual;
+            }
+        }
+
+        function abrirFiltroExcelDireto(event) {
+            event.stopPropagation();
+            const popup = document.getElementById('excelFilterPopup');
+            const btn = event.currentTarget;
+            
+            popup.style.top = `${btn.offsetTop + btn.offsetHeight + 5}px`;
+            popup.style.left = `${btn.offsetLeft}px`;
+            popup.classList.remove('hidden');
+
+            construirArvoreExcel();
+        }
+
+        function fecharFiltroExcel() {
+            document.getElementById('excelFilterPopup').classList.add('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            const popup = document.getElementById('excelFilterPopup');
+            if (!popup.contains(e.target) && !e.target.closest('button')) {
+                popup.classList.add('hidden');
+            }
+        });
+
+        function construirArvoreExcel() {
+            const periodoFiltro = document.getElementById('filtroPeriodo').value;
+            const dadosPeriodo = transacoes.filter(t => {
+                if (!t.data) return false;
+                return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
+            });
+
+            const arvore = {};
+            dadosPeriodo.forEach(t => {
+                if (!t.data) return;
+                const partesData = t.data.split('-');
+                if (partesData.length >= 2) {
+                    const ano = partesData[0];
+                    const mes = partesData[1];
+                    const chaveMes = `${ano}-${mes}`;
+                    if (!arvore[ano]) arvore[ano] = {};
+                    if (!arvore[ano][chaveMes]) arvore[ano][chaveMes] = new Set();
+                    arvore[ano][chaveMes].add(t.data);
+                }
+            });
+
+            const container = document.getElementById('excelTreeContainer');
+            container.innerHTML = '';
+
+            const anosOrd = Object.keys(arvore).sort().reverse();
+            anosOrd.forEach(ano => {
+                const detAno = document.createElement('details');
+                detAno.open = true;
+                const sumAno = document.createElement('summary');
+                sumAno.innerHTML = `<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="check-ano rounded bg-gray-700 border-gray-600 text-emerald-500" data-ano="${ano}" onchange="toggleGrupoExcel(this)" checked> <span class="font-bold text-amber-300">Ano ${ano}</span></label>`;
+                detAno.appendChild(sumAno);
+
+                const ulMeses = document.createElement('ul');
+                const mesesOrd = Object.keys(arvore[ano]).sort().reverse();
+                mesesOrd.forEach(chaveMes => {
+                    const [y, m] = chaveMes.split('-');
+                    const nomeMes = `${m}/${y}`;
+
+                    const detMes = document.createElement('details');
+                    const sumMes = document.createElement('summary');
+                    sumMes.innerHTML = `<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="check-mes rounded bg-gray-700 border-gray-600 text-emerald-500" data-mes="${chaveMes}" onchange="toggleGrupoExcel(this)" checked> <span>📁 Mês ${nomeMes}</span></label>`;
+                    detMes.appendChild(sumMes);
+
+                    const ulDias = document.createElement('ul');
+                    const diasOrd = Array.from(arvore[ano][chaveMes]).sort().reverse();
+                    diasOrd.forEach(diaStr => {
+                        const partesDia = diaStr.split('-');
+                        const dy = partesDia[0];
+                        const dm = partesDia[1];
+                        const dd = partesDia[2];
+
+                        const liDia = document.createElement('li');
+                        const isChecked = diasSelecionadosExcel === null || diasSelecionadosExcel.includes(diaStr);
+                        liDia.innerHTML = `<label class="inline-flex items-center gap-1.5 cursor-pointer font-normal text-gray-300"><input type="checkbox" class="check-dia rounded bg-gray-700 border-gray-600 text-emerald-500" value="${diaStr}" ${isChecked ? 'checked' : ''} onchange="atualizarCheckMasterExcel()"> <span>• Dia ${dd}/${dm}/${dy}</span></label>`;
+                        ulDias.appendChild(liDia);
+                    });
+                    detMes.appendChild(ulDias);
+                    ulMeses.appendChild(detMes);
+                });
+                detAno.appendChild(ulMeses);
+                container.appendChild(detAno);
+            });
+            atualizarCheckMasterExcel();
+        }
+
+        function toggleGrupoExcel(masterCheckbox) {
+            const container = masterCheckbox.closest('details');
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            atualizarCheckMasterExcel();
+        }
+
+        function toggleSelectAllExcel(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('#excelTreeContainer input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+        }
+
+        function atualizarCheckMasterExcel() {
+            const total = document.querySelectorAll('#excelTreeContainer .check-dia').length;
+            const marcados = document.querySelectorAll('#excelTreeContainer .check-dia:checked').length;
+            const master = document.getElementById('checkSelectAllExcel');
+            master.checked = total > 0 && total === marcados;
+            master.indeterminate = marcados > 0 && marcados < total;
+        }
+
+        function aplicarFiltroExcelData() {
+            const checksDias = document.querySelectorAll('#excelTreeContainer .check-dia:checked');
+            const totalDias = document.querySelectorAll('#excelTreeContainer .check-dia').length;
+
+            const lblBtn = document.getElementById('labelFiltroDataBtn');
+            const icone = document.getElementById('iconeFiltroDataAtivo');
+
+            if (checksDias.length === totalDias || checksDias.length === 0) {
+                diasSelecionadosExcel = null;
+                lblBtn.innerText = "Todas as Datas";
+                icone.className = "fa-solid fa-filter text-emerald-400 text-[10px]";
+            } else {
+                diasSelecionadosExcel = Array.from(checksDias).map(cb => cb.value);
+                lblBtn.innerText = `${checksDias.length} dias selecionados`;
+                icone.className = "fa-solid fa-filter text-amber-400 text-[10px]";
+            }
+
+            fecharFiltroExcel();
+            atualizarDashboard();
+        }
+
+        function limparFiltroExcelData() {
+            diasSelecionadosExcel = null;
+            document.getElementById('labelFiltroDataBtn').innerText = "Todas as Datas";
+            document.getElementById('iconeFiltroDataAtivo').className = "fa-solid fa-filter text-emerald-400 text-[10px]";
+            fecharFiltroExcel();
+            atualizarDashboard();
+        }
+
+        function popularOpcoesFiltrosColunas(dadosPeriodo) {
+            const preencherSelect = (idSelect, valoresSet, formatador = v => v, customItensHTML = '') => {
+                const select = document.getElementById(idSelect);
+                const valorSelecionado = select.value;
+                const valoresOrdenados = Array.from(valoresSet).sort((a, b) => {
+                    return String(a).localeCompare(String(b), 'pt-BR', { numeric: true });
+                });
+
+                let html = '<option value="">Todos</option>' + customItensHTML;
+                valoresOrdenados.forEach(v => {
+                    if (v !== '' && v !== undefined && v !== null && v !== 'Vazio') {
+                        const optVal = String(v);
+                        html += `<option value="${optVal}">${formatador(v)}</option>`;
+                    }
+                });
+
+                select.innerHTML = html;
+
+                if (valorSelecionado !== '' && (valoresOrdenados.includes(valorSelecionado) || valorSelecionado === 'COM_PARCELA' || valorSelecionado === 'Vazio')) {
+                    select.value = valorSelecionado;
+                } else {
+                    select.value = "";
+                }
+            };
+
+            const formasSet = new Set();
+            const parcelasSet = new Set();
+            const descricoesSet = new Set();
+            const categoriasSet = new Set();
+            const subcategoriasSet = new Set();
+            const fixosSet = new Set();
+            const valoresSet = new Set();
+
+            dadosPeriodo.forEach(t => {
+                if (t.forma_pagamento) formasSet.add(t.forma_pagamento);
+                if (t.parcela_cc && t.parcela_cc.trim() !== '') {
+                    parcelasSet.add(t.parcela_cc.trim());
+                }
+                if (t.descricao) descricoesSet.add(t.descricao);
+                categoriasSet.add(t.categoria || 'OUTROS');
+                subcategoriasSet.add(t.subcategoria || 'Geral');
+                if (t.fixo) fixosSet.add(t.fixo);
+                if (t.valor !== undefined) valoresSet.add(t.valor);
+            });
+
+            preencherSelect('filtroForma', formasSet);
+            const customParcelaHTML = `<option value="COM_PARCELA">⚡ Com Parcela (Qualquer)</option><option value="Vazio">Sem Parcela / Vazio</option>`;
+            preencherSelect('filtroParcela', parcelasSet, v => v, customParcelaHTML);
+            preencherSelect('filtroDescricao', descricoesSet);
+            preencherSelect('filtroCategoria', categoriasSet);
+            preencherSelect('filtroSubcategoria', subcategoriasSet);
+            preencherSelect('filtroFixo', fixosSet);
+            preencherSelect('filtroValor', valoresSet, v => formatarMoeda(v));
+        }
+
+        function popularFiltroCategoriasSub(dadosPeriodo) {
+            const selectCat = document.getElementById('filtroCategoriaSub');
+            const catAtual = selectCat.value;
+
+            const catsSet = new Set();
+            dadosPeriodo.filter(t => t.valor < 0).forEach(t => {
+                catsSet.add(t.categoria || 'OUTROS');
+            });
+
+            const catsOrdenadas = Array.from(catsSet).sort();
+
+            selectCat.innerHTML = '';
+            catsOrdenadas.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                selectCat.appendChild(opt);
+            });
+
+            if (catsOrdenadas.includes(catAtual)) {
+                selectCat.value = catAtual;
+            } else if (catsOrdenadas.length > 0) {
+                selectCat.value = catsOrdenadas[0];
+            }
+        }
+
+        async function adicionarTransacao(e) {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById('valor').value);
+            
+            const novaRegistro = {
+                data: document.getElementById('data').value,
+                forma_pagamento: document.getElementById('formaPagamento').value,
+                parcela_cc: document.getElementById('parcelaCC').value.trim(),
+                descricao: document.getElementById('descricao').value.trim(),
+                valor: val,
+                subcategoria: document.getElementById('subcategoria').value.trim(),
+                categoria: document.getElementById('categoria').value.trim(),
+                fixo: document.getElementById('fixo').value
+            };
+
+            const { error } = await supabaseClient
+                .from('transacoes')
+                .insert([novaRegistro]);
+
+            if (error) {
+                alert('Erro ao salvar no Supabase: ' + error.message);
+                return;
+            }
+
+            document.getElementById('transacaoForm').reset();
+            document.getElementById('data').valueAsDate = new Date();
+            alternarModalTransacao(false);
+            carregarTransacoesDaNuvem();
+        }
+
+        async function excluirTransacao(id) {
+            if (!confirm('Deseja realmente excluir este registro da nuvem?')) return;
+
+            const { error } = await supabaseClient
+                .from('transacoes')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                alert('Erro ao excluir: ' + error.message);
+                return;
+            }
+
+            carregarTransacoesDaNuvem();
+        }
+
+        async function limparDados() {
+            if(confirm('Tem certeza que deseja apagar TODOS os registros da nuvem?')) {
+                const { error } = await supabaseClient
+                    .from('transacoes')
+                    .delete()
+                    .neq('id', 0);
+
+                if (error) {
+                    alert('Erro ao limpar dados: ' + error.message);
+                    return;
+                }
+
+                carregarTransacoesDaNuvem();
+            }
+        }
+
+        function mudarFiltroPeriodo() {
+            diasSelecionadosExcel = null;
+            document.getElementById('labelFiltroDataBtn').innerText = "Todas as Datas";
+            document.getElementById('iconeFiltroDataAtivo').className = "fa-solid fa-filter text-emerald-400 text-[10px]";
+            document.getElementById('filtroForma').value = "";
+            document.getElementById('filtroParcela').value = "";
+            document.getElementById('filtroDescricao').value = "";
+            document.getElementById('filtroCategoria').value = "";
+            document.getElementById('filtroSubcategoria').value = "";
+            document.getElementById('filtroFixo').value = "";
+            document.getElementById('filtroValor').value = "";
+
+            const periodoGlobal = document.getElementById('filtroPeriodo').value;
+            document.getElementById('filtroMesFixos').value = periodoGlobal;
+
+            atualizarDashboard();
+        }
+
+        function parseValorExcel(valStr) {
+            if (!valStr) return 0;
+            let limpo = valStr.toString().trim();
+            let negativo = false;
+
+            if (limpo.startsWith('(') && limpo.endsWith(')')) {
+                negativo = true;
+                limpo = limpo.slice(1, -1);
+            }
+
+            limpo = limpo.replace('R$', '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+            let num = parseFloat(limpo);
+            if (isNaN(num)) return 0;
+
+            return negativo ? -Math.abs(num) : num;
+        }
+
+        async function importarCSV(event) {
+            const arquivo = event.target.files[0];
+            if (!arquivo) return;
+
+            const leitor = new FileReader();
+            leitor.onload = async function(e) {
+                try {
+                    const conteudo = e.target.result;
+                    const linhas = conteudo.split(/\r\n|\n/);
+                    let novosLotes = [];
+
+                    linhas.forEach((linha, index) => {
+                        if (!linha.trim()) return;
+                        
+                        const separador = linha.includes(';') ? ';' : ',';
+                        const colunas = linha.split(separador).map(c => c.replace(/^["']|["']$/g, '').trim());
+
+                        if (index === 0 && (colunas[0].toLowerCase().includes('forma') || colunas[0].toLowerCase().includes('pagamento'))) return;
+
+                        if (colunas.length >= 6) {
+                            const formaPagamento = colunas[0] || 'Débito';
+                            let parcelaCCBruta = colunas[1] || '';
+                            parcelaCCBruta = parcelaCCBruta.replace(/^parcela\s*:\s*/i, '').trim();
+
+                            const dataStr = colunas[3] || colunas[2] || '';
+                            const desc = colunas[4] || '';
+                            const valStr = colunas[5] || '';
+                            const subcat = colunas[6] || 'Geral';
+                            const cat = colunas[7] || 'OUTROS';
+                            const fixo = colunas[8] || '';
+
+                            let val = parseValorExcel(valStr);
+
+                            if (val !== 0 && dataStr) {
+                                let dataFormatada = dataStr;
+                                if (dataStr.includes('-') && dataStr.length === 10) {
+                                    dataFormatada = dataStr;
+                                } else if (dataStr.includes('/')) {
+                                    const partes = dataStr.split('/');
+                                    if (partes.length === 3) {
+                                        dataFormatada = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                                    }
+                                }
+
+                                novosLotes.push({
+                                    forma_pagamento: formaPagamento,
+                                    parcela_cc: parcelaCCBruta,
+                                    data: dataFormatada,
+                                    descricao: desc,
+                                    valor: val,
+                                    subcategoria: subcat,
+                                    categoria: cat,
+                                    fixo: fixo
+                                });
+                            }
+                        }
+                    });
+
+                    if (novosLotes.length > 0) {
+                        const tamanhoLote = 500;
+                        for (let i = 0; i < novosLotes.length; i += tamanhoLote) {
+                            const lote = novosLotes.slice(i, i + tamanhoLote);
+                            const { error } = await supabaseClient.from('transacoes').insert(lote);
+                            if (error) {
+                                alert('Erro ao importar para o Supabase: ' + error.message);
+                                return;
+                            }
+                        }
+                        carregarTransacoesDaNuvem();
+                        alert(`${novosLotes.length} transações importadas com sucesso para a nuvem!`);
+                    }
+                } catch (erro) {
+                    alert('Erro ao processar o arquivo CSV: ' + erro.message);
+                }
+            };
+            leitor.readAsText(arquivo, 'ISO-8859-1');
+        }
+
+        function atualizarDashboard() {
+            const periodoFiltro = document.getElementById('filtroPeriodo').value;
+
+            const transacoesPeriodo = transacoes.filter(t => {
+                if (!t.data) return false;
+                return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
+            });
+
+            popularOpcoesFiltrosColunas(transacoesPeriodo);
+
+            const fForma = document.getElementById('filtroForma').value;
+            const fParcela = document.getElementById('filtroParcela').value;
+            const fDescricao = document.getElementById('filtroDescricao').value;
+            const fCategoria = document.getElementById('filtroCategoria').value;
+            const fSubcategoria = document.getElementById('filtroSubcategoria').value;
+            const fFixo = document.getElementById('filtroFixo').value;
+            const fValor = document.getElementById('filtroValor').value;
+
+            const transacoesFiltradas = transacoesPeriodo.filter(t => {
+                const categoriaVal = t.categoria || 'OUTROS';
+                const subcategoriaVal = t.subcategoria || 'Geral';
+                const parcelaVal = (t.parcela_cc || '').trim();
+
+                const matchData = diasSelecionadosExcel === null || diasSelecionadosExcel.includes(t.data);
+                const matchForma = !fForma || t.forma_pagamento === fForma;
+                
+                let matchParcela = true;
+                if (fParcela === 'COM_PARCELA') {
+                    matchParcela = parcelaVal !== '';
+                } else if (fParcela === 'Vazio') {
+                    matchParcela = parcelaVal === '';
+                } else if (fParcela !== '') {
+                    matchParcela = parcelaVal === fParcela;
+                }
+
+                const matchDescricao = !fDescricao || t.descricao === fDescricao;
+                const matchCategoria = !fCategoria || categoriaVal === fCategoria;
+                const matchSubcategoria = !fSubcategoria || subcategoriaVal === fSubcategoria;
+                const matchFixo = !fFixo || t.fixo === fFixo;
+                const matchValor = !fValor || t.valor.toString() === fValor;
+
+                return matchData && matchForma && matchParcela && matchDescricao && matchCategoria && matchSubcategoria && matchFixo && matchValor;
+            });
+
+            let totalEntradas = 0;
+            let totalSaidas = 0;
+            let totalFixas = 0;
+            let totalCartao = 0;
+            let totalDebitoPixDespesas = 0;
+
+            transacoesPeriodo.forEach(t => {
+                if (t.valor > 0) {
+                    totalEntradas += t.valor;
+                } else if (t.valor < 0) {
+                    const absVal = Math.abs(t.valor);
+                    totalSaidas += absVal;
+
+                    if (t.fixo && t.fixo.toUpperCase() === 'FIXO') {
+                        totalFixas += absVal;
+                    }
+
+                    const forma = (t.forma_pagamento || '').toLowerCase();
+                    if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
+                        totalCartao += absVal;
+                    } else {
+                        totalDebitoPixDespesas += absVal;
+                    }
+                }
+            });
+
+            let subtotalFiltrado = 0;
+            transacoesFiltradas.forEach(t => {
+                subtotalFiltrado += t.valor;
+            });
+
+            const lblSubtotal = document.getElementById('lblSubtotalValor');
+            lblSubtotal.innerText = `Subtotal: ${formatarMoeda(subtotalFiltrado)}`;
+            lblSubtotal.className = `text-[11px] font-semibold normal-case mt-0.5 whitespace-nowrap ${subtotalFiltrado >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            const tbody = document.getElementById('tabelaTransacoes');
+            tbody.innerHTML = '';
+
+            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            transacoesFiltradas.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-700/30 transition";
+                const dataExibir = t.data && t.data.includes('-') ? t.data.split('-').reverse().join('/') : t.data;
+                const ehEntrada = t.valor > 0;
+                const badgeParcela = t.parcela_cc ? `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-xs font-semibold mr-1">${t.parcela_cc}</span>` : '';
+                const badgeFixo = t.fixo ? '<span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded text-xs font-semibold">FIXO</span>' : '';
+
+                tr.innerHTML = `
+                    <td class="p-4 text-gray-300">${dataExibir}</td>
+                    <td class="p-4 text-xs font-medium text-gray-300">${t.forma_pagamento}</td>
+                    <td class="p-4 text-xs">${badgeParcela}</td>
+                    <td class="p-4 font-medium text-gray-200">${t.descricao}</td>
+                    <td class="p-4 text-xs"><span class="bg-gray-700 text-emerald-300 px-2.5 py-1 rounded-md font-semibold">${t.categoria || 'OUTROS'}</span></td>
+                    <td class="p-4 text-xs text-gray-400">${t.subcategoria || 'Geral'}</td>
+                    <td class="p-4 text-xs">${badgeFixo}</td>
+                    <td class="p-4 text-right font-semibold ${ehEntrada ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(t.valor)}</td>
+                    <td class="p-4 text-center"><button type="button" onclick="excluirTransacao(${t.id})" class="text-gray-500 hover:text-rose-400 transition cursor-pointer"><i class="fa-solid fa-trash"></i></button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('lblEntradas').innerText = formatarMoeda(totalEntradas);
+            document.getElementById('lblSaidas').innerText = formatarMoeda(totalSaidas);
+            const saldo = totalEntradas - totalSaidas;
+            const lblSaldo = document.getElementById('lblSaldo');
+            lblSaldo.innerText = formatarMoeda(saldo);
+            lblSaldo.className = `text-2xl font-bold mt-1 ${saldo >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
+
+            document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
+            document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
+            document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
+
+            document.getElementById('contadorTransacoes').innerText = `${transacoesFiltradas.length} de ${transacoes.length} registros`;
+
+            const lblMes = periodoFiltro === 'todos' ? 'Consolidado Ano' : periodoFiltro.split('-').reverse().join('/');
+            document.getElementById('tituloGraficoCategorias').innerText = `Saídas por Categoria (${lblMes})`;
+
+            popularFiltroCategoriasSub(transacoesPeriodo);
+            atualizarGraficos(transacoesPeriodo, lblMes);
+            atualizarGraficoSaldoAcumulado();
+            atualizarGraficoGastosFixosMensal();
+            atualizarGraficoCascataFixos();
+            atualizarGraficoCartaoMensal();
+            atualizarGraficoSubcategorias();
+            atualizarGraficosTop10(transacoesPeriodo, lblMes);
+        }
+
+        const pluginValoresNasBarra = {
+            id: 'pluginValoresNasBarra',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                ctx.save();
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#e5e7eb';
+                ctx.textBaseline = 'middle';
+
+                chart.getDatasetMeta(0).data.forEach((barra, index) => {
+                    const valorNum = data.datasets[0].data[index];
+                    const valorFormatado = valorNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const xPos = barra.x + 8;
+                    const yPos = barra.y;
+                    ctx.fillText(valorFormatado, xPos, yPos);
+                });
+                ctx.restore();
+            }
+        };
+
+        const pluginValoresEmCimaDaColunaSemRS = {
+            id: 'pluginValoresEmCimaDaColunaSemRS',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                ctx.save();
+                ctx.font = 'bold 9.5px sans-serif';
+                ctx.fillStyle = '#e5e7eb';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (dataset.type === 'line') return;
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    meta.data.forEach((barra, index) => {
+                        const valorNum = dataset.data[index];
+                        if (valorNum > 0) {
+                            const valorFormatado = valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            ctx.fillText(valorFormatado, barra.x, barra.y - 3);
+                        }
+                    });
+                });
+                ctx.restore();
+            }
+        };
+
+        const pluginValoresLinhaSaldoAcumulado = {
+            id: 'pluginValoresLinhaSaldoAcumulado',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data) return;
+
+                ctx.save();
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+
+                meta.data.forEach((ponto, index) => {
+                    const valorNum = data.datasets[0].data[index];
+                    const ehHoje = data.datasets[0].pontoHojeIndex === index;
+
+                    if (ehHoje) {
+                        ctx.fillStyle = '#38bdf8';
+                    } else if (valorNum < 0) {
+                        ctx.fillStyle = '#fb7185';
+                    } else {
+                        ctx.fillStyle = '#34d399';
+                    }
+
+                    // Exibe somente o valor positivo ou negativo, sem o "R$"
+                    const texto = formatarNumeroSemRS(valorNum);
+                    const offsetY = valorNum >= 0 ? -10 : 16;
+                    ctx.fillText(texto, ponto.x, ponto.y + offsetY);
+                });
+
+                ctx.restore();
+            }
+        };
+
+        // GRÁFICO: Evolução do Saldo Acumulado (Mês a Mês e Previsão)
+        function atualizarGraficoSaldoAcumulado() {
+            const hojeStr = obterDataHojeLocalISO();
+            const mesAtualStr = hojeStr.substring(0, 7);
+
+            // 1. Calcula e trava o Saldo Inicial com base na data de referência (17/11/2026 = R$ 765,60)
+            const saldoSalvo = localStorage.getItem(STORAGE_KEY_SALDO_INICIAL);
+            const inputInicial = document.getElementById('inputSaldoInicial');
+            let saldoInicial = 0;
+
+            if (saldoSalvo !== null && !isNaN(parseFloat(saldoSalvo))) {
+                saldoInicial = parseFloat(saldoSalvo);
+                inputInicial.value = saldoInicial.toFixed(2);
+            } else {
+                let somaAteDataBase = 0;
+                transacoes.forEach(t => {
+                    if (t.data && t.data <= DATA_BASE_CALIBRACAO) {
+                        somaAteDataBase += t.valor;
+                    }
+                });
+                saldoInicial = Number((SALDO_BASE_CALIBRACAO - somaAteDataBase).toFixed(2));
+                inputInicial.value = saldoInicial.toFixed(2);
+                if (transacoes.length > 0) {
+                    localStorage.setItem(STORAGE_KEY_SALDO_INICIAL, saldoInicial.toFixed(2));
+                }
+            }
+
+            // 2. Soma todas as entradas e saídas acumuladas até a data atual real (hojeStr)
+            let somaAteHoje = 0;
+            transacoes.forEach(t => {
+                if (t.data && t.data <= hojeStr) {
+                    somaAteHoje += t.valor;
+                }
+            });
+
+            const mesesSet = new Set([mesAtualStr]);
+            transacoes.forEach(t => {
+                if (t.data && t.data.length >= 7) {
+                    mesesSet.add(t.data.substring(0, 7));
+                }
+            });
+            const mesesOrdenados = Array.from(mesesSet).sort();
+
+            const labels = [];
+            const valores = [];
+            const coresPontos = [];
+            const raiosPontos = [];
+            let indiceHoje = -1;
+
+            mesesOrdenados.forEach(mes => {
+                const [ano, mm] = mes.split('-');
+                if (mes < mesAtualStr) {
+                    let somaMes = 0;
+                    transacoes.forEach(t => {
+                        if (t.data && t.data.substring(0, 7) <= mes) {
+                            somaMes += t.valor;
+                        }
+                    });
+                    const valMes = Number((saldoInicial + somaMes).toFixed(2));
+                    labels.push(`${mm}/${ano}`);
+                    valores.push(valMes);
+                    coresPontos.push(valMes < 0 ? '#f43f5e' : '#34d399');
+                    raiosPontos.push(4);
+                } else if (mes === mesAtualStr) {
+                    // Ponto 1: Saldo acumulado real até hoje
+                    const saldoHoje = Number((saldoInicial + somaAteHoje).toFixed(2));
+                    const [, , dd] = hojeStr.split('-');
+                    labels.push(`Hoje (${dd}/${mm})`);
+                    valores.push(saldoHoje);
+                    coresPontos.push('#38bdf8');
+                    raiosPontos.push(6);
+                    indiceHoje = labels.length - 1;
+
+                    // Ponto 2: Previsão até o final do mês atual
+                    let somaFimMesAtual = 0;
+                    transacoes.forEach(t => {
+                        if (t.data && t.data.substring(0, 7) <= mesAtualStr) {
+                            somaFimMesAtual += t.valor;
+                        }
+                    });
+                    const saldoFimMesAtual = Number((saldoInicial + somaFimMesAtual).toFixed(2));
+                    labels.push(`Prev. Fim ${mm}/${ano}`);
+                    valores.push(saldoFimMesAtual);
+                    coresPontos.push(saldoFimMesAtual < 0 ? '#f43f5e' : '#34d399');
+                    raiosPontos.push(5);
+                } else {
+                    // Meses futuros já lançados
+                    let somaFuturo = 0;
+                    transacoes.forEach(t => {
+                        if (t.data && t.data.substring(0, 7) <= mes) {
+                            somaFuturo += t.valor;
+                        }
+                    });
+                    const saldoFuturo = Number((saldoInicial + somaFuturo).toFixed(2));
+                    labels.push(`Prev. ${mm}/${ano}`);
+                    valores.push(saldoFuturo);
+                    coresPontos.push(saldoFuturo < 0 ? '#f43f5e' : '#34d399');
+                    raiosPontos.push(4);
+                }
+            });
+
+            const saldoHojeExibir = indiceHoje >= 0 ? valores[indiceHoje] : SALDO_BASE_CALIBRACAO;
+            const saldoFimMesExibir = indiceHoje >= 0 && valores[indiceHoje + 1] !== undefined ? valores[indiceHoje + 1] : saldoHojeExibir;
+
+            const lblHojeEl = document.getElementById('lblSaldoAcumuladoHoje');
+            lblHojeEl.innerText = formatarMoeda(saldoHojeExibir);
+            lblHojeEl.className = saldoHojeExibir >= 0 ? 'text-base font-extrabold text-sky-400' : 'text-base font-extrabold text-rose-400';
+
+            // Atualiza a janelinha de destaque da Previsão Fim do Mês
+            const cardPrev = document.getElementById('cardPrevFimMes');
+            const iconePrev = document.getElementById('iconeCardPrevFimMes');
+            const lblFimMesEl = document.getElementById('lblSaldoPrevistoFimMes');
+            lblFimMesEl.innerText = formatarMoeda(saldoFimMesExibir);
+
+            if (saldoFimMesExibir < 0) {
+                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3';
+                iconePrev.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
+                lblFimMesEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
+            } else {
+                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-3';
+                iconePrev.className = 'bg-emerald-500/25 text-emerald-300 p-2.5 rounded-xl';
+                lblFimMesEl.className = 'text-xl font-extrabold text-emerald-400 leading-tight';
+            }
+
+            const minVal = Math.min(...valores, 0);
+            const maxVal = Math.max(...valores, 1000);
+            const margem = Math.max(Math.abs(maxVal - minVal) * 0.18, 500);
+
+            if (graficoSaldoAcumuladoObj) graficoSaldoAcumuladoObj.destroy();
+            const ctx = document.getElementById('graficoSaldoAcumulado').getContext('2d');
+            graficoSaldoAcumuladoObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo Acumulado',
+                        data: valores,
+                        pontoHojeIndex: indiceHoje,
+                        borderColor: '#34d399',
+                        borderWidth: 2.5,
+                        tension: 0.25,
+                        fill: {
+                            target: 'origin',
+                            above: 'rgba(52, 211, 153, 0.18)',
+                            below: 'rgba(244, 63, 94, 0.18)'
+                        },
+                        pointBackgroundColor: coresPontos,
+                        pointBorderColor: '#111827',
+                        pointBorderWidth: 1.5,
+                        pointRadius: raiosPontos,
+                        pointHoverRadius: 7,
+                        segment: {
+                            borderColor: function(ctxSeg) {
+                                const v0 = ctxSeg.p0.parsed.y;
+                                const v1 = ctxSeg.p1.parsed.y;
+                                const ehProjecao = ctxSeg.p1DataIndex > indiceHoje;
+
+                                // Se for projeção (após Hoje), cor acompanha o destino (vermelho se negativo, verde se positivo)
+                                if (ehProjecao) {
+                                    return v1 < 0 ? '#f43f5e' : '#34d399';
+                                }
+
+                                // Histórico consolidado: se ambos <= 0 é vermelho; se ambos >= 0 é verde
+                                if (v0 <= 0 && v1 <= 0) return '#f43f5e';
+                                if (v0 >= 0 && v1 >= 0) return '#34d399';
+
+                                // Trecho que cruza exatamente a linha do zero: gradiente dinâmico entre vermelho e verde
+                                const chart = ctxSeg.chart;
+                                const yScale = chart.scales.y;
+                                const yZero = yScale.getPixelForValue(0);
+                                const y0 = ctxSeg.p0.y;
+                                const y1 = ctxSeg.p1.y;
+
+                                if (Math.abs(y1 - y0) > 0.5) {
+                                    const grad = chart.ctx.createLinearGradient(0, y0, 0, y1);
+                                    const ratio = Math.max(0, Math.min(1, (yZero - y0) / (y1 - y0)));
+                                    if (v0 < 0) {
+                                        grad.addColorStop(0, '#f43f5e');
+                                        grad.addColorStop(ratio, '#f43f5e');
+                                        grad.addColorStop(ratio, '#34d399');
+                                        grad.addColorStop(1, '#34d399');
+                                    } else {
+                                        grad.addColorStop(0, '#34d399');
+                                        grad.addColorStop(ratio, '#34d399');
+                                        grad.addColorStop(ratio, '#f43f5e');
+                                        grad.addColorStop(1, '#f43f5e');
+                                    }
+                                    return grad;
+                                }
+                                return v1 < 0 ? '#f43f5e' : '#34d399';
+                            },
+                            borderDash: function(ctxSeg) {
+                                return ctxSeg.p1DataIndex > indiceHoje ? [6, 6] : undefined;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 24, bottom: 16, left: 12, right: 24 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Saldo Acumulado: ${formatarNumeroSemRS(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: minVal - margem,
+                            max: maxVal + margem,
+                            ticks: {
+                                color: '#9ca3af',
+                                callback: function(val) {
+                                    return formatarNumeroSemRS(val);
+                                }
+                            },
+                            grid: {
+                                color: function(ctxGrid) {
+                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? '#6b7280' : '#374151';
+                                },
+                                lineWidth: function(ctxGrid) {
+                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? 1.5 : 1;
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af', font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                },
+                plugins: [pluginValoresLinhaSaldoAcumulado]
+            });
+        }
+
+        // GRÁFICO 1: Média Gastos Fixos por Mês
+        function atualizarGraficoGastosFixosMensal() {
+            const mesesMap = {};
+            transacoes.forEach(t => {
+                if (!t.data) return;
+                const mes = t.data.substring(0, 7);
+                if (!mesesMap[mes]) mesesMap[mes] = 0;
+
+                if (t.valor < 0 && t.fixo && t.fixo.toUpperCase() === 'FIXO') {
+                    mesesMap[mes] += Math.abs(t.valor);
+                }
+            });
+
+            const meses = Object.keys(mesesMap).sort();
+            const valoresMensais = meses.map(m => mesesMap[m]);
+            const somaTotal = valoresMensais.reduce((acc, v) => acc + v, 0);
+            const mediaAnual = meses.length > 0 ? (somaTotal / meses.length) : 0;
+            const linhaMediaData = meses.map(() => mediaAnual);
+
+            document.getElementById('lblMediaGastoFixoAnual').innerText = `Média Anual: ${formatarMoeda(mediaAnual)}`;
+
+            const maxVal = Math.max(...valoresMensais, mediaAnual, 100);
+
+            if (graficoGastosFixosMensalObj) graficoGastosFixosMensalObj.destroy();
+            const ctx = document.getElementById('graficoGastosFixosMensal').getContext('2d');
+            graficoGastosFixosMensalObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: `Média Anual (${formatarMoeda(mediaAnual)})`,
+                            data: linhaMediaData,
+                            borderColor: '#fbbf24',
+                            backgroundColor: '#fbbf24',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            pointRadius: 0,
+                            pointHoverRadius: 0,
+                            fill: false,
+                            order: 0
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Gasto Fixo Mensal',
+                            data: valoresMensais,
+                            backgroundColor: '#34d399',
+                            borderRadius: 6,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            max: maxVal * 1.2,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false }
+                        }
+                    }
+                },
+                plugins: [pluginValoresEmCimaDaColunaSemRS]
+            });
+        }
+
+        // GRÁFICO 2: Detalhamento de Gastos Fixos por Categoria (Cascata)
+        function atualizarGraficoCascataFixos() {
+            const mesSelecionado = document.getElementById('filtroMesFixos').value;
+
+            const dadosFixos = transacoes.filter(t => {
+                if (!t.data) return false;
+                const matchMes = (mesSelecionado === 'todos' || t.data.startsWith(mesSelecionado));
+                const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
+                return matchMes && ehFixo;
+            });
+
+            const catMapObj = {};
+            dadosFixos.forEach(t => {
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
+                if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
+                else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
+            });
+
+            const catMapFinal = {};
+            let totalGastosFixos = 0;
+
+            Object.keys(catMapObj).forEach(cat => {
+                let negs = [...catMapObj[cat].negativas];
+                let poss = [...catMapObj[cat].positivas];
+
+                for (let i = negs.length - 1; i >= 0; i--) {
+                    const idxPos = poss.indexOf(negs[i]);
+                    if (idxPos !== -1) {
+                        negs.splice(i, 1);
+                        poss.splice(idxPos, 1);
+                    }
+                }
+                const totalNeg = negs.reduce((a, b) => a + b, 0);
+                if (totalNeg > 0) {
+                    catMapFinal[cat] = totalNeg;
+                    totalGastosFixos += totalNeg;
+                }
+            });
+
+            const catOrdenadas = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]);
+
+            const labelsCascata = ['[TOTAL] GASTOS FIXOS', ...catOrdenadas.map(item => `   •  ${item[0]}`)];
+            const valoresCascata = [totalGastosFixos, ...catOrdenadas.map(item => item[1])];
+            const coresCascata = ['#3b82f6', ...catOrdenadas.map((_, i) => ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123'][i % 9])];
+
+            const lblPeriodo = mesSelecionado === 'todos' ? 'Consolidado Ano' : mesSelecionado.split('-').reverse().join('/');
+            document.getElementById('tituloCascataFixos').innerText = `Detalhamento de Gastos Fixos por Categoria (${lblPeriodo})`;
+
+            if (graficoCascataFixosCatObj) graficoCascataFixosCatObj.destroy();
+            const ctx = document.getElementById('graficoCascataFixosCat').getContext('2d');
+            graficoCascataFixosCatObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelsCascata,
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: valoresCascata,
+                        backgroundColor: coresCascata,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 95 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
+                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresNasBarra]
+            });
+        }
+
+        // GRÁFICO 3: Cartão de Crédito por Mês
+        function atualizarGraficoCartaoMensal() {
+            const mesesMap = {};
+            transacoes.forEach(t => {
+                if (!t.data) return;
+                const mes = t.data.substring(0, 7);
+                if (!mesesMap[mes]) mesesMap[mes] = 0;
+
+                if (t.valor < 0) {
+                    const forma = (t.forma_pagamento || '').toLowerCase();
+                    if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
+                        mesesMap[mes] += Math.abs(t.valor);
+                    }
+                }
+            });
+
+            const meses = Object.keys(mesesMap).sort();
+            const valoresCartao = meses.map(m => mesesMap[m]);
+            const maxVal = Math.max(...valoresCartao, 100);
+
+            if (graficoCartaoMensalObj) graficoCartaoMensalObj.destroy();
+            const ctx = document.getElementById('graficoCartaoMensal').getContext('2d');
+            graficoCartaoMensalObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    datasets: [{
+                        label: 'Gastos com Cartão de Crédito',
+                        data: valoresCartao,
+                        backgroundColor: '#a78bfa',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Cartão de Crédito: ${formatarMoeda(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            max: maxVal * 1.2,
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: '#374151' }
+                        },
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { display: false }
+                        }
+                    }
+                },
+                plugins: [pluginValoresEmCimaDaColunaSemRS]
+            });
+        }
+
+        function atualizarGraficos(dadosPeriodo, lblMes) {
+            const mesesMap = {};
+            transacoes.forEach(t => {
+                if (!t.data) return;
+                const mes = t.data.substring(0, 7);
+                if (!mesesMap[mes]) mesesMap[mes] = { entrada: 0, saida: 0 };
+                if (t.valor > 0) mesesMap[mes].entrada += t.valor;
+                else if (t.valor < 0) mesesMap[mes].saida += Math.abs(t.valor);
+            });
+
+            const meses = Object.keys(mesesMap).sort();
+            const entradasData = meses.map(m => mesesMap[m].entrada);
+            const saidasData = meses.map(m => mesesMap[m].saida);
+            const maxFluxo = Math.max(...entradasData, ...saidasData, 100);
+
+            if (graficoLinhaObj) graficoLinhaObj.destroy();
+            const ctxLinha = document.getElementById('graficoLinha').getContext('2d');
+            graficoLinhaObj = new Chart(ctxLinha, {
+                type: 'bar',
+                data: {
+                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    datasets: [
+                        { label: 'Entradas', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
+                        { label: 'Saídas', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    scales: {
+                        y: { max: maxFluxo * 1.2, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresEmCimaDaColunaSemRS]
+            });
+
+            const catMapObj = {};
+            dadosPeriodo.forEach(t => {
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
+                if (t.valor < 0) {
+                    catMapObj[cat].negativas.push(Math.abs(t.valor));
+                } else if (t.valor > 0) {
+                    catMapObj[cat].positivas.push(t.valor);
+                }
+            });
+
+            const catMapFinal = {};
+            Object.keys(catMapObj).forEach(cat => {
+                let negs = [...catMapObj[cat].negativas];
+                let poss = [...catMapObj[cat].positivas];
+
+                if (cat === 'INVESTIMENTOS') {
+                    const totalNeg = negs.reduce((a, b) => a + b, 0);
+                    const totalPos = poss.reduce((a, b) => a + b, 0);
+                    const saldoInv = totalNeg - totalPos;
+                    if (saldoInv > 0) {
+                        catMapFinal[cat] = saldoInv;
+                    }
+                } else {
+                    for (let i = negs.length - 1; i >= 0; i--) {
+                        const idxPos = poss.indexOf(negs[i]);
+                        if (idxPos !== -1) {
+                            negs.splice(i, 1);
+                            poss.splice(idxPos, 1);
+                        }
+                    }
+                    const totalNeg = negs.reduce((a, b) => a + b, 0);
+                    if (totalNeg > 0) {
+                        catMapFinal[cat] = totalNeg;
+                    }
+                }
+            });
+
+            const catEntidadesOrdenadas = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]);
+            const categoriasNomes = catEntidadesOrdenadas.map(item => item[0]);
+            const categoriasValores = catEntidadesOrdenadas.map(item => item[1]);
+
+            if (graficoBarraCategoriasObj) graficoBarraCategoriasObj.destroy();
+            const ctxBarra = document.getElementById('graficoBarraCategorias').getContext('2d');
+            graficoBarraCategoriasObj = new Chart(ctxBarra, {
+                type: 'bar',
+                data: {
+                    labels: categoriasNomes,
+                    datasets: [{
+                        label: 'Gasto por Categoria (R$)',
+                        data: categoriasValores,
+                        backgroundColor: ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123', '#f87171', '#818cf8'],
+                        borderRadius: 6
+                    }]
+                },
+                options: { 
+                    indexAxis: 'y',
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    layout: { padding: { right: 90 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false }, max: Math.max(...categoriasValores, 100) * 1.15 },
+                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresNasBarra]
+            });
+        }
+
+        function atualizarGraficoSubcategorias() {
+            const periodoFiltro = document.getElementById('filtroPeriodo').value;
+            const categoriaSelecionada = (document.getElementById('filtroCategoriaSub').value || '').toUpperCase().trim();
+
+            const dadosPeriodo = transacoes.filter(t => {
+                if (!t.data) return false;
+                return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
+            });
+
+            let subcatObj = {};
+            dadosPeriodo.forEach(t => {
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (cat === categoriaSelecionada) {
+                    const subcat = t.subcategoria || 'Geral';
+                    if (!subcatObj[subcat]) subcatObj[subcat] = { negativas: [], positivas: [] };
+                    if (t.valor < 0) subcatObj[subcat].negativas.push(Math.abs(t.valor));
+                    else if (t.valor > 0) subcatObj[subcat].positivas.push(t.valor);
+                }
+            });
+
+            const subcatFinal = {};
+            let totalCategoria = 0;
+
+            Object.keys(subcatObj).forEach(subcat => {
+                let negs = [...subcatObj[subcat].negativas];
+                let poss = [...subcatObj[subcat].positivas];
+
+                if (categoriaSelecionada === 'INVESTIMENTOS') {
+                    const totalNeg = negs.reduce((a, b) => a + b, 0);
+                    const totalPos = poss.reduce((a, b) => a + b, 0);
+                    const saldoSub = totalNeg - totalPos;
+                    if (saldoSub > 0) {
+                        subcatFinal[subcat] = saldoSub;
+                        totalCategoria += saldoSub;
+                    }
+                } else {
+                    for (let i = negs.length - 1; i >= 0; i--) {
+                        const idxPos = poss.indexOf(negs[i]);
+                        if (idxPos !== -1) {
+                            negs.splice(i, 1);
+                            poss.splice(idxPos, 1);
+                        }
+                    }
+                    const totalNeg = negs.reduce((a, b) => a + b, 0);
+                    if (totalNeg > 0) {
+                        subcatFinal[subcat] = totalNeg;
+                        totalCategoria += totalNeg;
+                    }
+                }
+            });
+
+            const subcatOrdenadas = Object.entries(subcatFinal).sort((a, b) => b[1] - a[1]);
+            
+            const labelsCascata = [`[TOTAL] ${document.getElementById('filtroCategoriaSub').value}`, ...subcatOrdenadas.map(item => `   •  ${item[0]}`)];
+            const valoresCascata = [totalCategoria, ...subcatOrdenadas.map(item => item[1])];
+            
+            const coresCascata = ['#3b82f6', ...subcatOrdenadas.map((_, i) => ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123'][i % 9])];
+
+            document.getElementById('tituloGraficoSubcategorias').innerText = `Detalhamento de Subcategorias`;
+
+            if (graficoBarraSubcategoriasObj) graficoBarraSubcategoriasObj.destroy();
+            const ctxSub = document.getElementById('graficoBarraSubcategorias').getContext('2d');
+            
+            graficoBarraSubcategoriasObj = new Chart(ctxSub, {
+                type: 'bar',
+                data: {
+                    labels: labelsCascata,
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: valoresCascata,
+                        backgroundColor: coresCascata,
+                        borderRadius: 6
+                    }]
+                },
+                options: { 
+                    indexAxis: 'y',
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    layout: { padding: { right: 90 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
+                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresNasBarra]
+            });
+        }
+
+        function atualizarGraficosTop10(dadosPeriodo, lblMes) {
+            const catMapObj = {};
+            dadosPeriodo.forEach(t => {
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
+                if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
+                else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
+            });
+
+            const catMapFinal = {};
+            Object.keys(catMapObj).forEach(cat => {
+                let negs = [...catMapObj[cat].negativas];
+                let poss = [...catMapObj[cat].positivas];
+
+                if (cat === 'INVESTIMENTOS') {
+                    const totalNeg = negs.reduce((a, b) => a + b, 0);
+                    const totalPos = poss.reduce((a, b) => a + b, 0);
+                    const saldoInv = totalNeg - totalPos;
+                    if (saldoInv > 0) catMapFinal[cat] = saldoInv;
+                } else {
+                    for (let i = negs.length - 1; i >= 0; i--) {
+                        const idxPos = poss.indexOf(negs[i]);
+                        if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
+                    }
+                    const totalNeg = negs.reduce((a, b) => a + b, 0);
+                    if (totalNeg > 0) catMapFinal[cat] = totalNeg;
+                }
+            });
+
+            const top10Cat = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            document.getElementById('tituloTop10Cat').innerText = `Top 10 Gastos por Categoria (${lblMes})`;
+
+            if (graficoTop10CatObj) graficoTop10CatObj.destroy();
+            const ctxTop10Cat = document.getElementById('graficoTop10Cat').getContext('2d');
+            graficoTop10CatObj = new Chart(ctxTop10Cat, {
+                type: 'bar',
+                data: {
+                    labels: top10Cat.map(item => item[0]),
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: top10Cat.map(item => item[1]),
+                        backgroundColor: ['#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123', '#818cf8'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 90 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false }, max: Math.max(...top10Cat.map(i => i[1]), 100) * 1.15 },
+                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresNasBarra]
+            });
+
+            const subMapObj = {};
+            dadosPeriodo.forEach(t => {
+                const sub = t.subcategoria || 'Geral';
+                if (!subMapObj[sub]) subMapObj[sub] = { negativas: [], positivas: [] };
+                if (t.valor < 0) subMapObj[sub].negativas.push(Math.abs(t.valor));
+                else if (t.valor > 0) subMapObj[sub].positivas.push(t.valor);
+            });
+
+            const subMapFinal = {};
+            Object.keys(subMapObj).forEach(sub => {
+                let negs = [...subMapObj[sub].negativas];
+                let poss = [...subMapObj[sub].positivas];
+                for (let i = negs.length - 1; i >= 0; i--) {
+                    const idxPos = poss.indexOf(negs[i]);
+                    if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
+                }
+                const totalNeg = negs.reduce((a, b) => a + b, 0);
+                if (totalNeg > 0) subMapFinal[sub] = totalNeg;
+            });
+
+            const top10Sub = Object.entries(subMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            document.getElementById('tituloTop10Sub').innerText = `Top 10 Gastos por Subcategoria (${lblMes})`;
+
+            if (graficoTop10SubObj) graficoTop10SubObj.destroy();
+            const ctxTop10Sub = document.getElementById('graficoTop10Sub').getContext('2d');
+            graficoTop10SubObj = new Chart(ctxTop10Sub, {
+                type: 'bar',
+                data: {
+                    labels: top10Sub.map(item => `• ${item[0]}`),
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: top10Sub.map(item => item[1]),
+                        backgroundColor: ['#fb923c', '#22d3ee', '#e879f9', '#acc123', '#818cf8', '#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { right: 90 } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false }, max: Math.max(...top10Sub.map(i => i[1]), 100) * 1.15 },
+                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
+                    }
+                },
+                plugins: [pluginValoresNasBarra]
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarTransacoesDaNuvem();
+        });
+    </script>
+</body>
+</html>
