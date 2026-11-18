@@ -107,24 +107,30 @@
                 <p id="lblDetalheCaixa" class="text-[11px] text-gray-400 mt-2">Entradas menos saídas líquidas</p>
             </div>
 
-            <!-- Card 4: Total Despesas Fixas (com Fixas Riceli e Fixas Juliana internos) -->
+            <!-- Card 4: Total Despesas Fixas (3 itens: Fixas Riceli, Fixas Juliana e Fixas Cartão) -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-indigo-500 flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-thumbtack mr-1 text-indigo-400"></i> Total Despesas Fixas</p>
                     <h3 id="lblFixas" class="text-2xl font-bold text-indigo-400 mt-1">R$ 0,00</h3>
                 </div>
-                <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
-                    <div class="bg-gray-900/50 px-2.5 py-1.5 rounded-lg border-l-2 border-sky-400">
-                        <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-user text-sky-400 text-[10px]"></i> Fixas Riceli
+                <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-3 gap-1.5">
+                    <div class="bg-gray-900/50 px-2 py-1.5 rounded-lg border-l-2 border-sky-400">
+                        <p class="text-[10px] text-gray-400 font-medium flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-user text-sky-400 text-[9px]"></i> Fixas Riceli
                         </p>
-                        <span id="lblFixasRiceli" class="text-xs sm:text-sm font-bold text-sky-400 block mt-0.5">R$ 0,00</span>
+                        <span id="lblFixasRiceli" class="text-[11px] sm:text-xs font-bold text-sky-400 block mt-0.5">R$ 0,00</span>
                     </div>
-                    <div class="bg-gray-900/50 px-2.5 py-1.5 rounded-lg border-l-2 border-fuchsia-400">
-                        <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-user text-fuchsia-400 text-[10px]"></i> Fixas Juliana
+                    <div class="bg-gray-900/50 px-2 py-1.5 rounded-lg border-l-2 border-fuchsia-400">
+                        <p class="text-[10px] text-gray-400 font-medium flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-user text-fuchsia-400 text-[9px]"></i> Fixas Juliana
                         </p>
-                        <span id="lblFixasJuliana" class="text-xs sm:text-sm font-bold text-fuchsia-400 block mt-0.5">R$ 0,00</span>
+                        <span id="lblFixasJuliana" class="text-[11px] sm:text-xs font-bold text-fuchsia-400 block mt-0.5">R$ 0,00</span>
+                    </div>
+                    <div class="bg-gray-900/50 px-2 py-1.5 rounded-lg border-l-2 border-purple-400">
+                        <p class="text-[10px] text-gray-400 font-medium flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-credit-card text-purple-400 text-[9px]"></i> Fixas Cartão
+                        </p>
+                        <span id="lblFixasCartao" class="text-[11px] sm:text-xs font-bold text-purple-400 block mt-0.5">R$ 0,00</span>
                     </div>
                 </div>
             </div>
@@ -188,22 +194,21 @@
         <!-- Gráficos empilhados -->
         <div class="space-y-3 sm:space-y-4">
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 class="text-md font-semibold mb-3 text-gray-300">Fluxo Mensal de Entradas (Renda Real) e Saídas</h3>
+                <h3 class="text-md font-semibold mb-3 text-gray-300">Fluxo Mensal de Entradas e Saídas</h3>
                 <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoLinha"></canvas></div>
             </div>
 
-            <!-- GRÁFICO: Evolução do Saldo Acumulado (Mês a Mês e Previsão) -->
+            <!-- GRÁFICO: Evolução do Saldo Acumulado -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado (Mês a Mês)</h3>
-                        <p class="text-xs text-gray-400">Saldo líquido progressivo calibrado em 17/11/2026 (R$ 1.865,60) — novos lançamentos alteram o saldo normalmente</p>
+                        <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado</h3>
                     </div>
                     <div class="flex flex-col items-start xl:items-end gap-2.5">
                         <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
                             <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
                             <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
-                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial para fechar 17/11/2026 em R$ 1.865,60" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1 rounded-lg cursor-pointer">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1 rounded-lg cursor-pointer">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
@@ -243,7 +248,7 @@
                             <i class="fa-solid fa-thumbtack text-lg"></i>
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Média Anual</span>
+                            <span class="text-[11px] uppercase tracking-wider text-gray-300 font-bold">Média Anual Gastos Fixos</span>
                             <strong id="lblMediaGastoFixoAnual" class="text-xl font-extrabold text-amber-400 leading-tight">R$ 0,00</strong>
                         </div>
                     </div>
@@ -424,6 +429,11 @@
 
         function formatarNumeroSemRS(valor) {
             return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Formata número inteiro com separador de milhar e sem centavos (XX.XXX)
+        function formatarInteiroSemRS(valor) {
+            return Math.round(valor).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         }
 
         function alterarSaldoInicialManual() {
@@ -987,6 +997,7 @@
             let totalFixas = 0;
             let totalFixasRiceli = 0;
             let totalFixasJuliana = 0;
+            let totalFixasCartao = 0;
 
             transacoesPeriodo.forEach(t => {
                 const forma = (t.forma_pagamento || '').toLowerCase();
@@ -1012,8 +1023,13 @@
                         }
                         if (ehFixo && !ehMovimentoInvestimento(t)) {
                             totalFixas -= t.valor;
-                            if (forma.includes('riceli')) totalFixasRiceli -= t.valor;
-                            else if (forma.includes('juliana')) totalFixasJuliana -= t.valor;
+                            if (ehCartao) {
+                                totalFixasCartao -= t.valor;
+                            } else if (forma.includes('riceli')) {
+                                totalFixasRiceli -= t.valor;
+                            } else if (forma.includes('juliana')) {
+                                totalFixasJuliana -= t.valor;
+                            }
                         }
                     }
                 } else if (t.valor < 0) {
@@ -1021,7 +1037,9 @@
 
                     if (ehFixo) {
                         totalFixas += absVal;
-                        if (forma.includes('riceli')) {
+                        if (ehCartao) {
+                            totalFixasCartao += absVal;
+                        } else if (forma.includes('riceli')) {
                             totalFixasRiceli += absVal;
                         } else if (forma.includes('juliana')) {
                             totalFixasJuliana += absVal;
@@ -1090,6 +1108,7 @@
             document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
             document.getElementById('lblFixasRiceli').innerText = formatarMoeda(totalFixasRiceli);
             document.getElementById('lblFixasJuliana').innerText = formatarMoeda(totalFixasJuliana);
+            document.getElementById('lblFixasCartao').innerText = formatarMoeda(totalFixasCartao);
 
             document.getElementById('contadorTransacoes').innerText = `${transacoesFiltradas.length} de ${transacoes.length} registros`;
 
@@ -1106,6 +1125,7 @@
             atualizarGraficosTop10(transacoesPeriodo, lblMes);
         }
 
+        // Plugin para barras horizontais: exibe valores sem R$ e sem centavos (XX.XXX)
         const pluginValoresNasBarra = {
             id: 'pluginValoresNasBarra',
             afterDatasetsDraw(chart) {
@@ -1117,10 +1137,36 @@
 
                 chart.getDatasetMeta(0).data.forEach((barra, index) => {
                     const valorNum = data.datasets[0].data[index];
-                    const valorFormatado = valorNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const valorFormatado = formatarInteiroSemRS(valorNum);
                     const xPos = barra.x + 8;
                     const yPos = barra.y;
                     ctx.fillText(valorFormatado, xPos, yPos);
+                });
+                ctx.restore();
+            }
+        };
+
+        // Plugin para colunas verticais: exibe valores sem centavos (XX.XXX)
+        const pluginValoresEmCimaDaColunaInteiro = {
+            id: 'pluginValoresEmCimaDaColunaInteiro',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                ctx.save();
+                ctx.font = 'bold 10px sans-serif';
+                ctx.fillStyle = '#e5e7eb';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    if (dataset.type === 'line') return;
+                    const meta = chart.getDatasetMeta(datasetIndex);
+                    meta.data.forEach((barra, index) => {
+                        const valorNum = dataset.data[index];
+                        if (valorNum > 0) {
+                            const valorFormatado = formatarInteiroSemRS(valorNum);
+                            ctx.fillText(valorFormatado, barra.x, barra.y - 4);
+                        }
+                    });
                 });
                 ctx.restore();
             }
@@ -1151,6 +1197,7 @@
             }
         };
 
+        // Plugin inteligente para Evolução do Saldo Acumulado: sem centavos (XX.XXX) e desvio inteligente para não cruzar a linha
         const pluginValoresLinhaSaldoAcumulado = {
             id: 'pluginValoresLinhaSaldoAcumulado',
             afterDatasetsDraw(chart) {
@@ -1159,11 +1206,14 @@
                 if (!meta || !meta.data) return;
 
                 ctx.save();
-                ctx.font = 'bold 10px sans-serif';
+                ctx.font = 'bold 10.5px sans-serif';
                 ctx.textAlign = 'center';
 
-                meta.data.forEach((ponto, index) => {
-                    const valorNum = data.datasets[0].data[index];
+                const pontos = meta.data;
+                const valores = data.datasets[0].data;
+
+                pontos.forEach((ponto, index) => {
+                    const valorNum = valores[index];
                     const ehHoje = data.datasets[0].pontoHojeIndex === index;
 
                     if (ehHoje) {
@@ -1174,9 +1224,40 @@
                         ctx.fillStyle = '#34d399';
                     }
 
-                    const texto = formatarNumeroSemRS(valorNum);
-                    const offsetY = valorNum >= 0 ? -10 : 16;
-                    ctx.fillText(texto, ponto.x, ponto.y + offsetY);
+                    const texto = formatarInteiroSemRS(valorNum);
+
+                    // Analisa os pontos vizinhos (anterior e próximo) para posicionar o texto longe da inclinação da linha
+                    const prevVal = index > 0 ? valores[index - 1] : valorNum;
+                    const nextVal = index < valores.length - 1 ? valores[index + 1] : valorNum;
+                    const mediaVizinhos = (prevVal + nextVal) / 2;
+
+                    // Se o ponto for um pico local (maior que vizinhos), joga o texto para cima (-15px); se for vale local, joga para baixo (+18px)
+                    let colocarAcima = valorNum >= mediaVizinhos;
+                    if (index === 0) colocarAcima = valorNum >= nextVal;
+                    if (index === valores.length - 1) colocarAcima = valorNum >= prevVal;
+
+                    // Evita sair da área superior ou inferior do gráfico
+                    const yMin = chart.chartArea.top + 14;
+                    const yMax = chart.chartArea.bottom - 8;
+                    let posY = colocarAcima ? ponto.y - 14 : ponto.y + 18;
+
+                    if (posY < yMin) posY = ponto.y + 18;
+                    if (posY > yMax) posY = ponto.y - 14;
+
+                    // Fundo sutil atrás do número para garantir leitura perfeita
+                    const larguraTexto = ctx.measureText(texto).width;
+                    ctx.fillStyle = 'rgba(17, 24, 39, 0.78)';
+                    ctx.fillRect(ponto.x - larguraTexto / 2 - 3, posY - 9, larguraTexto + 6, 13);
+
+                    if (ehHoje) {
+                        ctx.fillStyle = '#38bdf8';
+                    } else if (valorNum < 0) {
+                        ctx.fillStyle = '#fb7185';
+                    } else {
+                        ctx.fillStyle = '#34d399';
+                    }
+
+                    ctx.fillText(texto, ponto.x, posY);
                 });
 
                 ctx.restore();
@@ -1313,7 +1394,7 @@
 
             const minVal = Math.min(...valores, 0);
             const maxVal = Math.max(...valores, 1000);
-            const margem = Math.max(Math.abs(maxVal - minVal) * 0.18, 500);
+            const margem = Math.max(Math.abs(maxVal - minVal) * 0.22, 800);
 
             if (graficoSaldoAcumuladoObj) graficoSaldoAcumuladoObj.destroy();
             const ctx = document.getElementById('graficoSaldoAcumulado').getContext('2d');
@@ -1384,13 +1465,13 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 24, bottom: 16, left: 6, right: 16 } },
+                    layout: { padding: { top: 28, bottom: 20, left: 10, right: 24 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Saldo Acumulado: ${formatarNumeroSemRS(context.parsed.y)}`;
+                                    return `Saldo Acumulado: ${formatarInteiroSemRS(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -1402,7 +1483,7 @@
                             ticks: {
                                 color: '#9ca3af',
                                 callback: function(val) {
-                                    return formatarNumeroSemRS(val);
+                                    return formatarInteiroSemRS(val);
                                 }
                             },
                             grid: {
@@ -1455,7 +1536,7 @@
                     datasets: [
                         {
                             type: 'line',
-                            label: `Média Anual (${formatarMoeda(mediaAnual)})`,
+                            label: `Média Anual Gastos Fixos (${formatarInteiroSemRS(mediaAnual)})`,
                             data: linhaMediaData,
                             borderColor: '#fbbf24',
                             backgroundColor: '#fbbf24',
@@ -1484,7 +1565,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                    return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -1492,7 +1573,7 @@
                     scales: {
                         y: {
                             max: maxVal * 1.2,
-                            ticks: { color: '#9ca3af' },
+                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
                             grid: { color: '#374151' }
                         },
                         x: {
@@ -1501,7 +1582,7 @@
                         }
                     }
                 },
-                plugins: [pluginValoresEmCimaDaColunaSemRS]
+                plugins: [pluginValoresEmCimaDaColunaInteiro]
             });
         }
 
@@ -1561,7 +1642,7 @@
                 data: {
                     labels: labelsCascata,
                     datasets: [{
-                        label: 'Valor (R$)',
+                        label: 'Valor',
                         data: valoresCascata,
                         backgroundColor: coresCascata,
                         borderRadius: 6
@@ -1571,8 +1652,11 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { right: 95 } },
-                    plugins: { legend: { display: false } },
+                    layout: { padding: { right: 80 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
+                    },
                     scales: {
                         x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
@@ -1622,7 +1706,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Cartão de Crédito: ${formatarMoeda(context.parsed.y)}`;
+                                    return `Cartão de Crédito: ${formatarInteiroSemRS(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -1630,7 +1714,7 @@
                     scales: {
                         y: {
                             max: maxVal * 1.2,
-                            ticks: { color: '#9ca3af' },
+                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
                             grid: { color: '#374151' }
                         },
                         x: {
@@ -1639,7 +1723,7 @@
                         }
                     }
                 },
-                plugins: [pluginValoresEmCimaDaColunaSemRS]
+                plugins: [pluginValoresEmCimaDaColunaInteiro]
             });
         }
 
@@ -1673,8 +1757,8 @@
                 data: {
                     labels: meses.map(m => m.split('-').reverse().join('/')),
                     datasets: [
-                        { label: 'Entradas (Renda)', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
-                        { label: 'Saídas (Líquido)', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
+                        { label: 'Entradas', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
+                        { label: 'Saídas', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
                     ]
                 },
                 options: { 
@@ -1740,7 +1824,7 @@
                 data: {
                     labels: categoriasNomes,
                     datasets: [{
-                        label: 'Gasto por Categoria (R$)',
+                        label: 'Gasto por Categoria',
                         data: categoriasValores,
                         backgroundColor: ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123', '#f87171', '#818cf8'],
                         borderRadius: 6
@@ -1750,8 +1834,11 @@
                     indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    layout: { padding: { right: 90 } },
-                    plugins: { legend: { display: false } },
+                    layout: { padding: { right: 80 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
+                    },
                     scales: {
                         x: { display: false, grid: { display: false }, max: Math.max(...categoriasValores, 100) * 1.15 },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
@@ -1830,7 +1917,7 @@
                 data: {
                     labels: labelsCascata,
                     datasets: [{
-                        label: 'Valor (R$)',
+                        label: 'Valor',
                         data: valoresCascata,
                         backgroundColor: coresCascata,
                         borderRadius: 6
@@ -1840,8 +1927,11 @@
                     indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    layout: { padding: { right: 90 } },
-                    plugins: { legend: { display: false } },
+                    layout: { padding: { right: 80 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
+                    },
                     scales: {
                         x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
@@ -1893,7 +1983,7 @@
                 data: {
                     labels: top10Cat.map(item => item[0]),
                     datasets: [{
-                        label: 'Valor (R$)',
+                        label: 'Valor',
                         data: top10Cat.map(item => item[1]),
                         backgroundColor: ['#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123', '#818cf8'],
                         borderRadius: 6
@@ -1903,8 +1993,11 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { right: 90 } },
-                    plugins: { legend: { display: false } },
+                    layout: { padding: { right: 80 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
+                    },
                     scales: {
                         x: { display: false, grid: { display: false }, max: Math.max(...top10Cat.map(i => i[1]), 100) * 1.15 },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
@@ -1947,7 +2040,7 @@
                 data: {
                     labels: top10Sub.map(item => `• ${item[0]}`),
                     datasets: [{
-                        label: 'Valor (R$)',
+                        label: 'Valor',
                         data: top10Sub.map(item => item[1]),
                         backgroundColor: ['#fb923c', '#22d3ee', '#e879f9', '#acc123', '#818cf8', '#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e'],
                         borderRadius: 6
@@ -1957,8 +2050,11 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { right: 90 } },
-                    plugins: { legend: { display: false } },
+                    layout: { padding: { right: 80 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
+                    },
                     scales: {
                         x: { display: false, grid: { display: false }, max: Math.max(...top10Sub.map(i => i[1]), 100) * 1.15 },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
