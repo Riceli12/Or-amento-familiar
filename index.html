@@ -1184,31 +1184,6 @@
             }
         };
 
-        const pluginValoresEmCimaDaColunaSemRS = {
-            id: 'pluginValoresEmCimaDaColunaSemRS',
-            afterDatasetsDraw(chart) {
-                const { ctx, data } = chart;
-                ctx.save();
-                ctx.font = 'bold 9.5px sans-serif';
-                ctx.fillStyle = '#e5e7eb';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-
-                chart.data.datasets.forEach((dataset, datasetIndex) => {
-                    if (dataset.type === 'line') return;
-                    const meta = chart.getDatasetMeta(datasetIndex);
-                    meta.data.forEach((barra, index) => {
-                        const valorNum = dataset.data[index];
-                        if (valorNum > 0) {
-                            const valorFormatado = valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                            ctx.fillText(valorFormatado, barra.x, barra.y - 3);
-                        }
-                    });
-                });
-                ctx.restore();
-            }
-        };
-
         // Plugin inteligente para Evolução do Saldo Acumulado: sem centavos (XX.XXX) e desvio inteligente para não cruzar a linha
         const pluginValoresLinhaSaldoAcumulado = {
             id: 'pluginValoresLinhaSaldoAcumulado',
@@ -1764,13 +1739,26 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    plugins: { legend: { labels: { color: '#9ca3af' } } },
+                    plugins: {
+                        legend: { labels: { color: '#9ca3af' } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { max: maxFluxo * 1.2, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                        y: {
+                            max: maxFluxo * 1.2,
+                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
+                            grid: { color: '#374151' }
+                        },
                         x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
                     }
                 },
-                plugins: [pluginValoresEmCimaDaColunaSemRS]
+                plugins: [pluginValoresEmCimaDaColunaInteiro]
             });
 
             const catMapObj = {};
