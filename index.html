@@ -28,7 +28,6 @@
                 <p class="text-xs text-gray-400">Acesso protegido. A sessão permanece ativa por 30 dias.</p>
             </div>
 
-            <!-- Formulário com autocomplete padrão para o navegador oferecer "Salvar Senha" e pré-preencher -->
             <form id="formLogin" onsubmit="realizarLogin(event)" autocomplete="on" class="space-y-4">
                 <div>
                     <label for="loginEmail" class="text-xs font-semibold text-gray-300 mb-1 block">E-mail</label>
@@ -64,7 +63,7 @@
         </div>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL DO DASHBOARD (Oculto até autenticar) -->
+    <!-- CONTEÚDO PRINCIPAL DO DASHBOARD -->
     <div id="conteudoDashboard" class="w-full mx-auto space-y-3 sm:space-y-4 hidden">
         <!-- Cabeçalho Compacto com Todos os Botões na Mesma Linha -->
         <header class="flex flex-col lg:flex-row justify-between items-center bg-gray-800 px-3 sm:px-5 py-3 rounded-xl sm:rounded-2xl shadow-lg border border-gray-700 gap-3">
@@ -107,7 +106,7 @@
 
         <!-- Cards de Resumo Consolidados -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-            <!-- Card 1: Total de Entradas (Apenas Categoria RENDA) -->
+            <!-- Card 1: Total de Entradas -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium">Total de Entradas (Renda Real)</p>
@@ -129,7 +128,7 @@
                 </div>
             </div>
 
-            <!-- Card 2: Total de Saídas (Líquido de estornos e resgates de investimentos) -->
+            <!-- Card 2: Total de Saídas -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium">Total de Saídas (Líquido)</p>
@@ -151,7 +150,7 @@
                 </div>
             </div>
 
-            <!-- Card 3: Balanço Líquido do Período (Entradas - Saídas) -->
+            <!-- Card 3: Balanço Líquido -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium">Balanço Líquido do Período</p>
@@ -160,7 +159,7 @@
                 <p id="lblDetalheCaixa" class="text-[11px] text-gray-400 mt-2">Entradas menos saídas líquidas</p>
             </div>
 
-            <!-- Card 4: Total Despesas Fixas (3 itens: Fixas Riceli, Fixas Juliana e Fixas Cartão) -->
+            <!-- Card 4: Total Despesas Fixas -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm border-l-4 border-l-indigo-500 flex flex-col justify-between">
                 <div>
                     <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-thumbtack mr-1 text-indigo-400"></i> Total Despesas Fixas</p>
@@ -259,9 +258,11 @@
                     </div>
                     <div class="flex flex-col items-start xl:items-end gap-2.5">
                         <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
-                            <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap"><i class="fa-solid fa-lock text-amber-400 mr-1"></i>Saldo Inicial Fixo:</label>
+                            <label for="inputSaldoInicial" class="text-xs font-semibold text-gray-300 whitespace-nowrap">
+                                <i class="fa-solid fa-cloud text-emerald-400 mr-1" id="iconeSyncSaldoInicial" title="Sincronizado na Nuvem"></i>Saldo Inicial Fixo:
+                            </label>
                             <input type="number" step="0.01" id="inputSaldoInicial" onchange="alterarSaldoInicialManual()" class="bg-gray-800 text-amber-300 font-bold text-xs rounded-lg px-2.5 py-1 w-28 text-right border border-gray-600 focus:outline-none focus:border-emerald-500">
-                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1 rounded-lg cursor-pointer">
+                            <button type="button" onclick="recalibrarSaldoInicialBase()" title="Recalibrar Saldo Inicial na Nuvem" class="text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 px-2.5 py-1 rounded-lg cursor-pointer">
                                 <i class="fa-solid fa-rotate"></i>
                             </button>
                         </div>
@@ -442,13 +443,14 @@
         // Data de referência fixa em que o saldo real era R$ 1.865,60
         const DATA_BASE_CALIBRACAO = '2026-11-17';
         const SALDO_BASE_CALIBRACAO = 1865.60;
-        const STORAGE_KEY_SALDO_INICIAL = 'orcamento_familiar_saldo_inicial_fixo_v2';
+        const CHAVE_CONFIG_SALDO_INICIAL = 'saldo_inicial_fixo';
 
-        // Cores padronizadas para gráficos em cascata: Total (Azul Royal) e Composições (Azul Claro)
+        // Cores padronizadas para gráficos em cascata
         const COR_CASCATA_TOTAL = '#2563eb';
         const COR_CASCATA_ITEM = '#7dd3fc';
 
         let transacoes = [];
+        let saldoInicialNuvem = null;
         let primeiraCargaFiltro = true;
         let graficoLinhaObj = null;
         let graficoSaldoAcumuladoObj = null;
@@ -481,7 +483,6 @@
             document.getElementById('conteudoDashboard').classList.add('hidden');
             document.getElementById('telaLogin').classList.remove('hidden');
 
-            // Pré-preenche o e-mail usado anteriormente (e o navegador completa a senha salva)
             const emailSalvo = localStorage.getItem(STORAGE_KEY_ULTIMO_EMAIL);
             if (emailSalvo) {
                 document.getElementById('loginEmail').value = emailSalvo;
@@ -491,7 +492,7 @@
         function mostrarDashboard() {
             document.getElementById('telaLogin').classList.add('hidden');
             document.getElementById('conteudoDashboard').classList.remove('hidden');
-            carregarTransacoesDaNuvem();
+            carregarDadosDaNuvem();
         }
 
         async function verificarSessaoInicial() {
@@ -501,10 +502,8 @@
             const dentroDoPrazoDe1Mes = loginTimestamp > 0 && (agora - loginTimestamp) < TRINTA_DIAS_MS;
 
             if (session && dentroDoPrazoDe1Mes) {
-                // Ainda dentro dos 30 dias: entra direto no painel
                 mostrarDashboard();
             } else {
-                // Passou de 30 dias ou não há sessão: encerra e pede confirmação na tela de login
                 if (session) {
                     await supabaseClient.auth.signOut();
                 }
@@ -524,7 +523,7 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Entrando...</span>';
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
+            const { error } = await supabaseClient.auth.signInWithPassword({
                 email,
                 password
             });
@@ -538,7 +537,6 @@
                 return;
             }
 
-            // Salva data do login para liberar entrada automática pelos próximos 30 dias
             localStorage.setItem(STORAGE_KEY_LOGIN_TIMESTAMP, Date.now().toString());
             localStorage.setItem(STORAGE_KEY_ULTIMO_EMAIL, email);
 
@@ -551,16 +549,94 @@
             mostrarTelaLogin();
         }
 
+        // ======================== PERSISTÊNCIA DO SALDO INICIAL NA NUVEM ========================
+
+        async function carregarSaldoInicialDaNuvem() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('configuracoes')
+                    .select('valor')
+                    .eq('chave', CHAVE_CONFIG_SALDO_INICIAL)
+                    .maybeSingle();
+
+                if (error) {
+                    console.error('Erro ao carregar saldo inicial da nuvem:', error);
+                    return;
+                }
+
+                if (data && data.valor !== null && !isNaN(parseFloat(data.valor))) {
+                    saldoInicialNuvem = parseFloat(data.valor);
+                } else {
+                    saldoInicialNuvem = null;
+                }
+            } catch (err) {
+                console.error('Falha de conexão ao buscar saldo inicial:', err);
+            }
+        }
+
+        async function salvarSaldoInicialNaNuvem(valorNumerico) {
+            const icone = document.getElementById('iconeSyncSaldoInicial');
+            if (icone) icone.className = 'fa-solid fa-spinner fa-spin text-amber-400 mr-1';
+
+            saldoInicialNuvem = Number(valorNumerico.toFixed(2));
+
+            const { error } = await supabaseClient
+                .from('configuracoes')
+                .upsert(
+                    {
+                        chave: CHAVE_CONFIG_SALDO_INICIAL,
+                        valor: saldoInicialNuvem.toFixed(2),
+                        atualizado_em: new Date().toISOString()
+                    },
+                    { onConflict: 'chave' }
+                );
+
+            if (error) {
+                console.error('Erro ao salvar saldo inicial na nuvem:', error);
+                if (icone) {
+                    icone.className = 'fa-solid fa-triangle-exclamation text-rose-400 mr-1';
+                    icone.title = 'Erro ao sincronizar com a nuvem: ' + error.message;
+                }
+                return;
+            }
+
+            if (icone) {
+                icone.className = 'fa-solid fa-cloud-arrow-up text-emerald-400 mr-1';
+                icone.title = 'Sincronizado na Nuvem';
+                setTimeout(() => {
+                    icone.className = 'fa-solid fa-cloud text-emerald-400 mr-1';
+                }, 1500);
+            }
+        }
+
+        async function alterarSaldoInicialManual() {
+            const val = parseFloat(document.getElementById('inputSaldoInicial').value);
+            if (!isNaN(val)) {
+                await salvarSaldoInicialNaNuvem(val);
+            }
+            atualizarGraficoSaldoAcumulado();
+        }
+
+        async function recalibrarSaldoInicialBase() {
+            let somaAteDataBase = 0;
+            transacoes.forEach(t => {
+                if (t.data && t.data <= DATA_BASE_CALIBRACAO) {
+                    somaAteDataBase += t.valor;
+                }
+            });
+            const saldoRecalibrado = Number((SALDO_BASE_CALIBRACAO - somaAteDataBase).toFixed(2));
+            await salvarSaldoInicialNaNuvem(saldoRecalibrado);
+            atualizarGraficoSaldoAcumulado();
+        }
+
         // ======================== LÓGICA FINANCEIRA ========================
 
-        // Verifica se a transação é uma Renda Real (Salário / Receita) e não resgate/estorno
         function ehRendaReal(t) {
             if (!t || t.valor <= 0) return false;
             const cat = (t.categoria || '').toUpperCase().trim();
             return cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS';
         }
 
-        // Verifica se é movimento interno de investimentos (aporte ou resgate)
         function ehMovimentoInvestimento(t) {
             const cat = (t.categoria || '').toUpperCase().trim();
             return cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO';
@@ -576,26 +652,8 @@
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        function formatarNumeroSemRS(valor) {
-            return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        // Formata número inteiro com separador de milhar e sem centavos (XX.XXX)
         function formatarInteiroSemRS(valor) {
             return Math.round(valor).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-        }
-
-        function alterarSaldoInicialManual() {
-            const val = parseFloat(document.getElementById('inputSaldoInicial').value);
-            if (!isNaN(val)) {
-                localStorage.setItem(STORAGE_KEY_SALDO_INICIAL, val.toFixed(2));
-            }
-            atualizarGraficoSaldoAcumulado();
-        }
-
-        function recalibrarSaldoInicialBase() {
-            localStorage.removeItem(STORAGE_KEY_SALDO_INICIAL);
-            atualizarGraficoSaldoAcumulado();
         }
 
         function acionarSeletorArquivo() {
@@ -613,6 +671,11 @@
             } else {
                 modal.classList.add('hidden');
             }
+        }
+
+        async function carregarDadosDaNuvem() {
+            await carregarSaldoInicialDaNuvem();
+            await carregarTransacoesDaNuvem();
         }
 
         async function carregarTransacoesDaNuvem() {
@@ -673,7 +736,6 @@
                 }
             });
 
-            // Ordena do mais recente (mês com último lançamento) para o mais antigo
             const mesesOrdenados = Array.from(mesesSet).sort().reverse();
 
             select.innerHTML = '<option value="todos">Total Ano Consolidado</option>';
@@ -1148,1055 +1210,4 @@
 
             let totalEntradas = 0;
             let totalEntradasRiceli = 0;
-            let totalEntradasJuliana = 0;
-
-            let totalCartao = 0;
-            let totalDebitoPixDespesas = 0;
-
-            let totalFixas = 0;
-            let totalFixasRiceli = 0;
-            let totalFixasJuliana = 0;
-            let totalFixasCartao = 0;
-
-            transacoesPeriodo.forEach(t => {
-                const forma = (t.forma_pagamento || '').toLowerCase();
-                const desc = (t.descricao || '').toLowerCase();
-                const ehCartao = forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito');
-                const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
-
-                if (t.valor > 0) {
-                    if (ehRendaReal(t)) {
-                        totalEntradas += t.valor;
-                        if (forma.includes('riceli') || (!forma.includes('juliana') && desc.includes('riceli'))) {
-                            totalEntradasRiceli += t.valor;
-                        } else if (forma.includes('juliana') || desc.includes('juliana')) {
-                            totalEntradasJuliana += t.valor;
-                        }
-                    } else {
-                        if (ehCartao) {
-                            totalCartao -= t.valor;
-                        } else {
-                            totalDebitoPixDespesas -= t.valor;
-                        }
-                        if (ehFixo && !ehMovimentoInvestimento(t)) {
-                            totalFixas -= t.valor;
-                            if (ehCartao) {
-                                totalFixasCartao -= t.valor;
-                            } else if (forma.includes('riceli')) {
-                                totalFixasRiceli -= t.valor;
-                            } else if (forma.includes('juliana')) {
-                                totalFixasJuliana -= t.valor;
-                            }
-                        }
-                    }
-                } else if (t.valor < 0) {
-                    const absVal = Math.abs(t.valor);
-
-                    if (ehFixo) {
-                        totalFixas += absVal;
-                        if (ehCartao) {
-                            totalFixasCartao += absVal;
-                        } else if (forma.includes('riceli')) {
-                            totalFixasRiceli += absVal;
-                        } else if (forma.includes('juliana')) {
-                            totalFixasJuliana += absVal;
-                        }
-                    }
-
-                    if (ehCartao) {
-                        totalCartao += absVal;
-                    } else {
-                        totalDebitoPixDespesas += absVal;
-                    }
-                }
-            });
-
-            const totalSaidas = totalCartao + totalDebitoPixDespesas;
-            const balancoLiquido = totalEntradas - totalSaidas;
-
-            let subtotalFiltrado = 0;
-            transacoesFiltradas.forEach(t => {
-                subtotalFiltrado += t.valor;
-            });
-
-            const lblSubtotal = document.getElementById('lblSubtotalValor');
-            lblSubtotal.innerText = `Subtotal: ${formatarMoeda(subtotalFiltrado)}`;
-            lblSubtotal.className = `text-[11px] font-semibold normal-case mt-0.5 whitespace-nowrap ${subtotalFiltrado >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-
-            const tbody = document.getElementById('tabelaTransacoes');
-            tbody.innerHTML = '';
-
-            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
-
-            transacoesFiltradas.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-700/30 transition";
-                const dataExibir = t.data && t.data.includes('-') ? t.data.split('-').reverse().join('/') : t.data;
-                const ehEntrada = t.valor > 0;
-                const badgeParcela = t.parcela_cc ? `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-xs font-semibold mr-1">${t.parcela_cc}</span>` : '';
-                const badgeFixo = t.fixo ? '<span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded text-xs font-semibold">FIXO</span>' : '';
-
-                tr.innerHTML = `
-                    <td class="p-3 sm:p-4 text-gray-300">${dataExibir}</td>
-                    <td class="p-3 sm:p-4 text-xs font-medium text-gray-300">${t.forma_pagamento}</td>
-                    <td class="p-3 sm:p-4 text-xs">${badgeParcela}</td>
-                    <td class="p-3 sm:p-4 font-medium text-gray-200">${t.descricao}</td>
-                    <td class="p-3 sm:p-4 text-xs"><span class="bg-gray-700 text-emerald-300 px-2.5 py-1 rounded-md font-semibold">${t.categoria || 'OUTROS'}</span></td>
-                    <td class="p-3 sm:p-4 text-xs text-gray-400">${t.subcategoria || 'Geral'}</td>
-                    <td class="p-3 sm:p-4 text-xs">${badgeFixo}</td>
-                    <td class="p-3 sm:p-4 text-right font-semibold ${ehEntrada ? 'text-emerald-400' : 'text-rose-400'}">${formatarMoeda(t.valor)}</td>
-                    <td class="p-3 sm:p-4 text-center"><button type="button" onclick="excluirTransacao(${t.id})" class="text-gray-500 hover:text-rose-400 transition cursor-pointer"><i class="fa-solid fa-trash"></i></button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('lblEntradas').innerText = formatarMoeda(totalEntradas);
-            document.getElementById('lblEntradasRiceli').innerText = formatarMoeda(totalEntradasRiceli);
-            document.getElementById('lblEntradasJuliana').innerText = formatarMoeda(totalEntradasJuliana);
-
-            document.getElementById('lblSaidas').innerText = formatarMoeda(totalSaidas);
-            document.getElementById('lblCartao').innerText = formatarMoeda(totalCartao);
-            document.getElementById('lblDebitoPix').innerText = formatarMoeda(totalDebitoPixDespesas);
-
-            const lblSaldo = document.getElementById('lblSaldo');
-            lblSaldo.innerText = formatarMoeda(balancoLiquido);
-            lblSaldo.className = `text-2xl font-bold mt-1 ${balancoLiquido >= 0 ? 'text-blue-400' : 'text-rose-400'}`;
-
-            document.getElementById('lblFixas').innerText = formatarMoeda(totalFixas);
-            document.getElementById('lblFixasRiceli').innerText = formatarMoeda(totalFixasRiceli);
-            document.getElementById('lblFixasJuliana').innerText = formatarMoeda(totalFixasJuliana);
-            document.getElementById('lblFixasCartao').innerText = formatarMoeda(totalFixasCartao);
-
-            document.getElementById('contadorTransacoes').innerText = `${transacoesFiltradas.length} de ${transacoes.length} registros`;
-
-            const lblMes = periodoFiltro === 'todos' ? 'Consolidado Ano' : periodoFiltro.split('-').reverse().join('/');
-            document.getElementById('tituloGraficoCategorias').innerText = `Saídas por Categoria (${lblMes})`;
-
-            popularFiltroCategoriasSub(transacoesPeriodo);
-            atualizarGraficos(transacoesPeriodo, lblMes);
-            atualizarGraficoSaldoAcumulado();
-            atualizarGraficoGastosFixosMensal();
-            atualizarGraficoCascataFixos();
-            atualizarGraficoCartaoMensal();
-            atualizarGraficoSubcategorias();
-            atualizarGraficosTop10(transacoesPeriodo, lblMes);
-        }
-
-        // Plugin para barras horizontais: exibe valores sem R$ e sem centavos (XX.XXX)
-        const pluginValoresNasBarra = {
-            id: 'pluginValoresNasBarra',
-            afterDatasetsDraw(chart) {
-                const { ctx, data } = chart;
-                ctx.save();
-                ctx.font = 'bold 11px sans-serif';
-                ctx.fillStyle = '#e5e7eb';
-                ctx.textBaseline = 'middle';
-
-                chart.getDatasetMeta(0).data.forEach((barra, index) => {
-                    const valorNum = data.datasets[0].data[index];
-                    const valorFormatado = formatarInteiroSemRS(valorNum);
-                    const xPos = barra.x + 8;
-                    const yPos = barra.y;
-                    ctx.fillText(valorFormatado, xPos, yPos);
-                });
-                ctx.restore();
-            }
-        };
-
-        // Plugin para colunas verticais: exibe valores sem centavos (XX.XXX)
-        const pluginValoresEmCimaDaColunaInteiro = {
-            id: 'pluginValoresEmCimaDaColunaInteiro',
-            afterDatasetsDraw(chart) {
-                const { ctx, data } = chart;
-                ctx.save();
-                ctx.font = 'bold 10px sans-serif';
-                ctx.fillStyle = '#e5e7eb';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-
-                chart.data.datasets.forEach((dataset, datasetIndex) => {
-                    if (dataset.type === 'line') return;
-                    const meta = chart.getDatasetMeta(datasetIndex);
-                    meta.data.forEach((barra, index) => {
-                        const valorNum = dataset.data[index];
-                        if (valorNum > 0) {
-                            const valorFormatado = formatarInteiroSemRS(valorNum);
-                            ctx.fillText(valorFormatado, barra.x, barra.y - 4);
-                        }
-                    });
-                });
-                ctx.restore();
-            }
-        };
-
-        // Plugin inteligente para Evolução do Saldo Acumulado: sem centavos (XX.XXX) e desvio inteligente para não cruzar a linha
-        const pluginValoresLinhaSaldoAcumulado = {
-            id: 'pluginValoresLinhaSaldoAcumulado',
-            afterDatasetsDraw(chart) {
-                const { ctx, data } = chart;
-                const meta = chart.getDatasetMeta(0);
-                if (!meta || !meta.data) return;
-
-                ctx.save();
-                ctx.font = 'bold 10.5px sans-serif';
-                ctx.textAlign = 'center';
-
-                const pontos = meta.data;
-                const valores = data.datasets[0].data;
-
-                pontos.forEach((ponto, index) => {
-                    const valorNum = valores[index];
-                    const ehHoje = data.datasets[0].pontoHojeIndex === index;
-
-                    const texto = formatarInteiroSemRS(valorNum);
-
-                    const prevVal = index > 0 ? valores[index - 1] : valorNum;
-                    const nextVal = index < valores.length - 1 ? valores[index + 1] : valorNum;
-                    const mediaVizinhos = (prevVal + nextVal) / 2;
-
-                    let colocarAcima = valorNum >= mediaVizinhos;
-                    if (index === 0) colocarAcima = valorNum >= nextVal;
-                    if (index === valores.length - 1) colocarAcima = valorNum >= prevVal;
-
-                    const yMin = chart.chartArea.top + 14;
-                    const yMax = chart.chartArea.bottom - 8;
-                    let posY = colocarAcima ? ponto.y - 14 : ponto.y + 18;
-
-                    if (posY < yMin) posY = ponto.y + 18;
-                    if (posY > yMax) posY = ponto.y - 14;
-
-                    const larguraTexto = ctx.measureText(texto).width;
-                    ctx.fillStyle = 'rgba(17, 24, 39, 0.78)';
-                    ctx.fillRect(ponto.x - larguraTexto / 2 - 3, posY - 9, larguraTexto + 6, 13);
-
-                    if (ehHoje) {
-                        ctx.fillStyle = '#38bdf8';
-                    } else if (valorNum < 0) {
-                        ctx.fillStyle = '#fb7185';
-                    } else {
-                        ctx.fillStyle = '#34d399';
-                    }
-
-                    ctx.fillText(texto, ponto.x, posY);
-                });
-
-                ctx.restore();
-            }
-        };
-
-        function atualizarGraficoSaldoAcumulado() {
-            const hojeStr = obterDataHojeLocalISO();
-            const mesAtualStr = hojeStr.substring(0, 7);
-
-            const saldoSalvo = localStorage.getItem(STORAGE_KEY_SALDO_INICIAL);
-            const inputInicial = document.getElementById('inputSaldoInicial');
-            let saldoInicial = 0;
-
-            if (saldoSalvo !== null && !isNaN(parseFloat(saldoSalvo))) {
-                saldoInicial = parseFloat(saldoSalvo);
-                inputInicial.value = saldoInicial.toFixed(2);
-            } else {
-                let somaAteDataBase = 0;
-                transacoes.forEach(t => {
-                    if (t.data && t.data <= DATA_BASE_CALIBRACAO) {
-                        somaAteDataBase += t.valor;
-                    }
-                });
-                saldoInicial = Number((SALDO_BASE_CALIBRACAO - somaAteDataBase).toFixed(2));
-                inputInicial.value = saldoInicial.toFixed(2);
-                if (transacoes.length > 0) {
-                    localStorage.setItem(STORAGE_KEY_SALDO_INICIAL, saldoInicial.toFixed(2));
-                }
-            }
-
-            let somaAteHoje = 0;
-            transacoes.forEach(t => {
-                if (t.data && t.data <= hojeStr) {
-                    somaAteHoje += t.valor;
-                }
-            });
-
-            const mesesSet = new Set([mesAtualStr]);
-            transacoes.forEach(t => {
-                if (t.data && t.data.length >= 7) {
-                    mesesSet.add(t.data.substring(0, 7));
-                }
-            });
-            const mesesOrdenados = Array.from(mesesSet).sort();
-
-            const labels = [];
-            const valores = [];
-            const coresPontos = [];
-            const raiosPontos = [];
-            let indiceHoje = -1;
-
-            mesesOrdenados.forEach(mes => {
-                const [ano, mm] = mes.split('-');
-                if (mes < mesAtualStr) {
-                    let somaMes = 0;
-                    transacoes.forEach(t => {
-                        if (t.data && t.data.substring(0, 7) <= mes) {
-                            somaMes += t.valor;
-                        }
-                    });
-                    const valMes = Number((saldoInicial + somaMes).toFixed(2));
-                    labels.push(`${mm}/${ano}`);
-                    valores.push(valMes);
-                    coresPontos.push(valMes < 0 ? '#f43f5e' : '#34d399');
-                    raiosPontos.push(4);
-                } else if (mes === mesAtualStr) {
-                    const saldoHoje = Number((saldoInicial + somaAteHoje).toFixed(2));
-                    const [, , dd] = hojeStr.split('-');
-                    labels.push(`Hoje (${dd}/${mm})`);
-                    valores.push(saldoHoje);
-                    coresPontos.push('#38bdf8');
-                    raiosPontos.push(6);
-                    indiceHoje = labels.length - 1;
-
-                    let somaFimMesAtual = 0;
-                    transacoes.forEach(t => {
-                        if (t.data && t.data.substring(0, 7) <= mesAtualStr) {
-                            somaFimMesAtual += t.valor;
-                        }
-                    });
-                    const saldoFimMesAtual = Number((saldoInicial + somaFimMesAtual).toFixed(2));
-                    labels.push(`Prev. Fim ${mm}/${ano}`);
-                    valores.push(saldoFimMesAtual);
-                    coresPontos.push(saldoFimMesAtual < 0 ? '#f43f5e' : '#34d399');
-                    raiosPontos.push(5);
-                } else {
-                    let somaFuturo = 0;
-                    transacoes.forEach(t => {
-                        if (t.data && t.data.substring(0, 7) <= mes) {
-                            somaFuturo += t.valor;
-                        }
-                    });
-                    const saldoFuturo = Number((saldoInicial + somaFuturo).toFixed(2));
-                    labels.push(`Prev. ${mm}/${ano}`);
-                    valores.push(saldoFuturo);
-                    coresPontos.push(saldoFuturo < 0 ? '#f43f5e' : '#34d399');
-                    raiosPontos.push(4);
-                }
-            });
-
-            const saldoHojeExibir = indiceHoje >= 0 ? valores[indiceHoje] : SALDO_BASE_CALIBRACAO;
-            const saldoFimMesExibir = indiceHoje >= 0 && valores[indiceHoje + 1] !== undefined ? valores[indiceHoje + 1] : saldoHojeExibir;
-
-            const cardAtual = document.getElementById('cardSaldoAtual');
-            const iconeAtual = document.getElementById('iconeCardSaldoAtual');
-            const lblHojeEl = document.getElementById('lblSaldoAcumuladoHoje');
-            lblHojeEl.innerText = formatarMoeda(saldoHojeExibir);
-
-            if (saldoHojeExibir < 0) {
-                cardAtual.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
-                iconeAtual.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
-                lblHojeEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
-            } else {
-                cardAtual.className = 'bg-sky-500/20 border-2 border-sky-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
-                iconeAtual.className = 'bg-sky-500/25 text-sky-300 p-2.5 rounded-xl';
-                lblHojeEl.className = 'text-xl font-extrabold text-sky-400 leading-tight';
-            }
-
-            const cardPrev = document.getElementById('cardPrevFimMes');
-            const iconePrev = document.getElementById('iconeCardPrevFimMes');
-            const lblFimMesEl = document.getElementById('lblSaldoPrevistoFimMes');
-            lblFimMesEl.innerText = formatarMoeda(saldoFimMesExibir);
-
-            if (saldoFimMesExibir < 0) {
-                cardPrev.className = 'bg-rose-500/20 border-2 border-rose-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
-                iconePrev.className = 'bg-rose-500/25 text-rose-300 p-2.5 rounded-xl';
-                lblFimMesEl.className = 'text-xl font-extrabold text-rose-400 leading-tight';
-            } else {
-                cardPrev.className = 'bg-emerald-500/20 border-2 border-emerald-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]';
-                iconePrev.className = 'bg-emerald-500/25 text-emerald-300 p-2.5 rounded-xl';
-                lblFimMesEl.className = 'text-xl font-extrabold text-emerald-400 leading-tight';
-            }
-
-            const minVal = Math.min(...valores, 0);
-            const maxVal = Math.max(...valores, 1000);
-            const margem = Math.max(Math.abs(maxVal - minVal) * 0.22, 800);
-
-            if (graficoSaldoAcumuladoObj) graficoSaldoAcumuladoObj.destroy();
-            const ctx = document.getElementById('graficoSaldoAcumulado').getContext('2d');
-            graficoSaldoAcumuladoObj = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Saldo Acumulado',
-                        data: valores,
-                        pontoHojeIndex: indiceHoje,
-                        borderColor: '#34d399',
-                        borderWidth: 2.5,
-                        tension: 0.25,
-                        fill: {
-                            target: 'origin',
-                            above: 'rgba(52, 211, 153, 0.18)',
-                            below: 'rgba(244, 63, 94, 0.18)'
-                        },
-                        pointBackgroundColor: coresPontos,
-                        pointBorderColor: '#111827',
-                        pointBorderWidth: 1.5,
-                        pointRadius: raiosPontos,
-                        pointHoverRadius: 7,
-                        segment: {
-                            borderColor: function(ctxSeg) {
-                                const v0 = ctxSeg.p0.parsed.y;
-                                const v1 = ctxSeg.p1.parsed.y;
-                                const ehProjecao = ctxSeg.p1DataIndex > indiceHoje;
-
-                                if (ehProjecao) {
-                                    return v1 < 0 ? '#f43f5e' : '#34d399';
-                                }
-
-                                if (v0 <= 0 && v1 <= 0) return '#f43f5e';
-                                if (v0 >= 0 && v1 >= 0) return '#34d399';
-
-                                const chart = ctxSeg.chart;
-                                const yScale = chart.scales.y;
-                                const yZero = yScale.getPixelForValue(0);
-                                const y0 = ctxSeg.p0.y;
-                                const y1 = ctxSeg.p1.y;
-
-                                if (Math.abs(y1 - y0) > 0.5) {
-                                    const grad = chart.ctx.createLinearGradient(0, y0, 0, y1);
-                                    const ratio = Math.max(0, Math.min(1, (yZero - y0) / (y1 - y0)));
-                                    if (v0 < 0) {
-                                        grad.addColorStop(0, '#f43f5e');
-                                        grad.addColorStop(ratio, '#f43f5e');
-                                        grad.addColorStop(ratio, '#34d399');
-                                        grad.addColorStop(1, '#34d399');
-                                    } else {
-                                        grad.addColorStop(0, '#34d399');
-                                        grad.addColorStop(ratio, '#34d399');
-                                        grad.addColorStop(ratio, '#f43f5e');
-                                        grad.addColorStop(1, '#f43f5e');
-                                    }
-                                    return grad;
-                                }
-                                return v1 < 0 ? '#f43f5e' : '#34d399';
-                            },
-                            borderDash: function(ctxSeg) {
-                                return ctxSeg.p1DataIndex > indiceHoje ? [6, 6] : undefined;
-                            }
-                        }
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { top: 28, bottom: 20, left: 10, right: 24 } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Saldo Acumulado: ${formatarInteiroSemRS(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            min: minVal - margem,
-                            max: maxVal + margem,
-                            ticks: {
-                                color: '#9ca3af',
-                                callback: function(val) {
-                                    return formatarInteiroSemRS(val);
-                                }
-                            },
-                            grid: {
-                                color: function(ctxGrid) {
-                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? '#6b7280' : '#374151';
-                                },
-                                lineWidth: function(ctxGrid) {
-                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? 1.5 : 1;
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: { color: '#9ca3af', font: { size: 11 } },
-                            grid: { display: false }
-                        }
-                    }
-                },
-                plugins: [pluginValoresLinhaSaldoAcumulado]
-            });
-        }
-
-        function atualizarGraficoGastosFixosMensal() {
-            const mesesMap = {};
-            transacoes.forEach(t => {
-                if (!t.data) return;
-                const mes = t.data.substring(0, 7);
-                if (!mesesMap[mes]) mesesMap[mes] = 0;
-
-                if (t.valor < 0 && t.fixo && t.fixo.toUpperCase() === 'FIXO') {
-                    mesesMap[mes] += Math.abs(t.valor);
-                }
-            });
-
-            const meses = Object.keys(mesesMap).sort();
-            const valoresMensais = meses.map(m => mesesMap[m]);
-            const somaTotal = valoresMensais.reduce((acc, v) => acc + v, 0);
-            const mediaAnual = meses.length > 0 ? (somaTotal / meses.length) : 0;
-            const linhaMediaData = meses.map(() => mediaAnual);
-
-            document.getElementById('lblMediaGastoFixoAnual').innerText = formatarMoeda(mediaAnual);
-
-            const maxVal = Math.max(...valoresMensais, mediaAnual, 100);
-
-            if (graficoGastosFixosMensalObj) graficoGastosFixosMensalObj.destroy();
-            const ctx = document.getElementById('graficoGastosFixosMensal').getContext('2d');
-            graficoGastosFixosMensalObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: meses.map(m => m.split('-').reverse().join('/')),
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: `Média Anual Gastos Fixos (${formatarInteiroSemRS(mediaAnual)})`,
-                            data: linhaMediaData,
-                            borderColor: '#fbbf24',
-                            backgroundColor: '#fbbf24',
-                            borderWidth: 2,
-                            borderDash: [6, 6],
-                            pointRadius: 0,
-                            pointHoverRadius: 0,
-                            fill: false,
-                            order: 0
-                        },
-                        {
-                            type: 'bar',
-                            label: 'Gasto Fixo Mensal',
-                            data: valoresMensais,
-                            backgroundColor: '#34d399',
-                            borderRadius: 6,
-                            order: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            max: maxVal * 1.2,
-                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
-                            grid: { color: '#374151' }
-                        },
-                        x: {
-                            ticks: { color: '#9ca3af' },
-                            grid: { display: false }
-                        }
-                    }
-                },
-                plugins: [pluginValoresEmCimaDaColunaInteiro]
-            });
-        }
-
-        function atualizarGraficoCascataFixos() {
-            const mesSelecionado = document.getElementById('filtroMesFixos').value;
-
-            const dadosFixos = transacoes.filter(t => {
-                if (!t.data) return false;
-                const matchMes = (mesSelecionado === 'todos' || t.data.startsWith(mesSelecionado));
-                const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
-                return matchMes && ehFixo;
-            });
-
-            const catMapObj = {};
-            dadosFixos.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
-                if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
-                else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
-            });
-
-            const catMapFinal = {};
-            let totalGastosFixos = 0;
-
-            Object.keys(catMapObj).forEach(cat => {
-                let negs = [...catMapObj[cat].negativas];
-                let poss = [...catMapObj[cat].positivas];
-
-                for (let i = negs.length - 1; i >= 0; i--) {
-                    const idxPos = poss.indexOf(negs[i]);
-                    if (idxPos !== -1) {
-                        negs.splice(i, 1);
-                        poss.splice(idxPos, 1);
-                    }
-                }
-                const totalNeg = negs.reduce((a, b) => a + b, 0);
-                if (totalNeg > 0) {
-                    catMapFinal[cat] = totalNeg;
-                    totalGastosFixos += totalNeg;
-                }
-            });
-
-            const catOrdenadas = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]);
-
-            const labelsCascata = ['[TOTAL] GASTOS FIXOS', ...catOrdenadas.map(item => `   •  ${item[0]}`)];
-            const valoresCascata = [totalGastosFixos, ...catOrdenadas.map(item => item[1])];
-            const coresCascata = [COR_CASCATA_TOTAL, ...catOrdenadas.map(() => COR_CASCATA_ITEM)];
-
-            const lblPeriodo = mesSelecionado === 'todos' ? 'Consolidado Ano' : mesSelecionado.split('-').reverse().join('/');
-            document.getElementById('tituloCascataFixos').innerText = `Detalhamento de Gastos Fixos por Categoria (${lblPeriodo})`;
-
-            if (graficoCascataFixosCatObj) graficoCascataFixosCatObj.destroy();
-            const ctx = document.getElementById('graficoCascataFixosCat').getContext('2d');
-            graficoCascataFixosCatObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labelsCascata,
-                    datasets: [{
-                        label: 'Valor',
-                        data: valoresCascata,
-                        backgroundColor: coresCascata,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { right: 80 } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
-                    },
-                    scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
-                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
-                    }
-                },
-                plugins: [pluginValoresNasBarra]
-            });
-        }
-
-        function atualizarGraficoCartaoMensal() {
-            const mesesMap = {};
-            transacoes.forEach(t => {
-                if (!t.data) return;
-                const mes = t.data.substring(0, 7);
-                if (!mesesMap[mes]) mesesMap[mes] = 0;
-
-                if (t.valor < 0) {
-                    const forma = (t.forma_pagamento || '').toLowerCase();
-                    if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
-                        mesesMap[mes] += Math.abs(t.valor);
-                    }
-                }
-            });
-
-            const meses = Object.keys(mesesMap).sort();
-            const valoresCartao = meses.map(m => mesesMap[m]);
-            const maxVal = Math.max(...valoresCartao, 100);
-
-            if (graficoCartaoMensalObj) graficoCartaoMensalObj.destroy();
-            const ctx = document.getElementById('graficoCartaoMensal').getContext('2d');
-            graficoCartaoMensalObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: meses.map(m => m.split('-').reverse().join('/')),
-                    datasets: [{
-                        label: 'Gastos com Cartão de Crédito',
-                        data: valoresCartao,
-                        backgroundColor: '#a78bfa',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Cartão de Crédito: ${formatarInteiroSemRS(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            max: maxVal * 1.2,
-                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
-                            grid: { color: '#374151' }
-                        },
-                        x: {
-                            ticks: { color: '#9ca3af' },
-                            grid: { display: false }
-                        }
-                    }
-                },
-                plugins: [pluginValoresEmCimaDaColunaInteiro]
-            });
-        }
-
-        function atualizarGraficos(dadosPeriodo, lblMes) {
-            const mesesMap = {};
-            transacoes.forEach(t => {
-                if (!t.data) return;
-                const mes = t.data.substring(0, 7);
-                if (!mesesMap[mes]) mesesMap[mes] = { entrada: 0, saida: 0 };
-
-                if (t.valor > 0) {
-                    if (ehRendaReal(t)) {
-                        mesesMap[mes].entrada += t.valor;
-                    } else {
-                        mesesMap[mes].saida -= t.valor;
-                    }
-                } else if (t.valor < 0) {
-                    mesesMap[mes].saida += Math.abs(t.valor);
-                }
-            });
-
-            const meses = Object.keys(mesesMap).sort();
-            const entradasData = meses.map(m => mesesMap[m].entrada);
-            const saidasData = meses.map(m => mesesMap[m].saida);
-            const maxFluxo = Math.max(...entradasData, ...saidasData, 100);
-
-            if (graficoLinhaObj) graficoLinhaObj.destroy();
-            const ctxLinha = document.getElementById('graficoLinha').getContext('2d');
-            graficoLinhaObj = new Chart(ctxLinha, {
-                type: 'bar',
-                data: {
-                    labels: meses.map(m => m.split('-').reverse().join('/')),
-                    datasets: [
-                        { label: 'Entradas', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
-                        { label: 'Saídas', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
-                    ]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: {
-                        legend: { labels: { color: '#9ca3af' } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            max: maxFluxo * 1.2,
-                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
-                            grid: { color: '#374151' }
-                        },
-                        x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
-                    }
-                },
-                plugins: [pluginValoresEmCimaDaColunaInteiro]
-            });
-
-            const catMapObj = {};
-            dadosPeriodo.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
-                if (t.valor < 0) {
-                    catMapObj[cat].negativas.push(Math.abs(t.valor));
-                } else if (t.valor > 0) {
-                    catMapObj[cat].positivas.push(t.valor);
-                }
-            });
-
-            const catMapFinal = {};
-            Object.keys(catMapObj).forEach(cat => {
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
-
-                let negs = [...catMapObj[cat].negativas];
-                let poss = [...catMapObj[cat].positivas];
-
-                if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    const totalPos = poss.reduce((a, b) => a + b, 0);
-                    const saldoInv = totalNeg - totalPos;
-                    if (saldoInv > 0) {
-                        catMapFinal[cat] = saldoInv;
-                    }
-                } else {
-                    for (let i = negs.length - 1; i >= 0; i--) {
-                        const idxPos = poss.indexOf(negs[i]);
-                        if (idxPos !== -1) {
-                            negs.splice(i, 1);
-                            poss.splice(idxPos, 1);
-                        }
-                    }
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    if (totalNeg > 0) {
-                        catMapFinal[cat] = totalNeg;
-                    }
-                }
-            });
-
-            const catEntidadesOrdenadas = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]);
-            const categoriasNomes = catEntidadesOrdenadas.map(item => item[0]);
-            const categoriasValores = catEntidadesOrdenadas.map(item => item[1]);
-
-            if (graficoBarraCategoriasObj) graficoBarraCategoriasObj.destroy();
-            const ctxBarra = document.getElementById('graficoBarraCategorias').getContext('2d');
-            graficoBarraCategoriasObj = new Chart(ctxBarra, {
-                type: 'bar',
-                data: {
-                    labels: categoriasNomes,
-                    datasets: [{
-                        label: 'Gasto por Categoria',
-                        data: categoriasValores,
-                        backgroundColor: ['#38bdf8', '#fbbf24', '#a78bfa', '#34d399', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123', '#f87171', '#818cf8'],
-                        borderRadius: 6
-                    }]
-                },
-                options: { 
-                    indexAxis: 'y',
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    layout: { padding: { right: 80 } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
-                    },
-                    scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...categoriasValores, 100) * 1.15 },
-                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
-                    }
-                },
-                plugins: [pluginValoresNasBarra]
-            });
-        }
-
-        function atualizarGraficoSubcategorias() {
-            const periodoFiltro = document.getElementById('filtroPeriodo').value;
-            const categoriaSelecionada = (document.getElementById('filtroCategoriaSub').value || '').toUpperCase().trim();
-
-            const dadosPeriodo = transacoes.filter(t => {
-                if (!t.data) return false;
-                return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
-            });
-
-            let subcatObj = {};
-            dadosPeriodo.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (cat === categoriaSelecionada) {
-                    const subcat = t.subcategoria || 'Geral';
-                    if (!subcatObj[subcat]) subcatObj[subcat] = { negativas: [], positivas: [] };
-                    if (t.valor < 0) subcatObj[subcat].negativas.push(Math.abs(t.valor));
-                    else if (t.valor > 0) subcatObj[subcat].positivas.push(t.valor);
-                }
-            });
-
-            const subcatFinal = {};
-            let totalCategoria = 0;
-
-            Object.keys(subcatObj).forEach(subcat => {
-                let negs = [...subcatObj[subcat].negativas];
-                let poss = [...subcatObj[subcat].positivas];
-
-                if (categoriaSelecionada === 'INVESTIMENTOS' || categoriaSelecionada === 'INVESTIMENTO') {
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    const totalPos = poss.reduce((a, b) => a + b, 0);
-                    const saldoSub = totalNeg - totalPos;
-                    if (saldoSub > 0) {
-                        subcatFinal[subcat] = saldoSub;
-                        totalCategoria += saldoSub;
-                    }
-                } else {
-                    for (let i = negs.length - 1; i >= 0; i--) {
-                        const idxPos = poss.indexOf(negs[i]);
-                        if (idxPos !== -1) {
-                            negs.splice(i, 1);
-                            poss.splice(idxPos, 1);
-                        }
-                    }
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    if (totalNeg > 0) {
-                        subcatFinal[subcat] = totalNeg;
-                        totalCategoria += totalNeg;
-                    }
-                }
-            });
-
-            const subcatOrdenadas = Object.entries(subcatFinal).sort((a, b) => b[1] - a[1]);
-            
-            const labelsCascata = [`[TOTAL] ${document.getElementById('filtroCategoriaSub').value}`, ...subcatOrdenadas.map(item => `   •  ${item[0]}`)];
-            const valoresCascata = [totalCategoria, ...subcatOrdenadas.map(item => item[1])];
-            const coresCascata = [COR_CASCATA_TOTAL, ...subcatOrdenadas.map(() => COR_CASCATA_ITEM)];
-
-            document.getElementById('tituloGraficoSubcategorias').innerText = `Detalhamento de Subcategorias`;
-
-            if (graficoBarraSubcategoriasObj) graficoBarraSubcategoriasObj.destroy();
-            const ctxSub = document.getElementById('graficoBarraSubcategorias').getContext('2d');
-            
-            graficoBarraSubcategoriasObj = new Chart(ctxSub, {
-                type: 'bar',
-                data: {
-                    labels: labelsCascata,
-                    datasets: [{
-                        label: 'Valor',
-                        data: valoresCascata,
-                        backgroundColor: coresCascata,
-                        borderRadius: 6
-                    }]
-                },
-                options: { 
-                    indexAxis: 'y',
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    layout: { padding: { right: 80 } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
-                    },
-                    scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
-                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
-                    }
-                },
-                plugins: [pluginValoresNasBarra]
-            });
-        }
-
-        function atualizarGraficosTop10(dadosPeriodo, lblMes) {
-            const catMapObj = {};
-            dadosPeriodo.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
-                if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
-                else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
-            });
-
-            const catMapFinal = {};
-            Object.keys(catMapObj).forEach(cat => {
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
-
-                let negs = [...catMapObj[cat].negativas];
-                let poss = [...catMapObj[cat].positivas];
-
-                if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    const totalPos = poss.reduce((a, b) => a + b, 0);
-                    const saldoInv = totalNeg - totalPos;
-                    if (saldoInv > 0) catMapFinal[cat] = saldoInv;
-                } else {
-                    for (let i = negs.length - 1; i >= 0; i--) {
-                        const idxPos = poss.indexOf(negs[i]);
-                        if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
-                    }
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    if (totalNeg > 0) catMapFinal[cat] = totalNeg;
-                }
-            });
-
-            const top10Cat = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
-
-            document.getElementById('tituloTop10Cat').innerText = `Top 10 Gastos por Categoria (${lblMes})`;
-
-            if (graficoTop10CatObj) graficoTop10CatObj.destroy();
-            const ctxTop10Cat = document.getElementById('graficoTop10Cat').getContext('2d');
-            graficoTop10CatObj = new Chart(ctxTop10Cat, {
-                type: 'bar',
-                data: {
-                    labels: top10Cat.map(item => item[0]),
-                    datasets: [{
-                        label: 'Valor',
-                        data: top10Cat.map(item => item[1]),
-                        backgroundColor: ['#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e', '#fb923c', '#e879f9', '#22d3ee', '#acc123', '#818cf8'],
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { right: 80 } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
-                    },
-                    scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...top10Cat.map(i => i[1]), 100) * 1.15 },
-                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
-                    }
-                },
-                plugins: [pluginValoresNasBarra]
-            });
-
-            const subMapObj = {};
-            dadosPeriodo.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
-
-                const sub = t.subcategoria || 'Geral';
-                if (!subMapObj[sub]) subMapObj[sub] = { negativas: [], positivas: [] };
-                if (t.valor < 0) subMapObj[sub].negativas.push(Math.abs(t.valor));
-                else if (t.valor > 0) subMapObj[sub].positivas.push(t.valor);
-            });
-
-            const subMapFinal = {};
-            Object.keys(subMapObj).forEach(sub => {
-                let negs = [...subMapObj[sub].negativas];
-                let poss = [...subMapObj[sub].positivas];
-                for (let i = negs.length - 1; i >= 0; i--) {
-                    const idxPos = poss.indexOf(negs[i]);
-                    if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
-                }
-                const totalNeg = negs.reduce((a, b) => a + b, 0);
-                if (totalNeg > 0) subMapFinal[sub] = totalNeg;
-            });
-
-            const top10Sub = Object.entries(subMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
-
-            document.getElementById('tituloTop10Sub').innerText = `Top 10 Gastos por Subcategoria (${lblMes})`;
-
-            if (graficoTop10SubObj) graficoTop10SubObj.destroy();
-            const ctxTop10Sub = document.getElementById('graficoTop10Sub').getContext('2d');
-            graficoTop10SubObj = new Chart(ctxTop10Sub, {
-                type: 'bar',
-                data: {
-                    labels: top10Sub.map(item => `• ${item[0]}`),
-                    datasets: [{
-                        label: 'Valor',
-                        data: top10Sub.map(item => item[1]),
-                        backgroundColor: ['#fb923c', '#22d3ee', '#e879f9', '#acc123', '#818cf8', '#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e'],
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { right: 80 } },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
-                    },
-                    scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...top10Sub.map(i => i[1]), 100) * 1.15 },
-                        y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
-                    }
-                },
-                plugins: [pluginValoresNasBarra]
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            verificarSessaoInicial();
-        });
-    </script>
-</body>
-</html>
+            let totalEntradasJuliana =
