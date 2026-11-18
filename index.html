@@ -17,7 +17,55 @@
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen p-1.5 sm:p-2.5">
 
-    <div class="w-full mx-auto space-y-3 sm:space-y-4">
+    <!-- TELA DE LOGIN (Exibida apenas se não houver sessão válida nos últimos 30 dias) -->
+    <div id="telaLogin" class="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-800 border border-gray-700 w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mb-1">
+                    <i class="fa-solid fa-wallet text-2xl"></i>
+                </div>
+                <h1 class="text-xl font-bold text-emerald-400">Painel Financeiro Familiar</h1>
+                <p class="text-xs text-gray-400">Acesso protegido. A sessão permanece ativa por 30 dias.</p>
+            </div>
+
+            <!-- Formulário com autocomplete padrão para o navegador oferecer "Salvar Senha" e pré-preencher -->
+            <form id="formLogin" onsubmit="realizarLogin(event)" autocomplete="on" class="space-y-4">
+                <div>
+                    <label for="loginEmail" class="text-xs font-semibold text-gray-300 mb-1 block">E-mail</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                            <i class="fa-solid fa-envelope text-xs"></i>
+                        </span>
+                        <input type="email" id="loginEmail" name="email" autocomplete="username email" required placeholder="seuemail@exemplo.com"
+                            class="bg-gray-700 border border-gray-600 rounded-xl pl-10 pr-4 py-2.5 text-sm w-full text-gray-100 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="loginSenha" class="text-xs font-semibold text-gray-300 mb-1 block">Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                            <i class="fa-solid fa-lock text-xs"></i>
+                        </span>
+                        <input type="password" id="loginSenha" name="password" autocomplete="current-password" required placeholder="••••••••"
+                            class="bg-gray-700 border border-gray-600 rounded-xl pl-10 pr-10 py-2.5 text-sm w-full text-gray-100 focus:outline-none focus:border-emerald-500">
+                        <button type="button" onclick="alternarVisibilidadeSenha()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-200 cursor-pointer">
+                            <i id="iconeOlhoSenha" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="msgErroLogin" class="hidden bg-rose-500/20 border border-rose-500/50 text-rose-300 text-xs px-3 py-2 rounded-xl text-center"></div>
+
+                <button type="submit" id="btnEntrar" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl py-2.5 text-sm transition shadow-lg cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> <span>Entrar no Painel</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL DO DASHBOARD (Oculto até autenticar) -->
+    <div id="conteudoDashboard" class="w-full mx-auto space-y-3 sm:space-y-4 hidden">
         <!-- Cabeçalho Compacto com Todos os Botões na Mesma Linha -->
         <header class="flex flex-col lg:flex-row justify-between items-center bg-gray-800 px-3 sm:px-5 py-3 rounded-xl sm:rounded-2xl shadow-lg border border-gray-700 gap-3">
             <div>
@@ -48,6 +96,11 @@
                 <!-- Botão Limpar Dados -->
                 <button type="button" onclick="limparDados()" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition border border-red-500/30 cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
                     <i class="fa-solid fa-trash-can"></i> Limpar Nuvem
+                </button>
+
+                <!-- Botão Sair -->
+                <button type="button" onclick="realizarLogout()" title="Sair da conta" class="bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition border border-gray-600 cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
                 </button>
             </div>
         </header>
@@ -381,6 +434,11 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_pefL475b5oBO9vEtugWHTQ_zVN-V-q5';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Controle de sessão de 30 dias (1 mês)
+        const STORAGE_KEY_LOGIN_TIMESTAMP = 'orcamento_familiar_login_timestamp_v1';
+        const STORAGE_KEY_ULTIMO_EMAIL = 'orcamento_familiar_ultimo_email_v1';
+        const TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
+
         // Data de referência fixa em que o saldo real era R$ 1.865,60
         const DATA_BASE_CALIBRACAO = '2026-11-17';
         const SALDO_BASE_CALIBRACAO = 1865.60;
@@ -404,6 +462,96 @@
         let diasSelecionadosExcel = null;
 
         document.getElementById('data').valueAsDate = new Date();
+
+        // ======================== AUTENTICAÇÃO (30 DIAS) ========================
+
+        function alternarVisibilidadeSenha() {
+            const input = document.getElementById('loginSenha');
+            const icone = document.getElementById('iconeOlhoSenha');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icone.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                input.type = 'password';
+                icone.className = 'fa-solid fa-eye text-xs';
+            }
+        }
+
+        function mostrarTelaLogin() {
+            document.getElementById('conteudoDashboard').classList.add('hidden');
+            document.getElementById('telaLogin').classList.remove('hidden');
+
+            // Pré-preenche o e-mail usado anteriormente (e o navegador completa a senha salva)
+            const emailSalvo = localStorage.getItem(STORAGE_KEY_ULTIMO_EMAIL);
+            if (emailSalvo) {
+                document.getElementById('loginEmail').value = emailSalvo;
+            }
+        }
+
+        function mostrarDashboard() {
+            document.getElementById('telaLogin').classList.add('hidden');
+            document.getElementById('conteudoDashboard').classList.remove('hidden');
+            carregarTransacoesDaNuvem();
+        }
+
+        async function verificarSessaoInicial() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const loginTimestamp = Number(localStorage.getItem(STORAGE_KEY_LOGIN_TIMESTAMP) || 0);
+            const agora = Date.now();
+            const dentroDoPrazoDe1Mes = loginTimestamp > 0 && (agora - loginTimestamp) < TRINTA_DIAS_MS;
+
+            if (session && dentroDoPrazoDe1Mes) {
+                // Ainda dentro dos 30 dias: entra direto no painel
+                mostrarDashboard();
+            } else {
+                // Passou de 30 dias ou não há sessão: encerra e pede confirmação na tela de login
+                if (session) {
+                    await supabaseClient.auth.signOut();
+                }
+                localStorage.removeItem(STORAGE_KEY_LOGIN_TIMESTAMP);
+                mostrarTelaLogin();
+            }
+        }
+
+        async function realizarLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginSenha').value;
+            const btn = document.getElementById('btnEntrar');
+            const msgErro = document.getElementById('msgErroLogin');
+
+            msgErro.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Entrando...</span>';
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span>Entrar no Painel</span>';
+
+            if (error) {
+                msgErro.innerText = 'E-mail ou senha inválidos. Verifique e tente novamente.';
+                msgErro.classList.remove('hidden');
+                return;
+            }
+
+            // Salva data do login para liberar entrada automática pelos próximos 30 dias
+            localStorage.setItem(STORAGE_KEY_LOGIN_TIMESTAMP, Date.now().toString());
+            localStorage.setItem(STORAGE_KEY_ULTIMO_EMAIL, email);
+
+            mostrarDashboard();
+        }
+
+        async function realizarLogout() {
+            await supabaseClient.auth.signOut();
+            localStorage.removeItem(STORAGE_KEY_LOGIN_TIMESTAMP);
+            mostrarTelaLogin();
+        }
+
+        // ======================== LÓGICA FINANCEIRA ========================
 
         // Verifica se a transação é uma Renda Real (Salário / Receita) e não resgate/estorno
         function ehRendaReal(t) {
@@ -547,7 +695,6 @@
             });
 
             if (primeiraCargaFiltro && mesesOrdenados.length > 0) {
-                // Na abertura do sistema, seleciona automaticamente o mês do último lançamento
                 const ultimoMesComLancamento = mesesOrdenados[0];
                 select.value = ultimoMesComLancamento;
                 selectFixos.value = ultimoMesComLancamento;
@@ -580,7 +727,7 @@
 
         window.addEventListener('click', function(e) {
             const popup = document.getElementById('excelFilterPopup');
-            if (!popup.contains(e.target) && !e.target.closest('button')) {
+            if (popup && !popup.contains(e.target) && !e.target.closest('button')) {
                 popup.classList.add('hidden');
             }
         });
@@ -1019,7 +1166,6 @@
 
                 if (t.valor > 0) {
                     if (ehRendaReal(t)) {
-                        // Apenas categoria RENDA entra como Entrada Real
                         totalEntradas += t.valor;
                         if (forma.includes('riceli') || (!forma.includes('juliana') && desc.includes('riceli'))) {
                             totalEntradasRiceli += t.valor;
@@ -1027,7 +1173,6 @@
                             totalEntradasJuliana += t.valor;
                         }
                     } else {
-                        // Estornos e resgates de investimentos abatem das Saídas para fechar o saldo líquido exato
                         if (ehCartao) {
                             totalCartao -= t.valor;
                         } else {
@@ -1604,7 +1749,6 @@
 
             const labelsCascata = ['[TOTAL] GASTOS FIXOS', ...catOrdenadas.map(item => `   •  ${item[0]}`)];
             const valoresCascata = [totalGastosFixos, ...catOrdenadas.map(item => item[1])];
-            // Total em Azul Royal e demais categorias da cascata em Azul Claro correlacionado
             const coresCascata = [COR_CASCATA_TOTAL, ...catOrdenadas.map(() => COR_CASCATA_ITEM)];
 
             const lblPeriodo = mesSelecionado === 'todos' ? 'Consolidado Ano' : mesSelecionado.split('-').reverse().join('/');
@@ -1891,8 +2035,6 @@
             
             const labelsCascata = [`[TOTAL] ${document.getElementById('filtroCategoriaSub').value}`, ...subcatOrdenadas.map(item => `   •  ${item[0]}`)];
             const valoresCascata = [totalCategoria, ...subcatOrdenadas.map(item => item[1])];
-            
-            // Total em Azul Royal e demais subcategorias da cascata em Azul Claro correlacionado
             const coresCascata = [COR_CASCATA_TOTAL, ...subcatOrdenadas.map(() => COR_CASCATA_ITEM)];
 
             document.getElementById('tituloGraficoSubcategorias').innerText = `Detalhamento de Subcategorias`;
@@ -2053,7 +2195,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            carregarTransacoesDaNuvem();
+            verificarSessaoInicial();
         });
     </script>
 </body>
