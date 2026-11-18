@@ -391,6 +391,7 @@
         const COR_CASCATA_ITEM = '#7dd3fc';
 
         let transacoes = [];
+        let primeiraCargaFiltro = true;
         let graficoLinhaObj = null;
         let graficoSaldoAcumuladoObj = null;
         let graficoGastosFixosMensalObj = null;
@@ -519,9 +520,12 @@
             
             const mesesSet = new Set();
             transacoes.forEach(t => {
-                if (t.data) mesesSet.add(t.data.substring(0, 7));
+                if (t.data && t.data.length >= 7) {
+                    mesesSet.add(t.data.substring(0, 7));
+                }
             });
 
+            // Ordena do mais recente (mês com último lançamento) para o mais antigo
             const mesesOrdenados = Array.from(mesesSet).sort().reverse();
 
             select.innerHTML = '<option value="todos">Total Ano Consolidado</option>';
@@ -542,11 +546,19 @@
                 selectFixos.appendChild(optFixo);
             });
 
-            if (mesesOrdenados.includes(valorAtual) || valorAtual === 'todos') {
-                select.value = valorAtual;
-            }
-            if (mesesOrdenados.includes(valorFixosAtual) || valorFixosAtual === 'todos') {
-                selectFixos.value = valorFixosAtual;
+            if (primeiraCargaFiltro && mesesOrdenados.length > 0) {
+                // Na abertura do sistema, seleciona automaticamente o mês do último lançamento
+                const ultimoMesComLancamento = mesesOrdenados[0];
+                select.value = ultimoMesComLancamento;
+                selectFixos.value = ultimoMesComLancamento;
+                primeiraCargaFiltro = false;
+            } else {
+                if (mesesOrdenados.includes(valorAtual) || valorAtual === 'todos') {
+                    select.value = valorAtual;
+                }
+                if (mesesOrdenados.includes(valorFixosAtual) || valorFixosAtual === 'todos') {
+                    selectFixos.value = valorFixosAtual;
+                }
             }
         }
 
@@ -1216,27 +1228,16 @@
                     const valorNum = valores[index];
                     const ehHoje = data.datasets[0].pontoHojeIndex === index;
 
-                    if (ehHoje) {
-                        ctx.fillStyle = '#38bdf8';
-                    } else if (valorNum < 0) {
-                        ctx.fillStyle = '#fb7185';
-                    } else {
-                        ctx.fillStyle = '#34d399';
-                    }
-
                     const texto = formatarInteiroSemRS(valorNum);
 
-                    // Analisa os pontos vizinhos (anterior e próximo) para posicionar o texto longe da inclinação da linha
                     const prevVal = index > 0 ? valores[index - 1] : valorNum;
                     const nextVal = index < valores.length - 1 ? valores[index + 1] : valorNum;
                     const mediaVizinhos = (prevVal + nextVal) / 2;
 
-                    // Se o ponto for um pico local (maior que vizinhos), joga o texto para cima (-15px); se for vale local, joga para baixo (+18px)
                     let colocarAcima = valorNum >= mediaVizinhos;
                     if (index === 0) colocarAcima = valorNum >= nextVal;
                     if (index === valores.length - 1) colocarAcima = valorNum >= prevVal;
 
-                    // Evita sair da área superior ou inferior do gráfico
                     const yMin = chart.chartArea.top + 14;
                     const yMax = chart.chartArea.bottom - 8;
                     let posY = colocarAcima ? ponto.y - 14 : ponto.y + 18;
@@ -1244,7 +1245,6 @@
                     if (posY < yMin) posY = ponto.y + 18;
                     if (posY > yMax) posY = ponto.y - 14;
 
-                    // Fundo sutil atrás do número para garantir leitura perfeita
                     const larguraTexto = ctx.measureText(texto).width;
                     ctx.fillStyle = 'rgba(17, 24, 39, 0.78)';
                     ctx.fillRect(ponto.x - larguraTexto / 2 - 3, posY - 9, larguraTexto + 6, 13);
