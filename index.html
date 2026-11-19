@@ -807,14 +807,45 @@
             return forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito') || forma.includes('crédito');
         }
 
-        function parseParcelaCC(parcelaStr) {
-            if (!parcelaStr) return null;
-            const match = String(parcelaStr).match(/(\d+)\s*(?:de|\/)\s*(\d+)/i);
-            if (!match) return null;
-            const atual = parseInt(match[1], 10);
-            const total = parseInt(match[2], 10);
-            if (isNaN(atual) || isNaN(total) || total <= 1 || atual < 1 || atual > total) return null;
-            return { atual, total };
+        function parseParcelaCC(parcelaStr, descricaoStr = '') {
+            const fontes = [parcelaStr, descricaoStr];
+            for (const src of fontes) {
+                if (!src) continue;
+                const match = String(src).match(/(\d{1,2})\s*(?:de|\/)\s*(\d{1,2})/i);
+                if (!match) continue;
+                const atual = parseInt(match[1], 10);
+                const total = parseInt(match[2], 10);
+                if (isNaN(atual) || isNaN(total)) continue;
+                if (total === 1 && atual === 1) return { avista: true };
+                if (total > 1 && atual >= 1 && atual <= total) {
+                    return { avista: false, atual, total };
+                }
+            }
+            return null;
+        }
+
+        function normalizarChaveEstabelecimentoCC(desc) {
+            let s = String(desc || '').toUpperCase().trim();
+            // Remove marcações de parcela da descrição (ex: "01/09", "05 DE 08", "Parcela 1 de 10")
+            s = s.replace(/\bPARCELA\s*:?\s*\d{1,2}\s*(?:DE|\/)\s*\d{1,2}\b/gi, '');
+            s = s.replace(/(?:^|[\s\*\-])\d{1,2}\s*(?:DE|\/)\s*\d{1,2}(?:$|[\s\*\-])/gi, ' ');
+            s = s.replace(/\d{2}\/\d{2}/g, '');
+            // Remove sufixos de cidade + BRA colados ou separados no fim da fatura
+            s = s.replace(/(?:GOIANIA|SAO\s*PAULO|APARECIDA\s*DE|PORTO\s*SEGURO|POMPEIA|ANAPOLIS|OSASCO|PRESIDENTE\s*PR|GRAVATA|CALDAS\s*NOVAS|SOROCABA|LUZIANIA|LIVIANOPOLIS|RJ)\s*BRA\s*$/i, '');
+            s = s.replace(/\bBRA\s*$/i, '');
+
+            if (s.includes('*')) {
+                const [leftRaw, rightRaw] = s.split('*', 2);
+                const left = leftRaw.replace(/[^A-Z0-9]/g, '');
+                const right = rightRaw.replace(/[^A-Z0-9]/g, '');
+                const gateways = new Set(['MP', 'ZP', 'DL', 'PG', 'SHOPEE', 'MERCADOLIVRE', 'VALORI', 'JIMCOM', 'ASAAS', 'SESIDRGO', 'NATURAPAY']);
+                s = gateways.has(left) ? (left + right.slice(0, 5)) : left.slice(0, 11);
+            } else {
+                s = s.replace(/[^A-Z0-9]/g, '');
+            }
+
+            s = s.replace(/(?:GOIANIA|SAOPAULO|APARECIDADE|PORTOSEGURO|POMPEIA|ANAPOLIS|OSASCO|PRESIDENTEPR|GRAVATA|CALDASNOVAS|SOROCABA|LUZIANIA|LIVIANOPOLIS|RJ)BRA$/i, '');
+            return s || 'ESTABELECIMENTO';
         }
 
         function somarMesesYYYYMM(yyyyMm, qtdMeses) {
@@ -1724,7 +1755,7 @@
                 return true;
             });
 
-            // Determinar o mês âncora (último mês com lançamentos reais no cartão até o mês atual, ou o último mês disponível)
+            // Identificar o mês base (último mês com fatura importada até hoje)
             const mesesCartaoSet = new Set();
             transacoesCartao.forEach(t => mesesCartaoSet.add(t.data.substring(0, 7)));
             const mesesCartaoOrdenados = Array.from(mesesCartaoSet).sort();
@@ -1736,10 +1767,6 @@
 
             document.getElementById('badgeMesAncoraCC').innerText = `Mês Base: ${formatarMesYYYYMMParaBR(mesAncora)}`;
 
-            // Últimos meses de referência para identificar fixos recorrentes ativos no cartão
-            const mesesRefBase = mesesCartaoAteHoje.length > 0 ? mesesCartaoAteHoje : mesesCartaoOrdenados;
-            const ultimosMesesRef = mesesRefBase.slice(-2);
-
             const detalhesProjecaoCCPorMes = {};
             const resumoItensAtivos = [];
             const comprasParceladasMap = new Map();
@@ -1747,102 +1774,124 @@
 
             let ultimoMesParcelaGeral = '';
 
-            // 1. Varrer transações do cartão para mapear compras parceladas, fixos recorrentes e eventuais lançamentos já feitos no futuro
+            // 1. Identificar Fixos Recorrentes ativos exclusivamente no Mês Base (mesAncora), sem parcelas
             transacoesCartao.forEach(t => {
+                if (t.valor >= 0) return;
+                const mesLanc = t.data.substring(0, 7);
+                if (mesLanc !== mesAncora) return;
+
+                const parcelaInfo = parseParcelaCC(t.parcela_cc, t.descricao);
+                if (parcelaInfo && !parcelaInfo.avista) return;
+
+                const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
+                if (!ehFixo) return;
+
+                const cartaoNome = (t.forma_pagamento || 'Cartão de crédito').trim();
+                const descOriginal = (t.descricao || 'Sem descrição').trim();
+                const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
+                const valorMensal = Math.abs(t.valor);
+                const chaveEstab = normalizarChaveEstabelecimentoCC(descOriginal);
+                const escopoCartao = cartaoSelecionado === 'todos' ? 'TODOS' : cartaoNome;
+                const chaveFixo = `${escopoCartao}|${chaveEstab}|${valorMensal.toFixed(2)}`;
+
+                fixosCartaoMap.set(chaveFixo, {
+                    cartao: cartaoNome,
+                    descricao: descOriginal,
+                    chaveEstab,
+                    categoria: catNome,
+                    valorMensal,
+                    mesRef: mesLanc
+                });
+            });
+
+            // 2. Consolidar compras parceladas mantendo apenas a parcela mais avançada de cada contrato
+            transacoesCartao.forEach(t => {
+                if (t.valor >= 0) return;
                 const mesLanc = t.data.substring(0, 7);
                 const cartaoNome = (t.forma_pagamento || 'Cartão de crédito').trim();
                 const descOriginal = (t.descricao || 'Sem descrição').trim();
-                const descNorm = descOriginal.toUpperCase().replace(/\s+/g, ' ');
                 const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
-                const parcelaInfo = parseParcelaCC(t.parcela_cc);
-                const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
+                const parcelaInfo = parseParcelaCC(t.parcela_cc, t.descricao);
 
-                // Caso já existam lançamentos reais lançados em meses futuros (> mesAncora), registrar sem duplicar
-                if (mesLanc > mesAncora && t.valor < 0) {
+                if (mesLanc > mesAncora) {
                     if (!detalhesProjecaoCCPorMes[mesLanc]) detalhesProjecaoCCPorMes[mesLanc] = [];
                     detalhesProjecaoCCPorMes[mesLanc].push({
                         ehFuturo: false,
-                        origem: parcelaInfo ? 'Parcela (Lançada)' : (ehFixo ? 'Fixo (Lançado)' : 'Lançado'),
+                        origem: (parcelaInfo && !parcelaInfo.avista) ? 'Parcela (Lançada)' : 'Lançado',
                         cartao: cartaoNome,
                         descricao: descOriginal,
-                        parcela: parcelaInfo ? `${parcelaInfo.atual} de ${parcelaInfo.total}` : '—',
+                        parcela: (parcelaInfo && !parcelaInfo.avista) ? `${parcelaInfo.atual} de ${parcelaInfo.total}` : '—',
                         categoria: catNome,
                         valor: Math.abs(t.valor)
                     });
                 }
 
-                if (t.valor < 0 && parcelaInfo) {
-                    const valorMensal = Math.abs(t.valor);
-                    const chaveCompra = `${cartaoNome}|${descNorm}|${valorMensal.toFixed(2)}|${parcelaInfo.total}`;
-                    const existente = comprasParceladasMap.get(chaveCompra);
+                if (!parcelaInfo || parcelaInfo.avista) return;
 
-                    // Manter o registro com a parcela mais avançada já registrada
-                    if (!existente || parcelaInfo.atual > existente.parcelaAtual || (parcelaInfo.atual === existente.parcelaAtual && mesLanc > existente.mesUltimaParcela)) {
-                        comprasParceladasMap.set(chaveCompra, {
-                            cartao: cartaoNome,
-                            descricao: descOriginal,
-                            categoria: catNome,
-                            valorMensal: valorMensal,
-                            parcelaAtual: parcelaInfo.atual,
-                            parcelaTotal: parcelaInfo.total,
-                            mesUltimaParcela: mesLanc
-                        });
-                    }
-                } else if (t.valor < 0 && ehFixo && !parcelaInfo) {
-                    if (!ultimosMesesRef.includes(mesLanc)) return;
-                    const valorMensal = Math.abs(t.valor);
-                    const chaveFixo = `${cartaoNome}|${descNorm}`;
-                    const existenteFixo = fixosCartaoMap.get(chaveFixo);
+                const valorMensal = Math.abs(t.valor);
+                const chaveEstab = normalizarChaveEstabelecimentoCC(descOriginal);
+                const escopoCartao = cartaoSelecionado === 'todos' ? 'TODOS' : cartaoNome;
+                const chaveCompra = `${escopoCartao}|${chaveEstab}|${parcelaInfo.total}|${Math.round(valorMensal)}`;
+                const existente = comprasParceladasMap.get(chaveCompra);
 
-                    if (!existenteFixo || mesLanc >= existenteFixo.mesRef) {
-                        fixosCartaoMap.set(chaveFixo, {
-                            cartao: cartaoNome,
-                            descricao: descOriginal,
-                            categoria: catNome,
-                            valorMensal: valorMensal,
-                            mesRef: mesLanc
-                        });
-                    }
+                if (!existente || parcelaInfo.atual > existente.parcelaAtual || (parcelaInfo.atual === existente.parcelaAtual && mesLanc > existente.mesUltimaParcela)) {
+                    comprasParceladasMap.set(chaveCompra, {
+                        cartao: cartaoNome,
+                        descricao: descOriginal,
+                        chaveEstab,
+                        categoria: catNome,
+                        valorMensal,
+                        parcelaAtual: parcelaInfo.atual,
+                        parcelaTotal: parcelaInfo.total,
+                        mesUltimaParcela: mesLanc
+                    });
                 }
             });
 
-            // 2. Projetar parcelas restantes após mesAncora e montar resumo de compras parceladas ativas
+            // 3. Avançar parcelas pelo calendário até mesAncora e projetar apenas o saldo real restante
             let totalComprometidoParcelas = 0;
             let totalComprometidoRiceli = 0;
             let totalComprometidoOutros = 0;
             let qtdComprasAtivas = 0;
 
+            const [anoAnc, mesAnc] = mesAncora.split('-').map(Number);
+
             comprasParceladasMap.forEach(compra => {
-                const restantes = compra.parcelaTotal - compra.parcelaAtual;
+                const [anoUlt, mesUlt] = compra.mesUltimaParcela.split('-').map(Number);
+                const mesesDecorridos = Math.max(0, (anoAnc - anoUlt) * 12 + (mesAnc - mesUlt));
+                const parcelaReferenciaNoAncora = compra.parcelaAtual + mesesDecorridos;
+                const restantes = compra.parcelaTotal - parcelaReferenciaNoAncora;
+
                 if (restantes <= 0) return;
 
-                const mesTermino = somarMesesYYYYMM(compra.mesUltimaParcela, restantes);
-                if (mesTermino <= mesAncora) return;
+                // Evita duplicar parcelamento antigo que migrou para Fixo mensal no Mês Base
+                const escopoCartao = cartaoSelecionado === 'todos' ? 'TODOS' : compra.cartao;
+                const chaveEquivalenteFixo = `${escopoCartao}|${compra.chaveEstab}|${compra.valorMensal.toFixed(2)}`;
+                if (compra.mesUltimaParcela < mesAncora && fixosCartaoMap.has(chaveEquivalenteFixo)) return;
 
+                const mesTermino = somarMesesYYYYMM(mesAncora, restantes);
                 let parcelasFuturasReais = 0;
                 let saldoDevedorCompra = 0;
 
                 for (let k = 1; k <= restantes; k++) {
-                    const numParcelaFutura = compra.parcelaAtual + k;
-                    const mesFuturo = somarMesesYYYYMM(compra.mesUltimaParcela, k);
+                    const numParcelaFutura = parcelaReferenciaNoAncora + k;
+                    const mesFuturo = somarMesesYYYYMM(mesAncora, k);
 
-                    if (mesFuturo > mesAncora) {
-                        parcelasFuturasReais++;
-                        saldoDevedorCompra += compra.valorMensal;
+                    parcelasFuturasReais++;
+                    saldoDevedorCompra += compra.valorMensal;
 
-                        if (!detalhesProjecaoCCPorMes[mesFuturo]) {
-                            detalhesProjecaoCCPorMes[mesFuturo] = [];
-                        }
-                        detalhesProjecaoCCPorMes[mesFuturo].push({
-                            ehFuturo: true,
-                            origem: 'Parcela',
-                            cartao: compra.cartao,
-                            descricao: compra.descricao,
-                            parcela: `${numParcelaFutura} de ${compra.parcelaTotal}`,
-                            categoria: compra.categoria,
-                            valor: compra.valorMensal
-                        });
+                    if (!detalhesProjecaoCCPorMes[mesFuturo]) {
+                        detalhesProjecaoCCPorMes[mesFuturo] = [];
                     }
+                    detalhesProjecaoCCPorMes[mesFuturo].push({
+                        ehFuturo: true,
+                        origem: 'Parcela',
+                        cartao: compra.cartao,
+                        descricao: compra.descricao,
+                        parcela: `${numParcelaFutura} de ${compra.parcelaTotal}`,
+                        categoria: compra.categoria,
+                        valor: compra.valorMensal
+                    });
                 }
 
                 if (parcelasFuturasReais > 0) {
@@ -1859,13 +1908,12 @@
                         ultimoMesParcelaGeral = mesTermino;
                     }
 
-                    const parcelaReferenciaNoAncora = Math.min(compra.parcelaTotal, compra.parcelaAtual);
                     resumoItensAtivos.push({
                         tipo: 'Parcelado',
                         cartao: compra.cartao,
                         descricao: compra.descricao,
                         categoria: compra.categoria,
-                        ref: `${parcelaReferenciaNoAncora} de ${compra.parcelaTotal} (${formatarMesYYYYMMParaBR(compra.mesUltimaParcela)})`,
+                        ref: `${parcelaReferenciaNoAncora} de ${compra.parcelaTotal} (${formatarMesYYYYMMParaBR(mesAncora)})`,
                         restantes: `${parcelasFuturasReais}x`,
                         valorMensal: compra.valorMensal,
                         saldoDevedor: saldoDevedorCompra,
@@ -1875,15 +1923,14 @@
                 }
             });
 
-            // 3. Definir meses do horizonte futuro (mínimo 12 meses ou até o término da última parcela)
+            // 4. Definir horizonte futuro
             let qtdMesesHorizonte = 12;
             if (horizonteSelecionado === '6') {
                 qtdMesesHorizonte = 6;
             } else if (horizonteSelecionado === 'todos') {
                 if (ultimoMesParcelaGeral && ultimoMesParcelaGeral > mesAncora) {
-                    const [a0, m0] = mesAncora.split('-').map(Number);
                     const [a1, m1] = ultimoMesParcelaGeral.split('-').map(Number);
-                    const diffMeses = (a1 - a0) * 12 + (m1 - m0);
+                    const diffMeses = (a1 - anoAnc) * 12 + (m1 - mesAnc);
                     qtdMesesHorizonte = Math.max(diffMeses, 6);
                 } else {
                     qtdMesesHorizonte = 12;
@@ -1899,7 +1946,7 @@
                 }
             }
 
-            // 4. Adicionar Fixos Recorrentes do Cartão nos meses futuros (se habilitado) e no resumo de ativos
+            // 5. Inserir Fixos Recorrentes consolidados
             fixosCartaoMap.forEach(fixoItem => {
                 resumoItensAtivos.push({
                     tipo: 'Fixo Cartão',
@@ -1916,9 +1963,8 @@
 
                 if (incluirFixos) {
                     mesesProjetados.forEach(mesFut => {
-                        // Evitar duplicar se já existe lançamento real igual nesse mês futuro
                         const jaLancado = detalhesProjecaoCCPorMes[mesFut].some(
-                            it => !it.ehFuturo && it.cartao === fixoItem.cartao && it.descricao.toUpperCase() === fixoItem.descricao.toUpperCase()
+                            it => !it.ehFuturo && normalizarChaveEstabelecimentoCC(it.descricao) === fixoItem.chaveEstab
                         );
                         if (!jaLancado) {
                             detalhesProjecaoCCPorMes[mesFut].push({
@@ -1935,7 +1981,6 @@
                 }
             });
 
-            // Ordenar resumoItensAtivos por maior saldo devedor / valor mensal
             resumoItensAtivos.sort((a, b) => b.saldoDevedor - a.saldoDevedor || b.valorMensal - a.valorMensal);
 
             estadoProjecaoCC = {
@@ -1945,7 +1990,7 @@
                 resumoItensAtivos
             };
 
-            // 5. Atualizar KPIs de Comprometimento e Previsões
+            // 6. Atualizar KPIs e renderizar gráficos e tabelas
             document.getElementById('lblCCComprometidoTotal').innerText = formatarMoeda(totalComprometidoParcelas);
             document.getElementById('lblCCComprometidoDetalhe').innerText =
                 `${qtdComprasAtivas} parcelamento(s) ativo(s) • Riceli: ${formatarInteiroSemRS(totalComprometidoRiceli)} | Outros: ${formatarInteiroSemRS(totalComprometidoOutros)}`;
@@ -1970,10 +2015,9 @@
             document.getElementById('lblCCPrevProximoMesDetalhe').innerText =
                 `Parcelas: ${formatarMoeda(parcelasProximoMes)} • Fixos: ${formatarMoeda(fixosProximoMes)}`;
 
-            // Média mensal projetada no horizonte selecionado
-            const totaisPorMes = mesesProjetados.map(m => {
-                return (detalhesProjecaoCCPorMes[m] || []).reduce((acc, it) => acc + it.valor, 0);
-            });
+            const totaisPorMes = mesesProjetados.map(m =>
+                (detalhesProjecaoCCPorMes[m] || []).reduce((acc, it) => acc + it.valor, 0)
+            );
             const somaHorizonte = totaisPorMes.reduce((acc, v) => acc + v, 0);
             const mediaHorizonte = mesesProjetados.length > 0 ? somaHorizonte / mesesProjetados.length : 0;
 
@@ -1982,9 +2026,8 @@
                 `Média nos próximos ${mesesProjetados.length} meses (${formatarMoeda(somaHorizonte)} no período)`;
 
             if (ultimoMesParcelaGeral && ultimoMesParcelaGeral > mesAncora) {
-                const [a0, m0] = mesAncora.split('-').map(Number);
                 const [a1, m1] = ultimoMesParcelaGeral.split('-').map(Number);
-                const mesesAteQuitar = (a1 - a0) * 12 + (m1 - m0);
+                const mesesAteQuitar = (a1 - anoAnc) * 12 + (m1 - mesAnc);
                 document.getElementById('lblCCUltimoMesQuitacao').innerText = formatarMesYYYYMMParaBR(ultimoMesParcelaGeral);
                 document.getElementById('lblCCMesesRestantes').innerText = `${mesesAteQuitar} mês(es) até quitar parcelas atuais`;
             } else {
@@ -1992,10 +2035,10 @@
                 document.getElementById('lblCCMesesRestantes').innerText = 'Nenhuma parcela futura pendente';
             }
 
-            // 6. Renderizar Gráfico Empilhado de Previsão Futura
+            // 7. Renderizar Gráfico Empilhado de Previsão Futura
             renderizarGraficoProjecaoCartao();
 
-            // 7. Popular dropdown de meses na tabela de detalhamento e renderizar tabelas
+            // 8. Popular dropdown de meses na tabela de detalhamento e renderizar tabelas
             popularFiltroMesDetalheCC();
             renderizarTabelasComprometimentoCC();
         }
