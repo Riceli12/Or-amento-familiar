@@ -330,6 +330,156 @@
                 <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoCartaoMensal"></canvas></div>
             </div>
 
+            <!-- SEÇÃO: Comprometimento e Previsões Futuras do Cartão de Crédito -->
+            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-purple-500/40 shadow-lg w-full space-y-4">
+                <!-- Cabeçalho e Filtros da Projeção de Cartão -->
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 border-b border-gray-700 pb-3">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-md font-bold text-purple-300">
+                                <i class="fa-solid fa-credit-card text-purple-400 mr-1.5"></i> Comprometimento e Previsões Futuras — Cartão de Crédito
+                            </h3>
+                            <span id="badgeMesAncoraCC" class="text-[11px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2.5 py-0.5 rounded-full font-semibold">Mês Base: --/----</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5">Projeção automática das parcelas restantes e dos gastos fixos recorrentes no cartão de crédito</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Filtro de Cartão -->
+                        <div class="flex items-center gap-1.5 bg-gray-700/60 px-2.5 py-1.5 rounded-xl border border-gray-600">
+                            <label for="filtroCartaoProjecao" class="text-xs font-semibold text-gray-300">Cartão:</label>
+                            <select id="filtroCartaoProjecao" onchange="atualizarModuloComprometimentoCartao()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400">
+                                <option value="todos">Todos os Cartões</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtro de Horizonte -->
+                        <div class="flex items-center gap-1.5 bg-gray-700/60 px-2.5 py-1.5 rounded-xl border border-gray-600">
+                            <label for="filtroHorizonteCC" class="text-xs font-semibold text-gray-300">Horizonte:</label>
+                            <select id="filtroHorizonteCC" onchange="atualizarModuloComprometimentoCartao()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400">
+                                <option value="12">Próximos 12 meses</option>
+                                <option value="6">Próximos 6 meses</option>
+                                <option value="todos">Até quitar todas as parcelas</option>
+                            </select>
+                        </div>
+
+                        <!-- Checkbox Incluir Fixos no Cartão -->
+                        <label class="flex items-center gap-1.5 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600 text-xs font-semibold text-amber-300 cursor-pointer select-none">
+                            <input type="checkbox" id="checkIncluirFixosCC" checked onchange="atualizarModuloComprometimentoCartao()" class="rounded bg-gray-800 border-gray-500 text-purple-500 focus:ring-0">
+                            <span>Incluir Fixos no Cartão</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4 KPI Cards de Comprometimento do Cartão -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+                    <div class="bg-gray-900/70 p-3 rounded-xl border border-purple-500/40 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Total Comprometido (Parcelas)</p>
+                            <h4 id="lblCCComprometidoTotal" class="text-xl sm:text-2xl font-extrabold text-purple-400 mt-1">R$ 0,00</h4>
+                        </div>
+                        <p id="lblCCComprometidoDetalhe" class="text-[11px] text-gray-400 mt-2">0 compras parceladas ativas</p>
+                    </div>
+
+                    <div class="bg-gray-900/70 p-3 rounded-xl border border-amber-500/40 flex flex-col justify-between">
+                        <div>
+                            <p id="lblCCMesSeguinteTitulo" class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Previsão Próximo Mês</p>
+                            <h4 id="lblCCPrevProximoMes" class="text-xl sm:text-2xl font-extrabold text-amber-400 mt-1">R$ 0,00</h4>
+                        </div>
+                        <p id="lblCCPrevProximoMesDetalhe" class="text-[11px] text-gray-400 mt-2">Parcelas: R$ 0,00 • Fixos: R$ 0,00</p>
+                    </div>
+
+                    <div class="bg-gray-900/70 p-3 rounded-xl border border-sky-500/40 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Média Mensal Projetada</p>
+                            <h4 id="lblCCMediaProjetada" class="text-xl sm:text-2xl font-extrabold text-sky-400 mt-1">R$ 0,00</h4>
+                        </div>
+                        <p id="lblCCMediaProjetadaDetalhe" class="text-[11px] text-gray-400 mt-2">Nos próximos 12 meses</p>
+                    </div>
+
+                    <div class="bg-gray-900/70 p-3 rounded-xl border border-emerald-500/40 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Quitação Total das Parcelas</p>
+                            <h4 id="lblCCUltimoMesQuitacao" class="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1">—</h4>
+                        </div>
+                        <p id="lblCCMesesRestantes" class="text-[11px] text-gray-400 mt-2">Sem parcelas futuras pendentes</p>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Barras Empilhadas: Previsão Futura do Cartão -->
+                <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-700/80">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
+                        <span class="text-xs font-semibold text-gray-300">Evolução das Faturas Futuras Previstas (Parcelas + Fixos Recorrentes)</span>
+                        <span class="text-[11px] text-gray-400"><i class="fa-solid fa-hand-pointer text-purple-400 mr-1"></i> Clique em uma barra para filtrar o detalhamento do mês</span>
+                    </div>
+                    <div class="relative h-80 w-full"><canvas id="graficoProjecaoCartao"></canvas></div>
+                </div>
+
+                <!-- Tabelas de Detalhamento do Comprometimento e Previsão Mensal -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                    <!-- Tabela 1: Compromissos Ativos (Parcelamentos e Fixos) -->
+                    <div class="bg-gray-900/60 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
+                        <div class="p-3 border-b border-gray-700 flex flex-wrap justify-between items-center gap-2 bg-gray-800/70">
+                            <div>
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-200"><i class="fa-solid fa-layer-group text-purple-400 mr-1.5"></i> Itens Comprometidos Ativos</h4>
+                                <span id="lblResumoAtivosCC" class="text-[11px] text-gray-400">Parcela mensal total: R$ 0,00</span>
+                            </div>
+                            <select id="filtroTipoAtivoCC" onchange="renderizarTabelasComprometimentoCC()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2.5 py-1 border border-gray-600 focus:outline-none focus:border-purple-400">
+                                <option value="todos">Todos (Parcelas + Fixos)</option>
+                                <option value="Parcelado">Somente Parcelados</option>
+                                <option value="Fixo Cartão">Somente Fixos Cartão</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="sticky top-0 bg-gray-800 text-gray-400 uppercase text-[10px] tracking-wider border-b border-gray-700">
+                                    <tr>
+                                        <th class="p-2">Tipo</th>
+                                        <th class="p-2">Cartão</th>
+                                        <th class="p-2">Descrição</th>
+                                        <th class="p-2">Ref.</th>
+                                        <th class="p-2 text-center">Rest.</th>
+                                        <th class="p-2 text-right">Mensal</th>
+                                        <th class="p-2 text-right">Saldo Dev.</th>
+                                        <th class="p-2 text-center">Término</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaItensAtivosCC" class="divide-y divide-gray-800 text-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabela 2: Detalhamento da Fatura Prevista por Mês -->
+                    <div class="bg-gray-900/60 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
+                        <div class="p-3 border-b border-gray-700 flex flex-wrap justify-between items-center gap-2 bg-gray-800/70">
+                            <div>
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-200"><i class="fa-solid fa-calendar-days text-amber-400 mr-1.5"></i> Detalhamento das Faturas Futuras</h4>
+                                <span id="lblSubtotalMesDetalheCC" class="text-[11px] font-semibold text-amber-300">Total previsto: R$ 0,00</span>
+                            </div>
+                            <select id="filtroMesDetalheCC" onchange="renderizarTabelaDetalheMesCC()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2.5 py-1 border border-gray-600 focus:outline-none focus:border-amber-400">
+                                <option value="todos">Todos os Meses Projetados</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="sticky top-0 bg-gray-800 text-gray-400 uppercase text-[10px] tracking-wider border-b border-gray-700">
+                                    <tr>
+                                        <th class="p-2">Mês</th>
+                                        <th class="p-2">Origem</th>
+                                        <th class="p-2">Cartão</th>
+                                        <th class="p-2">Descrição</th>
+                                        <th class="p-2">Parcela</th>
+                                        <th class="p-2">Categoria</th>
+                                        <th class="p-2 text-right">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaDetalheMesCC" class="divide-y divide-gray-800 text-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <h3 id="tituloGraficoCategorias" class="text-md font-semibold mb-3 text-gray-300">Saídas por Categoria</h3>
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraCategorias"></canvas></div>
@@ -457,11 +607,20 @@
         let graficoGastosFixosMensalObj = null;
         let graficoCascataFixosCatObj = null;
         let graficoCartaoMensalObj = null;
+        let graficoProjecaoCartaoObj = null;
         let graficoBarraCategoriasObj = null;
         let graficoBarraSubcategoriasObj = null;
         let graficoTop10CatObj = null;
         let graficoTop10SubObj = null;
         let diasSelecionadosExcel = null;
+
+        // Estado global da projeção do cartão de crédito
+        let estadoProjecaoCC = {
+            mesAncora: '',
+            mesesProjetados: [],
+            detalhesProjecaoCCPorMes: {},
+            resumoItensAtivos: []
+        };
 
         document.getElementById('data').valueAsDate = new Date();
 
@@ -640,6 +799,37 @@
         function ehMovimentoInvestimento(t) {
             const cat = (t.categoria || '').toUpperCase().trim();
             return cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO';
+        }
+
+        function ehTransacaoCartao(t) {
+            if (!t) return false;
+            const forma = (t.forma_pagamento || '').toLowerCase();
+            return forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito') || forma.includes('crédito');
+        }
+
+        function parseParcelaCC(parcelaStr) {
+            if (!parcelaStr) return null;
+            const match = String(parcelaStr).match(/(\d+)\s*(?:de|\/)\s*(\d+)/i);
+            if (!match) return null;
+            const atual = parseInt(match[1], 10);
+            const total = parseInt(match[2], 10);
+            if (isNaN(atual) || isNaN(total) || total <= 1 || atual < 1 || atual > total) return null;
+            return { atual, total };
+        }
+
+        function somarMesesYYYYMM(yyyyMm, qtdMeses) {
+            const [anoStr, mesStr] = yyyyMm.split('-');
+            let ano = parseInt(anoStr, 10);
+            let mes = parseInt(mesStr, 10) - 1 + qtdMeses;
+            ano += Math.floor(mes / 12);
+            mes = ((mes % 12) + 12) % 12;
+            return `${ano}-${String(mes + 1).padStart(2, '0')}`;
+        }
+
+        function formatarMesYYYYMMParaBR(yyyyMm) {
+            if (!yyyyMm || !yyyyMm.includes('-')) return yyyyMm || '—';
+            const [ano, mes] = yyyyMm.split('-');
+            return `${mes}/${ano}`;
         }
 
         function obterDataHojeLocalISO() {
@@ -1223,7 +1413,7 @@
             transacoesPeriodo.forEach(t => {
                 const forma = (t.forma_pagamento || '').toLowerCase();
                 const desc = (t.descricao || '').toLowerCase();
-                const ehCartao = forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito');
+                const ehCartao = ehTransacaoCartao(t);
                 const ehFixo = t.fixo && t.fixo.toUpperCase() === 'FIXO';
 
                 if (t.valor > 0) {
@@ -1340,6 +1530,7 @@
             atualizarGraficoGastosFixosMensal();
             atualizarGraficoCascataFixos();
             atualizarGraficoCartaoMensal();
+            atualizarModuloComprometimentoCartao();
             atualizarGraficoSubcategorias();
             atualizarGraficosTop10(transacoesPeriodo, lblMes);
         }
@@ -1385,6 +1576,47 @@
                         }
                     });
                 });
+                ctx.restore();
+            }
+        };
+
+        const pluginTotalEmpilhadoCC = {
+            id: 'pluginTotalEmpilhadoCC',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                const numPontos = data.labels ? data.labels.length : 0;
+                if (numPontos === 0) return;
+
+                ctx.save();
+                ctx.font = 'bold 10.5px sans-serif';
+                ctx.fillStyle = '#e5e7eb';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                for (let i = 0; i < numPontos; i++) {
+                    let somaColuna = 0;
+                    let menorY = null;
+                    let posX = null;
+
+                    data.datasets.forEach((ds, dsIdx) => {
+                        const meta = chart.getDatasetMeta(dsIdx);
+                        if (meta && !meta.hidden && meta.data[i]) {
+                            const val = Number(ds.data[i]) || 0;
+                            somaColuna += val;
+                            if (val > 0) {
+                                const barY = meta.data[i].y;
+                                if (menorY === null || barY < menorY) {
+                                    menorY = barY;
+                                }
+                            }
+                            if (posX === null) posX = meta.data[i].x;
+                        }
+                    });
+
+                    if (somaColuna > 0 && menorY !== null && posX !== null) {
+                        ctx.fillText(formatarInteiroSemRS(somaColuna), posX, menorY - 4);
+                    }
+                }
                 ctx.restore();
             }
         };
@@ -1442,6 +1674,577 @@
                 ctx.restore();
             }
         };
+
+        // ======================== COMPROMETIMENTO E PREVISÕES DO CARTÃO ========================
+
+        function popularSelectCartoesProjecao() {
+            const select = document.getElementById('filtroCartaoProjecao');
+            const valorAtual = select.value;
+
+            const cartoesSet = new Set();
+            transacoes.forEach(t => {
+                if (ehTransacaoCartao(t) && t.forma_pagamento) {
+                    cartoesSet.add(t.forma_pagamento.trim());
+                }
+            });
+
+            const cartoesOrdenados = Array.from(cartoesSet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            select.innerHTML = '<option value="todos">Todos os Cartões</option>';
+            cartoesOrdenados.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                select.appendChild(opt);
+            });
+
+            if (valorAtual === 'todos' || cartoesOrdenados.includes(valorAtual)) {
+                select.value = valorAtual;
+            } else {
+                select.value = 'todos';
+            }
+        }
+
+        function atualizarModuloComprometimentoCartao() {
+            popularSelectCartoesProjecao();
+
+            const cartaoSelecionado = document.getElementById('filtroCartaoProjecao').value;
+            const horizonteSelecionado = document.getElementById('filtroHorizonteCC').value;
+            const incluirFixos = document.getElementById('checkIncluirFixosCC').checked;
+
+            const hojeStr = obterDataHojeLocalISO();
+            const mesHoje = hojeStr.substring(0, 7);
+
+            // Filtrar transações de cartão de crédito conforme seletor de cartão
+            const transacoesCartao = transacoes.filter(t => {
+                if (!t.data || t.data.length < 7) return false;
+                if (!ehTransacaoCartao(t)) return false;
+                if (cartaoSelecionado !== 'todos' && (t.forma_pagamento || '').trim() !== cartaoSelecionado) {
+                    return false;
+                }
+                return true;
+            });
+
+            // Determinar o mês âncora (último mês com lançamentos reais no cartão até o mês atual, ou o último mês disponível)
+            const mesesCartaoSet = new Set();
+            transacoesCartao.forEach(t => mesesCartaoSet.add(t.data.substring(0, 7)));
+            const mesesCartaoOrdenados = Array.from(mesesCartaoSet).sort();
+
+            const mesesCartaoAteHoje = mesesCartaoOrdenados.filter(m => m <= mesHoje);
+            const mesAncora = mesesCartaoAteHoje.length > 0
+                ? mesesCartaoAteHoje[mesesCartaoAteHoje.length - 1]
+                : (mesesCartaoOrdenados.length > 0 ? mesesCartaoOrdenados[mesesCartaoOrdenados.length - 1] : mesHoje);
+
+            document.getElementById('badgeMesAncoraCC').innerText = `Mês Base: ${formatarMesYYYYMMParaBR(mesAncora)}`;
+
+            // Últimos meses de referência para identificar fixos recorrentes ativos no cartão
+            const mesesRefBase = mesesCartaoAteHoje.length > 0 ? mesesCartaoAteHoje : mesesCartaoOrdenados;
+            const ultimosMesesRef = mesesRefBase.slice(-2);
+
+            const detalhesProjecaoCCPorMes = {};
+            const resumoItensAtivos = [];
+            const comprasParceladasMap = new Map();
+            const fixosCartaoMap = new Map();
+
+            let ultimoMesParcelaGeral = '';
+
+            // 1. Varrer transações do cartão para mapear compras parceladas, fixos recorrentes e eventuais lançamentos já feitos no futuro
+            transacoesCartao.forEach(t => {
+                const mesLanc = t.data.substring(0, 7);
+                const cartaoNome = (t.forma_pagamento || 'Cartão de crédito').trim();
+                const descOriginal = (t.descricao || 'Sem descrição').trim();
+                const descNorm = descOriginal.toUpperCase().replace(/\s+/g, ' ');
+                const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
+                const parcelaInfo = parseParcelaCC(t.parcela_cc);
+                const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
+
+                // Caso já existam lançamentos reais lançados em meses futuros (> mesAncora), registrar sem duplicar
+                if (mesLanc > mesAncora && t.valor < 0) {
+                    if (!detalhesProjecaoCCPorMes[mesLanc]) detalhesProjecaoCCPorMes[mesLanc] = [];
+                    detalhesProjecaoCCPorMes[mesLanc].push({
+                        ehFuturo: false,
+                        origem: parcelaInfo ? 'Parcela (Lançada)' : (ehFixo ? 'Fixo (Lançado)' : 'Lançado'),
+                        cartao: cartaoNome,
+                        descricao: descOriginal,
+                        parcela: parcelaInfo ? `${parcelaInfo.atual} de ${parcelaInfo.total}` : '—',
+                        categoria: catNome,
+                        valor: Math.abs(t.valor)
+                    });
+                }
+
+                if (t.valor < 0 && parcelaInfo) {
+                    const valorMensal = Math.abs(t.valor);
+                    const chaveCompra = `${cartaoNome}|${descNorm}|${valorMensal.toFixed(2)}|${parcelaInfo.total}`;
+                    const existente = comprasParceladasMap.get(chaveCompra);
+
+                    // Manter o registro com a parcela mais avançada já registrada
+                    if (!existente || parcelaInfo.atual > existente.parcelaAtual || (parcelaInfo.atual === existente.parcelaAtual && mesLanc > existente.mesUltimaParcela)) {
+                        comprasParceladasMap.set(chaveCompra, {
+                            cartao: cartaoNome,
+                            descricao: descOriginal,
+                            categoria: catNome,
+                            valorMensal: valorMensal,
+                            parcelaAtual: parcelaInfo.atual,
+                            parcelaTotal: parcelaInfo.total,
+                            mesUltimaParcela: mesLanc
+                        });
+                    }
+                } else if (t.valor < 0 && ehFixo && !parcelaInfo) {
+                    if (!ultimosMesesRef.includes(mesLanc)) return;
+                    const valorMensal = Math.abs(t.valor);
+                    const chaveFixo = `${cartaoNome}|${descNorm}`;
+                    const existenteFixo = fixosCartaoMap.get(chaveFixo);
+
+                    if (!existenteFixo || mesLanc >= existenteFixo.mesRef) {
+                        fixosCartaoMap.set(chaveFixo, {
+                            cartao: cartaoNome,
+                            descricao: descOriginal,
+                            categoria: catNome,
+                            valorMensal: valorMensal,
+                            mesRef: mesLanc
+                        });
+                    }
+                }
+            });
+
+            // 2. Projetar parcelas restantes após mesAncora e montar resumo de compras parceladas ativas
+            let totalComprometidoParcelas = 0;
+            let totalComprometidoRiceli = 0;
+            let totalComprometidoOutros = 0;
+            let qtdComprasAtivas = 0;
+
+            comprasParceladasMap.forEach(compra => {
+                const restantes = compra.parcelaTotal - compra.parcelaAtual;
+                if (restantes <= 0) return;
+
+                const mesTermino = somarMesesYYYYMM(compra.mesUltimaParcela, restantes);
+                if (mesTermino <= mesAncora) return;
+
+                let parcelasFuturasReais = 0;
+                let saldoDevedorCompra = 0;
+
+                for (let k = 1; k <= restantes; k++) {
+                    const numParcelaFutura = compra.parcelaAtual + k;
+                    const mesFuturo = somarMesesYYYYMM(compra.mesUltimaParcela, k);
+
+                    if (mesFuturo > mesAncora) {
+                        parcelasFuturasReais++;
+                        saldoDevedorCompra += compra.valorMensal;
+
+                        if (!detalhesProjecaoCCPorMes[mesFuturo]) {
+                            detalhesProjecaoCCPorMes[mesFuturo] = [];
+                        }
+                        detalhesProjecaoCCPorMes[mesFuturo].push({
+                            ehFuturo: true,
+                            origem: 'Parcela',
+                            cartao: compra.cartao,
+                            descricao: compra.descricao,
+                            parcela: `${numParcelaFutura} de ${compra.parcelaTotal}`,
+                            categoria: compra.categoria,
+                            valor: compra.valorMensal
+                        });
+                    }
+                }
+
+                if (parcelasFuturasReais > 0) {
+                    qtdComprasAtivas++;
+                    totalComprometidoParcelas += saldoDevedorCompra;
+
+                    if (compra.cartao.toLowerCase().includes('riceli')) {
+                        totalComprometidoRiceli += saldoDevedorCompra;
+                    } else {
+                        totalComprometidoOutros += saldoDevedorCompra;
+                    }
+
+                    if (!ultimoMesParcelaGeral || mesTermino > ultimoMesParcelaGeral) {
+                        ultimoMesParcelaGeral = mesTermino;
+                    }
+
+                    const parcelaReferenciaNoAncora = Math.min(compra.parcelaTotal, compra.parcelaAtual);
+                    resumoItensAtivos.push({
+                        tipo: 'Parcelado',
+                        cartao: compra.cartao,
+                        descricao: compra.descricao,
+                        categoria: compra.categoria,
+                        ref: `${parcelaReferenciaNoAncora} de ${compra.parcelaTotal} (${formatarMesYYYYMMParaBR(compra.mesUltimaParcela)})`,
+                        restantes: `${parcelasFuturasReais}x`,
+                        valorMensal: compra.valorMensal,
+                        saldoDevedor: saldoDevedorCompra,
+                        termino: formatarMesYYYYMMParaBR(mesTermino),
+                        terminoISO: mesTermino
+                    });
+                }
+            });
+
+            // 3. Definir meses do horizonte futuro (mínimo 12 meses ou até o término da última parcela)
+            let qtdMesesHorizonte = 12;
+            if (horizonteSelecionado === '6') {
+                qtdMesesHorizonte = 6;
+            } else if (horizonteSelecionado === 'todos') {
+                if (ultimoMesParcelaGeral && ultimoMesParcelaGeral > mesAncora) {
+                    const [a0, m0] = mesAncora.split('-').map(Number);
+                    const [a1, m1] = ultimoMesParcelaGeral.split('-').map(Number);
+                    const diffMeses = (a1 - a0) * 12 + (m1 - m0);
+                    qtdMesesHorizonte = Math.max(diffMeses, 6);
+                } else {
+                    qtdMesesHorizonte = 12;
+                }
+            }
+
+            const mesesProjetados = [];
+            for (let i = 1; i <= qtdMesesHorizonte; i++) {
+                const mesFut = somarMesesYYYYMM(mesAncora, i);
+                mesesProjetados.push(mesFut);
+                if (!detalhesProjecaoCCPorMes[mesFut]) {
+                    detalhesProjecaoCCPorMes[mesFut] = [];
+                }
+            }
+
+            // 4. Adicionar Fixos Recorrentes do Cartão nos meses futuros (se habilitado) e no resumo de ativos
+            fixosCartaoMap.forEach(fixoItem => {
+                resumoItensAtivos.push({
+                    tipo: 'Fixo Cartão',
+                    cartao: fixoItem.cartao,
+                    descricao: fixoItem.descricao,
+                    categoria: fixoItem.categoria,
+                    ref: `Recorrente (${formatarMesYYYYMMParaBR(fixoItem.mesRef)})`,
+                    restantes: 'Contínuo',
+                    valorMensal: fixoItem.valorMensal,
+                    saldoDevedor: fixoItem.valorMensal * qtdMesesHorizonte,
+                    termino: 'Contínuo',
+                    terminoISO: '9999-12'
+                });
+
+                if (incluirFixos) {
+                    mesesProjetados.forEach(mesFut => {
+                        // Evitar duplicar se já existe lançamento real igual nesse mês futuro
+                        const jaLancado = detalhesProjecaoCCPorMes[mesFut].some(
+                            it => !it.ehFuturo && it.cartao === fixoItem.cartao && it.descricao.toUpperCase() === fixoItem.descricao.toUpperCase()
+                        );
+                        if (!jaLancado) {
+                            detalhesProjecaoCCPorMes[mesFut].push({
+                                ehFuturo: true,
+                                origem: 'Fixo Cartão',
+                                cartao: fixoItem.cartao,
+                                descricao: fixoItem.descricao,
+                                parcela: 'Fixo',
+                                categoria: fixoItem.categoria,
+                                valor: fixoItem.valorMensal
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Ordenar resumoItensAtivos por maior saldo devedor / valor mensal
+            resumoItensAtivos.sort((a, b) => b.saldoDevedor - a.saldoDevedor || b.valorMensal - a.valorMensal);
+
+            estadoProjecaoCC = {
+                mesAncora,
+                mesesProjetados,
+                detalhesProjecaoCCPorMes,
+                resumoItensAtivos
+            };
+
+            // 5. Atualizar KPIs de Comprometimento e Previsões
+            document.getElementById('lblCCComprometidoTotal').innerText = formatarMoeda(totalComprometidoParcelas);
+            document.getElementById('lblCCComprometidoDetalhe').innerText =
+                `${qtdComprasAtivas} parcelamento(s) ativo(s) • Riceli: ${formatarInteiroSemRS(totalComprometidoRiceli)} | Outros: ${formatarInteiroSemRS(totalComprometidoOutros)}`;
+
+            const proximoMesISO = mesesProjetados[0] || somarMesesYYYYMM(mesAncora, 1);
+            const itensProximoMes = detalhesProjecaoCCPorMes[proximoMesISO] || [];
+            let totalProximoMes = 0;
+            let parcelasProximoMes = 0;
+            let fixosProximoMes = 0;
+
+            itensProximoMes.forEach(item => {
+                totalProximoMes += item.valor;
+                if (item.origem.includes('Fixo')) {
+                    fixosProximoMes += item.valor;
+                } else {
+                    parcelasProximoMes += item.valor;
+                }
+            });
+
+            document.getElementById('lblCCMesSeguinteTitulo').innerText = `Previsão Próximo Mês (${formatarMesYYYYMMParaBR(proximoMesISO)})`;
+            document.getElementById('lblCCPrevProximoMes').innerText = formatarMoeda(totalProximoMes);
+            document.getElementById('lblCCPrevProximoMesDetalhe').innerText =
+                `Parcelas: ${formatarMoeda(parcelasProximoMes)} • Fixos: ${formatarMoeda(fixosProximoMes)}`;
+
+            // Média mensal projetada no horizonte selecionado
+            const totaisPorMes = mesesProjetados.map(m => {
+                return (detalhesProjecaoCCPorMes[m] || []).reduce((acc, it) => acc + it.valor, 0);
+            });
+            const somaHorizonte = totaisPorMes.reduce((acc, v) => acc + v, 0);
+            const mediaHorizonte = mesesProjetados.length > 0 ? somaHorizonte / mesesProjetados.length : 0;
+
+            document.getElementById('lblCCMediaProjetada').innerText = formatarMoeda(mediaHorizonte);
+            document.getElementById('lblCCMediaProjetadaDetalhe').innerText =
+                `Média nos próximos ${mesesProjetados.length} meses (${formatarMoeda(somaHorizonte)} no período)`;
+
+            if (ultimoMesParcelaGeral && ultimoMesParcelaGeral > mesAncora) {
+                const [a0, m0] = mesAncora.split('-').map(Number);
+                const [a1, m1] = ultimoMesParcelaGeral.split('-').map(Number);
+                const mesesAteQuitar = (a1 - a0) * 12 + (m1 - m0);
+                document.getElementById('lblCCUltimoMesQuitacao').innerText = formatarMesYYYYMMParaBR(ultimoMesParcelaGeral);
+                document.getElementById('lblCCMesesRestantes').innerText = `${mesesAteQuitar} mês(es) até quitar parcelas atuais`;
+            } else {
+                document.getElementById('lblCCUltimoMesQuitacao').innerText = 'Quitado';
+                document.getElementById('lblCCMesesRestantes').innerText = 'Nenhuma parcela futura pendente';
+            }
+
+            // 6. Renderizar Gráfico Empilhado de Previsão Futura
+            renderizarGraficoProjecaoCartao();
+
+            // 7. Popular dropdown de meses na tabela de detalhamento e renderizar tabelas
+            popularFiltroMesDetalheCC();
+            renderizarTabelasComprometimentoCC();
+        }
+
+        function renderizarGraficoProjecaoCartao() {
+            const { mesesProjetados, detalhesProjecaoCCPorMes } = estadoProjecaoCC;
+
+            const labels = mesesProjetados.map(m => formatarMesYYYYMMParaBR(m));
+            const dataParcelas = [];
+            const dataFixos = [];
+            const dataLancados = [];
+
+            mesesProjetados.forEach(m => {
+                const itens = detalhesProjecaoCCPorMes[m] || [];
+                let somaParcelas = 0;
+                let somaFixos = 0;
+                let somaLancados = 0;
+
+                itens.forEach(it => {
+                    if (!it.ehFuturo) {
+                        somaLancados += it.valor;
+                    } else if (it.origem === 'Fixo Cartão') {
+                        somaFixos += it.valor;
+                    } else {
+                        somaParcelas += it.valor;
+                    }
+                });
+
+                dataParcelas.push(Number(somaParcelas.toFixed(2)));
+                dataFixos.push(Number(somaFixos.toFixed(2)));
+                dataLancados.push(Number(somaLancados.toFixed(2)));
+            });
+
+            const totaisEmpilhados = mesesProjetados.map((_, idx) => dataParcelas[idx] + dataFixos[idx] + dataLancados[idx]);
+            const maxVal = Math.max(...totaisEmpilhados, 100);
+
+            const datasets = [
+                {
+                    label: 'Parcelas Futuras',
+                    data: dataParcelas,
+                    backgroundColor: '#a78bfa',
+                    borderRadius: 4,
+                    stack: 'fatura'
+                },
+                {
+                    label: 'Fixos no Cartão (Recorrentes)',
+                    data: dataFixos,
+                    backgroundColor: '#fbbf24',
+                    borderRadius: 4,
+                    stack: 'fatura'
+                }
+            ];
+
+            if (dataLancados.some(v => v > 0)) {
+                datasets.push({
+                    label: 'Já Lançados Futuros',
+                    data: dataLancados,
+                    backgroundColor: '#38bdf8',
+                    borderRadius: 4,
+                    stack: 'fatura'
+                });
+            }
+
+            if (graficoProjecaoCartaoObj) graficoProjecaoCartaoObj.destroy();
+            const ctx = document.getElementById('graficoProjecaoCartao').getContext('2d');
+            graficoProjecaoCartaoObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: function(evt, elements) {
+                        if (elements && elements.length > 0) {
+                            const idx = elements[0].index;
+                            const mesClicado = mesesProjetados[idx];
+                            if (mesClicado) {
+                                const selectMes = document.getElementById('filtroMesDetalheCC');
+                                selectMes.value = mesClicado;
+                                renderizarTabelaDetalheMesCC();
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                },
+                                footer: function(tooltipItems) {
+                                    const total = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
+                                    return `Total Previsto: ${formatarMoeda(total)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#9ca3af', font: { size: 11 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            max: maxVal * 1.22,
+                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                },
+                plugins: [pluginTotalEmpilhadoCC]
+            });
+        }
+
+        function popularFiltroMesDetalheCC() {
+            const select = document.getElementById('filtroMesDetalheCC');
+            const valorAtual = select.value;
+            const { mesesProjetados } = estadoProjecaoCC;
+
+            select.innerHTML = '<option value="todos">Todos os Meses Projetados</option>';
+            mesesProjetados.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = formatarMesYYYYMMParaBR(m);
+                select.appendChild(opt);
+            });
+
+            if (valorAtual === 'todos' || mesesProjetados.includes(valorAtual)) {
+                select.value = valorAtual;
+            } else if (mesesProjetados.length > 0) {
+                select.value = mesesProjetados[0];
+            }
+        }
+
+        function renderizarTabelasComprometimentoCC() {
+            renderizarTabelaItensAtivosCC();
+            renderizarTabelaDetalheMesCC();
+        }
+
+        function renderizarTabelaItensAtivosCC() {
+            const tbody = document.getElementById('tabelaItensAtivosCC');
+            const tipoFiltro = document.getElementById('filtroTipoAtivoCC').value;
+            const incluirFixos = document.getElementById('checkIncluirFixosCC').checked;
+
+            const itensFiltrados = estadoProjecaoCC.resumoItensAtivos.filter(item => {
+                if (!incluirFixos && item.tipo === 'Fixo Cartão') return false;
+                if (tipoFiltro !== 'todos' && item.tipo !== tipoFiltro) return false;
+                return true;
+            });
+
+            tbody.innerHTML = '';
+
+            if (itensFiltrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400">Nenhum item comprometido ativo encontrado para este filtro.</td></tr>`;
+                document.getElementById('lblResumoAtivosCC').innerText = 'Parcela mensal total: R$ 0,00';
+                return;
+            }
+
+            let somaMensal = 0;
+            let somaSaldoDevedorParcelas = 0;
+
+            itensFiltrados.forEach(item => {
+                somaMensal += item.valorMensal;
+                if (item.tipo === 'Parcelado') {
+                    somaSaldoDevedorParcelas += item.saldoDevedor;
+                }
+
+                const badgeTipo = item.tipo === 'Parcelado'
+                    ? `<span class="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">Parcelado</span>`
+                    : `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">Fixo</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-800/70 transition';
+                tr.innerHTML = `
+                    <td class="p-2">${badgeTipo}</td>
+                    <td class="p-2 text-gray-300 whitespace-nowrap">${item.cartao}</td>
+                    <td class="p-2 font-medium text-gray-100">${item.descricao}</td>
+                    <td class="p-2 text-gray-400 whitespace-nowrap">${item.ref}</td>
+                    <td class="p-2 text-center font-semibold text-purple-300 whitespace-nowrap">${item.restantes}</td>
+                    <td class="p-2 text-right font-semibold text-gray-200 whitespace-nowrap">${formatarMoeda(item.valorMensal)}</td>
+                    <td class="p-2 text-right font-bold ${item.tipo === 'Parcelado' ? 'text-purple-400' : 'text-amber-300'} whitespace-nowrap">${item.tipo === 'Parcelado' ? formatarMoeda(item.saldoDevedor) : 'Recorrente'}</td>
+                    <td class="p-2 text-center text-gray-300 whitespace-nowrap">${item.termino}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('lblResumoAtivosCC').innerText =
+                `Comprometido mensal: ${formatarMoeda(somaMensal)} • Saldo devedor parcelas: ${formatarMoeda(somaSaldoDevedorParcelas)}`;
+        }
+
+        function renderizarTabelaDetalheMesCC() {
+            const tbody = document.getElementById('tabelaDetalheMesCC');
+            const mesFiltro = document.getElementById('filtroMesDetalheCC').value;
+            const { mesesProjetados, detalhesProjecaoCCPorMes } = estadoProjecaoCC;
+
+            const mesesAlvo = mesFiltro === 'todos' ? mesesProjetados : [mesFiltro];
+            const linhas = [];
+
+            mesesAlvo.forEach(m => {
+                const itens = detalhesProjecaoCCPorMes[m] || [];
+                itens.forEach(it => {
+                    linhas.push({ mes: m, ...it });
+                });
+            });
+
+            linhas.sort((a, b) => a.mes.localeCompare(b.mes) || b.valor - a.valor);
+
+            tbody.innerHTML = '';
+
+            if (linhas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400">Nenhuma previsão de cartão para o período selecionado.</td></tr>`;
+                document.getElementById('lblSubtotalMesDetalheCC').innerText = 'Total previsto: R$ 0,00';
+                return;
+            }
+
+            let subtotal = 0;
+            linhas.forEach(it => {
+                subtotal += it.valor;
+                const badgeOrigem = it.origem.includes('Fixo')
+                    ? `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.origem}</span>`
+                    : `<span class="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.origem}</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-800/70 transition';
+                tr.innerHTML = `
+                    <td class="p-2 font-semibold text-gray-300 whitespace-nowrap">${formatarMesYYYYMMParaBR(it.mes)}</td>
+                    <td class="p-2">${badgeOrigem}</td>
+                    <td class="p-2 text-gray-300 whitespace-nowrap">${it.cartao}</td>
+                    <td class="p-2 font-medium text-gray-100">${it.descricao}</td>
+                    <td class="p-2 text-amber-300 whitespace-nowrap">${it.parcela}</td>
+                    <td class="p-2 text-gray-400 whitespace-nowrap">${it.categoria}</td>
+                    <td class="p-2 text-right font-bold text-rose-300 whitespace-nowrap">${formatarMoeda(it.valor)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const tituloPeriodo = mesFiltro === 'todos' ? 'Período Projetado' : formatarMesYYYYMMParaBR(mesFiltro);
+            document.getElementById('lblSubtotalMesDetalheCC').innerText =
+                `Total previsto (${tituloPeriodo}): ${formatarMoeda(subtotal)} (${linhas.length} itens)`;
+        }
+
+        // ======================== DEMAIS GRÁFICOS ========================
 
         function atualizarGraficoSaldoAcumulado() {
             const hojeStr = obterDataHojeLocalISO();
@@ -1850,11 +2653,8 @@
                 const mes = t.data.substring(0, 7);
                 if (!mesesMap[mes]) mesesMap[mes] = 0;
 
-                if (t.valor < 0) {
-                    const forma = (t.forma_pagamento || '').toLowerCase();
-                    if (forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito')) {
-                        mesesMap[mes] += Math.abs(t.valor);
-                    }
+                if (t.valor < 0 && ehTransacaoCartao(t)) {
+                    mesesMap[mes] += Math.abs(t.valor);
                 }
             });
 
