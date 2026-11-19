@@ -410,6 +410,7 @@
                                     <th class="p-2">Descrição</th>
                                     <th class="p-2">Parcela</th>
                                     <th class="p-2">Categoria</th>
+                                    <th class="p-2">Subcategoria</th>
                                     <th class="p-2 text-center">Término</th>
                                     <th class="p-2 text-right">Valor</th>
                                 </tr>
@@ -1725,6 +1726,7 @@
 
                 const descOriginal = (t.descricao || 'Sem descrição').trim();
                 const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
+                const subcatNome = (t.subcategoria || 'Geral').trim();
                 const valorMensal = Math.abs(t.valor);
                 const chaveEstab = normalizarChaveEstabelecimentoCC(descOriginal);
                 const chaveFixo = `UNICO|${chaveEstab}|${valorMensal.toFixed(2)}`;
@@ -1734,6 +1736,7 @@
                     descricao: descOriginal,
                     chaveEstab,
                     categoria: catNome,
+                    subcategoria: subcatNome,
                     valorMensal,
                     mesRef: mesLanc
                 });
@@ -1745,6 +1748,7 @@
                 const mesLanc = t.data.substring(0, 7);
                 const descOriginal = (t.descricao || 'Sem descrição').trim();
                 const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
+                const subcatNome = (t.subcategoria || 'Geral').trim();
                 const parcelaInfo = parseParcelaCC(t.parcela_cc, t.descricao);
 
                 if (mesLanc > mesAncora) {
@@ -1760,6 +1764,7 @@
                         descricao: descOriginal,
                         parcela: (parcelaInfo && !parcelaInfo.avista) ? `${parcelaInfo.atual} de ${parcelaInfo.total}` : '—',
                         categoria: catNome,
+                        subcategoria: subcatNome,
                         termino: terminoLanc,
                         valor: Math.abs(t.valor)
                     });
@@ -1778,6 +1783,7 @@
                         descricao: descOriginal,
                         chaveEstab,
                         categoria: catNome,
+                        subcategoria: subcatNome,
                         valorMensal,
                         parcelaAtual: parcelaInfo.atual,
                         parcelaTotal: parcelaInfo.total,
@@ -1824,6 +1830,7 @@
                         descricao: compra.descricao,
                         parcela: `${numParcelaFutura} de ${compra.parcelaTotal}`,
                         categoria: compra.categoria,
+                        subcategoria: compra.subcategoria || 'Geral',
                         termino: formatarMesYYYYMMParaBR(mesTermino),
                         valor: compra.valorMensal
                     });
@@ -1878,6 +1885,7 @@
                                 descricao: fixoItem.descricao,
                                 parcela: 'Fixo',
                                 categoria: fixoItem.categoria,
+                                subcategoria: fixoItem.subcategoria || 'Geral',
                                 termino: 'Contínuo',
                                 valor: fixoItem.valorMensal
                             });
@@ -2130,7 +2138,7 @@
             tbody.innerHTML = '';
 
             if (linhas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400">Nenhum item encontrado para os filtros selecionados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400">Nenhum item encontrado para os filtros selecionados.</td></tr>`;
                 document.getElementById('lblSubtotalMesDetalheCC').innerText = 'Total previsto: R$ 0,00';
                 return;
             }
@@ -2155,6 +2163,7 @@
                     <td class="p-2 font-medium text-gray-100">${it.descricao}</td>
                     <td class="p-2 text-amber-300 whitespace-nowrap">${it.parcela}</td>
                     <td class="p-2 text-gray-400 whitespace-nowrap">${it.categoria}</td>
+                    <td class="p-2 text-gray-400 whitespace-nowrap">${it.subcategoria || 'Geral'}</td>
                     <td class="p-2 text-center text-gray-300 whitespace-nowrap">${it.termino || '—'}</td>
                     <td class="p-2 text-right font-bold text-rose-300 whitespace-nowrap">${formatarMoeda(it.valor)}</td>
                 `;
