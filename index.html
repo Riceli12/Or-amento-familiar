@@ -109,7 +109,7 @@
             <!-- Card 1: Total de Entradas -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Total de Entradas (Renda Real)</p>
+                    <p class="text-xs text-gray-400 font-medium">Total de Entradas</p>
                     <h3 id="lblEntradas" class="text-2xl font-bold text-emerald-400 mt-1">R$ 0,00</h3>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
@@ -131,7 +131,7 @@
             <!-- Card 2: Total de Saídas -->
             <div class="bg-gray-800 p-3 sm:p-4 rounded-xl border border-gray-700 shadow-sm flex flex-col justify-between">
                 <div>
-                    <p class="text-xs text-gray-400 font-medium">Total de Saídas (Líquido)</p>
+                    <p class="text-xs text-gray-400 font-medium">Total de Saídas</p>
                     <h3 id="lblSaidas" class="text-2xl font-bold text-rose-400 mt-1">R$ 0,00</h3>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-gray-700/80 grid grid-cols-2 gap-2">
@@ -201,8 +201,7 @@
                         <select id="formaPagamento" class="bg-gray-700 border border-gray-600 rounded-xl px-4 py-2 text-sm w-full focus:outline-none focus:border-emerald-500 text-gray-200">
                             <option value="Débito Riceli">Débito Riceli</option>
                             <option value="Débito Juliana">Débito Juliana</option>
-                            <option value="Cartão de crédito Riceli">Cartão de crédito Riceli</option>
-                            <option value="Cartão de crédito">Cartão de crédito</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
                         </select>
                     </div>
                     <div>
@@ -335,18 +334,9 @@
                             </h3>
                             <span id="badgeMesAncoraCC" class="text-[11px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2.5 py-0.5 rounded-full font-semibold">Mês Base: --/----</span>
                         </div>
-                        <p class="text-xs text-gray-400 mt-0.5">Gastos consolidados por mês e projeção automática das parcelas restantes e dos fixos recorrentes</p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <!-- Filtro de Cartão -->
-                        <div class="flex items-center gap-1.5 bg-gray-700/60 px-2.5 py-1.5 rounded-xl border border-gray-600">
-                            <label for="filtroCartaoProjecao" class="text-xs font-semibold text-gray-300">Cartão:</label>
-                            <select id="filtroCartaoProjecao" onchange="atualizarModuloComprometimentoCartao()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400">
-                                <option value="todos">Todos os Cartões</option>
-                            </select>
-                        </div>
-
                         <!-- Filtro de Horizonte -->
                         <div class="flex items-center gap-1.5 bg-gray-700/60 px-2.5 py-1.5 rounded-xl border border-gray-600">
                             <label for="filtroHorizonteCC" class="text-xs font-semibold text-gray-300">Horizonte:</label>
@@ -787,6 +777,17 @@
             return forma.includes('cartão') || forma.includes('cartao') || forma.includes('credito') || forma.includes('crédito');
         }
 
+        const NOME_CARTAO_UNICO = 'Cartão de Crédito';
+
+        function normalizarFormaPagamento(forma) {
+            const raw = (forma || '').trim();
+            const lower = raw.toLowerCase();
+            if (lower.includes('cartão') || lower.includes('cartao') || lower.includes('credito') || lower.includes('crédito')) {
+                return NOME_CARTAO_UNICO;
+            }
+            return raw;
+        }
+
         function parseParcelaCC(parcelaStr, descricaoStr = '') {
             const fontes = [parcelaStr, descricaoStr];
             for (const src of fontes) {
@@ -912,6 +913,7 @@
 
                 transacoes = todosRegistros.map(t => ({
                     ...t,
+                    forma_pagamento: normalizarFormaPagamento(t.forma_pagamento),
                     valor: Number(t.valor) || 0,
                     data: (t.data || '').toString().trim()
                 }));
@@ -1143,7 +1145,7 @@
             const valoresSet = new Set();
 
             dadosPeriodo.forEach(t => {
-                if (t.forma_pagamento) formasSet.add(t.forma_pagamento);
+                if (t.forma_pagamento) formasSet.add(normalizarFormaPagamento(t.forma_pagamento));
                 if (t.parcela_cc && t.parcela_cc.trim() !== '') {
                     parcelasSet.add(t.parcela_cc.trim());
                 }
@@ -1196,7 +1198,7 @@
             
             const novaRegistro = {
                 data: document.getElementById('data').value,
-                forma_pagamento: document.getElementById('formaPagamento').value,
+                forma_pagamento: normalizarFormaPagamento(document.getElementById('formaPagamento').value),
                 parcela_cc: document.getElementById('parcelaCC').value.trim(),
                 descricao: document.getElementById('descricao').value.trim(),
                 valor: val,
@@ -1307,7 +1309,7 @@
                         if (index === 0 && (colunas[0].toLowerCase().includes('forma') || colunas[0].toLowerCase().includes('pagamento'))) return;
 
                         if (colunas.length >= 6) {
-                            const formaPagamento = colunas[0] || 'Débito';
+                            const formaPagamento = normalizarFormaPagamento(colunas[0] || 'Débito');
                             let parcelaCCBruta = colunas[1] || '';
                             parcelaCCBruta = parcelaCCBruta.replace(/^parcela\s*:\s*/i, '').trim();
 
@@ -1389,7 +1391,7 @@
                 const parcelaVal = (t.parcela_cc || '').trim();
 
                 const matchData = diasSelecionadosExcel === null || diasSelecionadosExcel.includes(t.data);
-                const matchForma = !fForma || t.forma_pagamento === fForma;
+                const matchForma = !fForma || normalizarFormaPagamento(t.forma_pagamento) === fForma;
                 
                 let matchParcela = true;
                 if (fParcela === 'COM_PARCELA') {
@@ -1501,7 +1503,7 @@
 
                 tr.innerHTML = `
                     <td class="p-3 sm:p-4 text-gray-300">${dataExibir}</td>
-                    <td class="p-3 sm:p-4 text-xs font-medium text-gray-300">${t.forma_pagamento}</td>
+                    <td class="p-3 sm:p-4 text-xs font-medium text-gray-300">${normalizarFormaPagamento(t.forma_pagamento)}</td>
                     <td class="p-3 sm:p-4 text-xs">${badgeParcela}</td>
                     <td class="p-3 sm:p-4 font-medium text-gray-200">${t.descricao}</td>
                     <td class="p-3 sm:p-4 text-xs"><span class="bg-gray-700 text-emerald-300 px-2.5 py-1 rounded-md font-semibold">${t.categoria || 'OUTROS'}</span></td>
@@ -1687,51 +1689,17 @@
 
         // ======================== COMPROMETIMENTO E PREVISÕES DO CARTÃO ========================
 
-        function popularSelectCartoesProjecao() {
-            const select = document.getElementById('filtroCartaoProjecao');
-            const valorAtual = select.value;
-
-            const cartoesSet = new Set();
-            transacoes.forEach(t => {
-                if (ehTransacaoCartao(t) && t.forma_pagamento) {
-                    cartoesSet.add(t.forma_pagamento.trim());
-                }
-            });
-
-            const cartoesOrdenados = Array.from(cartoesSet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-            select.innerHTML = '<option value="todos">Todos os Cartões</option>';
-            cartoesOrdenados.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.innerText = c;
-                select.appendChild(opt);
-            });
-
-            if (valorAtual === 'todos' || cartoesOrdenados.includes(valorAtual)) {
-                select.value = valorAtual;
-            } else {
-                select.value = 'todos';
-            }
-        }
-
         function atualizarModuloComprometimentoCartao() {
-            popularSelectCartoesProjecao();
-
-            const cartaoSelecionado = document.getElementById('filtroCartaoProjecao').value;
             const horizonteSelecionado = document.getElementById('filtroHorizonteCC').value;
             const incluirFixos = document.getElementById('checkIncluirFixosCC').checked;
 
             const hojeStr = obterDataHojeLocalISO();
             const mesHoje = hojeStr.substring(0, 7);
 
-            // Filtrar transações de cartão de crédito conforme seletor de cartão
+            // Todas as transações de cartão de crédito unificadas em um único cartão
             const transacoesCartao = transacoes.filter(t => {
                 if (!t.data || t.data.length < 7) return false;
-                if (!ehTransacaoCartao(t)) return false;
-                if (cartaoSelecionado !== 'todos' && (t.forma_pagamento || '').trim() !== cartaoSelecionado) {
-                    return false;
-                }
-                return true;
+                return ehTransacaoCartao(t);
             });
 
             // Identificar o mês base (último mês com fatura importada até hoje)
@@ -1765,16 +1733,14 @@
                 const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
                 if (!ehFixo) return;
 
-                const cartaoNome = (t.forma_pagamento || 'Cartão de crédito').trim();
                 const descOriginal = (t.descricao || 'Sem descrição').trim();
                 const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
                 const valorMensal = Math.abs(t.valor);
                 const chaveEstab = normalizarChaveEstabelecimentoCC(descOriginal);
-                const escopoCartao = cartaoSelecionado === 'todos' ? 'TODOS' : cartaoNome;
-                const chaveFixo = `${escopoCartao}|${chaveEstab}|${valorMensal.toFixed(2)}`;
+                const chaveFixo = `UNICO|${chaveEstab}|${valorMensal.toFixed(2)}`;
 
                 fixosCartaoMap.set(chaveFixo, {
-                    cartao: cartaoNome,
+                    cartao: NOME_CARTAO_UNICO,
                     descricao: descOriginal,
                     chaveEstab,
                     categoria: catNome,
@@ -1787,7 +1753,6 @@
             transacoesCartao.forEach(t => {
                 if (t.valor >= 0) return;
                 const mesLanc = t.data.substring(0, 7);
-                const cartaoNome = (t.forma_pagamento || 'Cartão de crédito').trim();
                 const descOriginal = (t.descricao || 'Sem descrição').trim();
                 const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
                 const parcelaInfo = parseParcelaCC(t.parcela_cc, t.descricao);
@@ -1797,7 +1762,7 @@
                     detalhesProjecaoCCPorMes[mesLanc].push({
                         ehFuturo: false,
                         origem: (parcelaInfo && !parcelaInfo.avista) ? 'Parcela (Lançada)' : 'Lançado',
-                        cartao: cartaoNome,
+                        cartao: NOME_CARTAO_UNICO,
                         descricao: descOriginal,
                         parcela: (parcelaInfo && !parcelaInfo.avista) ? `${parcelaInfo.atual} de ${parcelaInfo.total}` : '—',
                         categoria: catNome,
@@ -1809,13 +1774,12 @@
 
                 const valorMensal = Math.abs(t.valor);
                 const chaveEstab = normalizarChaveEstabelecimentoCC(descOriginal);
-                const escopoCartao = cartaoSelecionado === 'todos' ? 'TODOS' : cartaoNome;
-                const chaveCompra = `${escopoCartao}|${chaveEstab}|${parcelaInfo.total}|${Math.round(valorMensal)}`;
+                const chaveCompra = `UNICO|${chaveEstab}|${parcelaInfo.total}|${Math.round(valorMensal)}`;
                 const existente = comprasParceladasMap.get(chaveCompra);
 
                 if (!existente || parcelaInfo.atual > existente.parcelaAtual || (parcelaInfo.atual === existente.parcelaAtual && mesLanc > existente.mesUltimaParcela)) {
                     comprasParceladasMap.set(chaveCompra, {
-                        cartao: cartaoNome,
+                        cartao: NOME_CARTAO_UNICO,
                         descricao: descOriginal,
                         chaveEstab,
                         categoria: catNome,
@@ -1829,8 +1793,6 @@
 
             // 3. Avançar parcelas pelo calendário até mesAncora e projetar apenas o saldo real restante
             let totalComprometidoParcelas = 0;
-            let totalComprometidoRiceli = 0;
-            let totalComprometidoOutros = 0;
             let qtdComprasAtivas = 0;
 
             const [anoAnc, mesAnc] = mesAncora.split('-').map(Number);
@@ -1844,8 +1806,7 @@
                 if (restantes <= 0) return;
 
                 // Evita duplicar parcelamento antigo que migrou para Fixo mensal no Mês Base
-                const escopoCartao = cartaoSelecionado === 'todos' ? 'TODOS' : compra.cartao;
-                const chaveEquivalenteFixo = `${escopoCartao}|${compra.chaveEstab}|${compra.valorMensal.toFixed(2)}`;
+                const chaveEquivalenteFixo = `UNICO|${compra.chaveEstab}|${compra.valorMensal.toFixed(2)}`;
                 if (compra.mesUltimaParcela < mesAncora && fixosCartaoMap.has(chaveEquivalenteFixo)) return;
 
                 const mesTermino = somarMesesYYYYMM(mesAncora, restantes);
@@ -1865,7 +1826,7 @@
                     detalhesProjecaoCCPorMes[mesFuturo].push({
                         ehFuturo: true,
                         origem: 'Parcela',
-                        cartao: compra.cartao,
+                        cartao: NOME_CARTAO_UNICO,
                         descricao: compra.descricao,
                         parcela: `${numParcelaFutura} de ${compra.parcelaTotal}`,
                         categoria: compra.categoria,
@@ -1877,19 +1838,13 @@
                     qtdComprasAtivas++;
                     totalComprometidoParcelas += saldoDevedorCompra;
 
-                    if (compra.cartao.toLowerCase().includes('riceli')) {
-                        totalComprometidoRiceli += saldoDevedorCompra;
-                    } else {
-                        totalComprometidoOutros += saldoDevedorCompra;
-                    }
-
                     if (!ultimoMesParcelaGeral || mesTermino > ultimoMesParcelaGeral) {
                         ultimoMesParcelaGeral = mesTermino;
                     }
 
                     resumoItensAtivos.push({
                         tipo: 'Parcelado',
-                        cartao: compra.cartao,
+                        cartao: NOME_CARTAO_UNICO,
                         descricao: compra.descricao,
                         categoria: compra.categoria,
                         ref: `${parcelaReferenciaNoAncora} de ${compra.parcelaTotal} (${formatarMesYYYYMMParaBR(mesAncora)})`,
@@ -1930,7 +1885,7 @@
             fixosCartaoMap.forEach(fixoItem => {
                 resumoItensAtivos.push({
                     tipo: 'Fixo Cartão',
-                    cartao: fixoItem.cartao,
+                    cartao: NOME_CARTAO_UNICO,
                     descricao: fixoItem.descricao,
                     categoria: fixoItem.categoria,
                     ref: `Recorrente (${formatarMesYYYYMMParaBR(fixoItem.mesRef)})`,
@@ -1950,7 +1905,7 @@
                             detalhesProjecaoCCPorMes[mesFut].push({
                                 ehFuturo: true,
                                 origem: 'Fixo Cartão',
-                                cartao: fixoItem.cartao,
+                                cartao: NOME_CARTAO_UNICO,
                                 descricao: fixoItem.descricao,
                                 parcela: 'Fixo',
                                 categoria: fixoItem.categoria,
@@ -1983,10 +1938,9 @@
                 resumoItensAtivos
             };
 
-            // 6. Atualizar KPIs restantes e renderizar gráfico unificado e tabelas
+            // 6. Atualizar KPIs e renderizar gráfico unificado e tabelas
             document.getElementById('lblCCComprometidoTotal').innerText = formatarMoeda(totalComprometidoParcelas);
-            document.getElementById('lblCCComprometidoDetalhe').innerText =
-                `${qtdComprasAtivas} parcelamento(s) ativo(s) • Riceli: ${formatarInteiroSemRS(totalComprometidoRiceli)} | Outros: ${formatarInteiroSemRS(totalComprometidoOutros)}`;
+            document.getElementById('lblCCComprometidoDetalhe').innerText = `${qtdComprasAtivas} parcelamento(s) ativo(s)`;
 
             const proximoMesISO = mesesProjetados[0] || somarMesesYYYYMM(mesAncora, 1);
             const itensProximoMes = detalhesProjecaoCCPorMes[proximoMesISO] || [];
@@ -2557,7 +2511,7 @@
                     datasets: [
                         {
                             type: 'line',
-                            label: `Média Anual Gastos Fixos (${formatarInteiroSemRS(mediaAnual)})`,
+                            label: 'Média Anual Gastos Fixos',
                             data: linhaMediaData,
                             borderColor: '#fbbf24',
                             backgroundColor: '#fbbf24',
