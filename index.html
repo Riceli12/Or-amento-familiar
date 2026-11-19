@@ -1983,7 +1983,7 @@
 
             const datasets = [
                 {
-                    label: 'Gastos Consolidados (Cartão)',
+                    label: 'Gastos Consolidados',
                     data: dataConsolidado,
                     backgroundColor: '#a78bfa',
                     borderRadius: 4,
@@ -1997,7 +1997,7 @@
                     stack: 'fatura'
                 },
                 {
-                    label: 'Fixos no Cartão (Recorrentes)',
+                    label: 'Fixos no Cartão',
                     data: dataFixos,
                     backgroundColor: '#fbbf24',
                     borderRadius: 4,
@@ -2027,6 +2027,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
+                    interaction: {
+                        mode: 'index',
+                        intersect: true
+                    },
                     onClick: function(evt, elements) {
                         if (elements && elements.length > 0) {
                             const idx = elements[0].index;
@@ -2040,11 +2044,11 @@
                     },
                     plugins: {
                         legend: {
-                            labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }
+                            labels: { color: '#e5e7eb', boxWidth: 14, padding: 10, font: { size: 10.5, weight: 'bold' } }
                         },
                         tooltip: {
                             mode: 'index',
-                            intersect: false,
+                            intersect: true,
                             callbacks: {
                                 label: function(context) {
                                     if (!context.parsed.y || context.parsed.y <= 0) return null;
