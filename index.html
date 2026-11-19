@@ -15,7 +15,7 @@
         .excel-tree details > summary:hover { color: #34d399; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen p-1.5 sm:p-2.5">
+<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen p-1 sm:p-2.5">
 
     <!-- TELA DE LOGIN (Exibida apenas se não houver sessão válida nos últimos 30 dias) -->
     <div id="telaLogin" class="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4 hidden">
@@ -243,13 +243,13 @@
 
         <!-- Gráficos empilhados -->
         <div class="space-y-3 sm:space-y-4">
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 class="text-md font-semibold mb-3 text-gray-300">Fluxo Mensal de Entradas e Saídas</h3>
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 class="text-md font-semibold mb-2 sm:mb-3 px-1 sm:px-0 text-gray-300">Fluxo Mensal de Entradas e Saídas</h3>
                 <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoLinha"></canvas></div>
             </div>
 
             <!-- GRÁFICO: Evolução do Saldo Acumulado -->
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
                     <div>
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado</h3>
@@ -292,7 +292,7 @@
             </div>
 
             <!-- GRÁFICO 1: Média Gastos Fixos por Mês -->
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <h3 class="text-md font-semibold text-gray-300">Média Gastos Fixos por Mês</h3>
                     <div class="bg-amber-500/20 border-2 border-amber-500/60 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-3 min-w-[225px]">
@@ -309,7 +309,7 @@
             </div>
 
             <!-- GRÁFICO 2: Detalhamento de Gastos Fixos por Categoria (Cascata) -->
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <h3 id="tituloCascataFixos" class="text-md font-semibold text-gray-300">Detalhamento de Gastos Fixos por Categoria (Cascata)</h3>
                     <div class="flex items-center gap-2">
@@ -323,7 +323,7 @@
             </div>
 
             <!-- SEÇÃO UNIFICADA: Histórico Consolidado e Previsões Futuras do Cartão de Crédito -->
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-purple-500/40 shadow-lg w-full space-y-4">
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-purple-500/40 shadow-lg w-full space-y-3 sm:space-y-4">
                 <!-- Cabeçalho e Filtros do Cartão -->
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 border-b border-gray-700 pb-3">
                     <div>
@@ -357,14 +357,6 @@
 
                 <!-- 2 KPI Cards de Comprometimento do Cartão -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                    <div class="bg-gray-900/70 p-3 rounded-xl border border-sky-500/40 flex flex-col justify-between">
-                        <div>
-                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Total Comprometido (Parcelas)</p>
-                            <h4 id="lblCCComprometidoTotal" class="text-xl sm:text-2xl font-extrabold text-sky-400 mt-1">R$ 0,00</h4>
-                        </div>
-                        <p id="lblCCComprometidoDetalhe" class="text-[11px] text-gray-400 mt-2">0 compras parceladas ativas</p>
-                    </div>
-
                     <div class="bg-gray-900/70 p-3 rounded-xl border border-amber-500/40 flex flex-col justify-between">
                         <div>
                             <p id="lblCCMesSeguinteTitulo" class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Previsão Próximo Mês</p>
@@ -372,10 +364,18 @@
                         </div>
                         <p id="lblCCPrevProximoMesDetalhe" class="text-[11px] text-gray-400 mt-2">Parcelas: R$ 0,00 • Fixos: R$ 0,00</p>
                     </div>
+
+                    <div class="bg-gray-900/70 p-3 rounded-xl border border-sky-500/40 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Total Comprometido (Parcelas)</p>
+                            <h4 id="lblCCComprometidoTotal" class="text-xl sm:text-2xl font-extrabold text-sky-400 mt-1">R$ 0,00</h4>
+                        </div>
+                        <p id="lblCCComprometidoDetalhe" class="text-[11px] text-gray-400 mt-2">0 compras parceladas ativas</p>
+                    </div>
                 </div>
 
                 <!-- Gráfico Unificado: Consolidado Mensal + Previsão Futura do Cartão -->
-                <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-700/80">
+                <div class="bg-gray-900/50 px-1 py-2 sm:p-3 rounded-xl border border-gray-700/80">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
                         <span class="text-xs font-semibold text-gray-300">Evolução Mensal Consolidada e Faturas Futuras Previstas (Parcelas + Fixos Recorrentes)</span>
                         <span class="text-[11px] text-gray-400"><i class="fa-solid fa-hand-pointer text-sky-400 mr-1"></i> Clique em uma barra futura para filtrar o detalhamento do mês</span>
@@ -420,13 +420,13 @@
                 </div>
             </div>
 
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
-                <h3 id="tituloGraficoCategorias" class="text-md font-semibold mb-3 text-gray-300">Saídas por Categoria</h3>
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <h3 id="tituloGraficoCategorias" class="text-md font-semibold mb-2 sm:mb-3 px-1 sm:px-0 text-gray-300">Saídas por Categoria</h3>
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraCategorias"></canvas></div>
             </div>
 
             <!-- GRÁFICO: Detalhamento de Subcategorias -->
-            <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <h3 id="tituloGraficoSubcategorias" class="text-md font-semibold text-gray-300">Detalhamento de Subcategorias</h3>
                     <div class="flex items-center gap-2">
@@ -440,12 +440,12 @@
 
             <!-- Top 10 Categoria e Top 10 Subcategoria -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-                <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
-                    <h3 id="tituloTop10Cat" class="text-md font-semibold mb-3 text-gray-300">Top 10 Gastos por Categoria</h3>
+                <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                    <h3 id="tituloTop10Cat" class="text-md font-semibold mb-2 sm:mb-3 px-1 sm:px-0 text-gray-300">Top 10 Gastos por Categoria</h3>
                     <div class="relative h-[420px] w-full"><canvas id="graficoTop10Cat"></canvas></div>
                 </div>
-                <div class="bg-gray-800 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
-                    <h3 id="tituloTop10Sub" class="text-md font-semibold mb-3 text-gray-300">Top 10 Gastos por Subcategoria</h3>
+                <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                    <h3 id="tituloTop10Sub" class="text-md font-semibold mb-2 sm:mb-3 px-1 sm:px-0 text-gray-300">Top 10 Gastos por Subcategoria</h3>
                     <div class="relative h-[420px] w-full"><canvas id="graficoTop10Sub"></canvas></div>
                 </div>
             </div>
@@ -1611,6 +1611,21 @@
 
         const pluginValoresLinhaSaldoAcumulado = {
             id: 'pluginValoresLinhaSaldoAcumulado',
+            beforeDatasetsDraw(chart) {
+                const { ctx, chartArea, scales } = chart;
+                if (!scales || !scales.y || !chartArea) return;
+                const yZero = scales.y.getPixelForValue(0);
+                if (yZero >= chartArea.top && yZero <= chartArea.bottom) {
+                    ctx.save();
+                    ctx.strokeStyle = '#6b7280';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(chartArea.left, yZero);
+                    ctx.lineTo(chartArea.right, yZero);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            },
             afterDatasetsDraw(chart) {
                 const { ctx, data } = chart;
                 const meta = chart.getDatasetMeta(0);
@@ -2011,6 +2026,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
                     onClick: function(evt, elements) {
                         if (elements && elements.length > 0) {
                             const idx = elements[0].index;
@@ -2055,7 +2071,7 @@
                             display: false,
                             grid: { display: false },
                             stacked: true,
-                            max: maxVal * 1.22
+                            max: maxVal * 1.15
                         }
                     }
                 },
@@ -2350,7 +2366,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 28, bottom: 20, left: 10, right: 24 } },
+                    layout: { padding: { top: 22, bottom: 4, left: 8, right: 14 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -2363,22 +2379,10 @@
                     },
                     scales: {
                         y: {
+                            display: false,
+                            grid: { display: false },
                             min: minVal - margem,
-                            max: maxVal + margem,
-                            ticks: {
-                                color: '#9ca3af',
-                                callback: function(val) {
-                                    return formatarInteiroSemRS(val);
-                                }
-                            },
-                            grid: {
-                                color: function(ctxGrid) {
-                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? '#6b7280' : '#374151';
-                                },
-                                lineWidth: function(ctxGrid) {
-                                    return ctxGrid.tick && ctxGrid.tick.value === 0 ? 1.5 : 1;
-                                }
-                            }
+                            max: maxVal + margem
                         },
                         x: {
                             ticks: { color: '#9ca3af', font: { size: 11 } },
@@ -2445,6 +2449,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
                     plugins: {
                         legend: { labels: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } } },
                         tooltip: {
@@ -2459,7 +2464,7 @@
                         y: {
                             display: false,
                             grid: { display: false },
-                            max: maxVal * 1.2
+                            max: maxVal * 1.14
                         },
                         x: {
                             ticks: { color: '#9ca3af' },
@@ -2536,7 +2541,7 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { right: 80 } },
+                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
@@ -2587,6 +2592,7 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
+                    layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
                     plugins: {
                         legend: { labels: { color: '#9ca3af' } },
                         tooltip: {
@@ -2601,7 +2607,7 @@
                         y: {
                             display: false,
                             grid: { display: false },
-                            max: maxFluxo * 1.2
+                            max: maxFluxo * 1.14
                         },
                         x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
                     }
@@ -2670,7 +2676,7 @@
                     indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    layout: { padding: { right: 80 } },
+                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
@@ -2761,7 +2767,7 @@
                     indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    layout: { padding: { right: 80 } },
+                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
@@ -2827,7 +2833,7 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { right: 80 } },
+                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
@@ -2884,7 +2890,7 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { right: 80 } },
+                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
