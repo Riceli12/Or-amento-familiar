@@ -156,7 +156,6 @@
                     <p class="text-xs text-gray-400 font-medium">Balanço Líquido do Período</p>
                     <h3 id="lblSaldo" class="text-2xl font-bold text-blue-400 mt-1">R$ 0,00</h3>
                 </div>
-                <p id="lblDetalheCaixa" class="text-[11px] text-gray-400 mt-2">Entradas menos saídas líquidas</p>
             </div>
 
             <!-- Card 4: Total Despesas Fixas -->
@@ -813,6 +812,12 @@
             if (!yyyyMm || !yyyyMm.includes('-')) return yyyyMm || '—';
             const [ano, mes] = yyyyMm.split('-');
             return `${mes}/${ano}`;
+        }
+
+        function formatarMesCurtoBR(yyyyMm) {
+            if (!yyyyMm || !yyyyMm.includes('-')) return yyyyMm || '—';
+            const [ano, mes] = yyyyMm.split('-');
+            return `${mes}/${ano.slice(-2)}`;
         }
 
         function obterDataHojeLocalISO() {
@@ -1921,7 +1926,7 @@
             const { mesAncora, mesesConsolidados, consolidadoPorMes, mesesProjetados, detalhesProjecaoCCPorMes } = estadoProjecaoCC;
 
             const todosMeses = [...mesesConsolidados, ...mesesProjetados];
-            const labels = todosMeses.map(m => formatarMesYYYYMMParaBR(m));
+            const labels = todosMeses.map(m => formatarMesCurtoBR(m));
             const dataConsolidado = [];
             const dataParcelas = [];
             const dataFixos = [];
@@ -2047,10 +2052,10 @@
                             grid: { display: false }
                         },
                         y: {
+                            display: false,
+                            grid: { display: false },
                             stacked: true,
-                            max: maxVal * 1.22,
-                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
-                            grid: { color: '#374151' }
+                            max: maxVal * 1.22
                         }
                     }
                 },
@@ -2191,6 +2196,7 @@
 
             mesesOrdenados.forEach(mes => {
                 const [ano, mm] = mes.split('-');
+                const anoCurto = ano.slice(-2);
                 if (mes < mesAtualStr) {
                     let somaMes = 0;
                     transacoes.forEach(t => {
@@ -2199,7 +2205,7 @@
                         }
                     });
                     const valMes = Number((saldoInicial + somaMes).toFixed(2));
-                    labels.push(`${mm}/${ano}`);
+                    labels.push(`${mm}/${anoCurto}`);
                     valores.push(valMes);
                     coresPontos.push(valMes < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(4);
@@ -2219,7 +2225,7 @@
                         }
                     });
                     const saldoFimMesAtual = Number((saldoInicial + somaFimMesAtual).toFixed(2));
-                    labels.push(`Prev. Fim ${mm}/${ano}`);
+                    labels.push(`Prev. Fim ${mm}/${anoCurto}`);
                     valores.push(saldoFimMesAtual);
                     coresPontos.push(saldoFimMesAtual < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(5);
@@ -2231,7 +2237,7 @@
                         }
                     });
                     const saldoFuturo = Number((saldoInicial + somaFuturo).toFixed(2));
-                    labels.push(`Prev. ${mm}/${ano}`);
+                    labels.push(`Prev. ${mm}/${anoCurto}`);
                     valores.push(saldoFuturo);
                     coresPontos.push(saldoFuturo < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(4);
@@ -2411,7 +2417,7 @@
             graficoGastosFixosMensalObj = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    labels: meses.map(m => formatarMesCurtoBR(m)),
                     datasets: [
                         {
                             type: 'line',
@@ -2451,9 +2457,9 @@
                     },
                     scales: {
                         y: {
-                            max: maxVal * 1.2,
-                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
-                            grid: { color: '#374151' }
+                            display: false,
+                            grid: { display: false },
+                            max: maxVal * 1.2
                         },
                         x: {
                             ticks: { color: '#9ca3af' },
@@ -2572,7 +2578,7 @@
             graficoLinhaObj = new Chart(ctxLinha, {
                 type: 'bar',
                 data: {
-                    labels: meses.map(m => m.split('-').reverse().join('/')),
+                    labels: meses.map(m => formatarMesCurtoBR(m)),
                     datasets: [
                         { label: 'Entradas', data: entradasData, backgroundColor: '#34d399', borderRadius: 6 },
                         { label: 'Saídas', data: saidasData, backgroundColor: '#f43f5e', borderRadius: 6 }
@@ -2593,9 +2599,9 @@
                     },
                     scales: {
                         y: {
-                            max: maxFluxo * 1.2,
-                            ticks: { color: '#9ca3af', callback: val => formatarInteiroSemRS(val) },
-                            grid: { color: '#374151' }
+                            display: false,
+                            grid: { display: false },
+                            max: maxFluxo * 1.2
                         },
                         x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
                     }
