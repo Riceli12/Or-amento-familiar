@@ -378,7 +378,7 @@
                 <div class="bg-gray-900/50 px-1 py-2 sm:p-3 rounded-xl border border-gray-700/80">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
                         <span class="text-xs font-semibold text-gray-300">Evolução Mensal Consolidada e Faturas Futuras Previstas (Parcelas + Fixos Recorrentes)</span>
-                        <span class="text-[11px] text-gray-400"><i class="fa-solid fa-hand-pointer text-sky-400 mr-1"></i> Clique em uma barra futura para filtrar o detalhamento do mês</span>
+                        <span class="text-[11px] text-gray-400"><i class="fa-solid fa-hand-pointer text-sky-400 mr-1"></i> Clique em uma barra para filtrar o detalhamento do mês</span>
                     </div>
                     <div class="relative h-80 sm:h-96 w-full"><canvas id="graficoProjecaoCartao"></canvas></div>
                 </div>
@@ -391,10 +391,17 @@
                             <span id="lblSubtotalMesDetalheCC" class="text-[11px] font-semibold text-amber-300">Total previsto: R$ 0,00</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <select id="filtroTipoAtivoCC" onchange="renderizarTabelaDetalheMesCC()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2.5 py-1 border border-gray-600 focus:outline-none focus:border-purple-400">
+                            <button type="button" id="btnLimparFiltrosColunasCC" onclick="limparFiltrosColunasCC()" class="hidden bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-filter-circle-xmark text-[11px]"></i> Limpar Filtros Colunas
+                            </button>
+                            <select id="filtroTipoAtivoCC" onchange="aoMudarFiltroTipoAtivoCC()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2.5 py-1 border border-gray-600 focus:outline-none focus:border-purple-400">
                                 <option value="todos">Todos (Parcelas + Fixos)</option>
                                 <option value="Parcelado">Somente Parcelados</option>
                                 <option value="Fixo Cartão">Somente Fixos Cartão</option>
+                                <option value="Gastos Consolidados">Gastos Consolidados</option>
+                                <option value="Parcelas Futuras">Parcelas Futuras</option>
+                                <option value="Fixos no Cartão">Fixos no Cartão</option>
+                                <option value="Já Lançados Futuros">Já Lançados Futuros</option>
                             </select>
                             <select id="filtroMesDetalheCC" onchange="renderizarTabelaDetalheMesCC()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2.5 py-1 border border-gray-600 focus:outline-none focus:border-amber-400">
                                 <option value="todos">Todos os Meses Projetados</option>
@@ -403,7 +410,7 @@
                     </div>
                     <div class="overflow-x-auto max-h-96 overflow-y-auto">
                         <table class="w-full text-left border-collapse text-xs">
-                            <thead class="sticky top-0 bg-gray-800 text-gray-400 uppercase text-[10px] tracking-wider border-b border-gray-700">
+                            <thead class="sticky top-0 z-10 bg-gray-800 text-gray-400 uppercase text-[10px] tracking-wider border-b border-gray-700">
                                 <tr>
                                     <th class="p-2">Mês</th>
                                     <th class="p-2">Tipo</th>
@@ -413,6 +420,16 @@
                                     <th class="p-2">Subcategoria</th>
                                     <th class="p-2 text-center">Término</th>
                                     <th class="p-2 text-right">Valor</th>
+                                </tr>
+                                <tr class="bg-gray-700/40 border-t border-gray-700">
+                                    <th class="p-1.5"><select id="filtroColMesCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColTipoCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColDescricaoCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full max-w-[230px] bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColParcelaCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColCategoriaCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColSubcategoriaCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColTerminoCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
+                                    <th class="p-1.5"><select id="filtroColValorCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaDetalheMesCC" class="divide-y divide-gray-800 text-gray-200"></tbody>
@@ -559,6 +576,7 @@
             mesAncora: '',
             mesesConsolidados: [],
             consolidadoPorMes: {},
+            detalhesConsolidadosCCPorMes: {},
             mesesProjetados: [],
             detalhesProjecaoCCPorMes: {}
         };
@@ -1982,11 +2000,42 @@
 
             // Consolidado mensal histórico do cartão (até o Mês Base)
             const consolidadoPorMes = {};
+            const detalhesConsolidadosCCPorMes = {};
             transacoesCartao.forEach(t => {
                 if (t.valor >= 0) return;
                 const mes = t.data.substring(0, 7);
                 if (mes <= mesAncora) {
-                    consolidadoPorMes[mes] = (consolidadoPorMes[mes] || 0) + Math.abs(t.valor);
+                    const valorAbs = Math.abs(t.valor);
+                    consolidadoPorMes[mes] = (consolidadoPorMes[mes] || 0) + valorAbs;
+
+                    if (!detalhesConsolidadosCCPorMes[mes]) detalhesConsolidadosCCPorMes[mes] = [];
+                    const descOriginal = (t.descricao || 'Sem descrição').trim();
+                    const catNome = (t.categoria || 'OUTROS').toUpperCase().trim();
+                    const subcatNome = (t.subcategoria || 'Geral').trim();
+                    const parcelaInfo = parseParcelaCC(t.parcela_cc, t.descricao);
+                    const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
+
+                    let parcelaTexto = '—';
+                    let terminoTexto = 'À vista';
+                    if (parcelaInfo && !parcelaInfo.avista) {
+                        parcelaTexto = `${parcelaInfo.atual} de ${parcelaInfo.total}`;
+                        const rest = Math.max(0, parcelaInfo.total - parcelaInfo.atual);
+                        terminoTexto = formatarMesYYYYMMParaBR(somarMesesYYYYMM(mes, rest));
+                    } else if (ehFixo) {
+                        parcelaTexto = 'Fixo';
+                        terminoTexto = 'Contínuo';
+                    }
+
+                    detalhesConsolidadosCCPorMes[mes].push({
+                        ehFuturo: false,
+                        origem: 'Gasto Consolidado',
+                        descricao: descOriginal,
+                        parcela: parcelaTexto,
+                        categoria: catNome,
+                        subcategoria: subcatNome,
+                        termino: terminoTexto,
+                        valor: valorAbs
+                    });
                 }
             });
             const mesesConsolidados = Object.keys(consolidadoPorMes).sort();
@@ -1995,6 +2044,7 @@
                 mesAncora,
                 mesesConsolidados,
                 consolidadoPorMes,
+                detalhesConsolidadosCCPorMes,
                 mesesProjetados,
                 detalhesProjecaoCCPorMes
             };
@@ -2129,8 +2179,19 @@
                         if (elements && elements.length > 0) {
                             const idx = elements[0].index;
                             const mesClicado = todosMeses[idx];
+                            const selectTipo = document.getElementById('filtroTipoAtivoCC');
+                            const selectMes = document.getElementById('filtroMesDetalheCC');
+
                             if (mesClicado && mesesProjetados.includes(mesClicado)) {
-                                const selectMes = document.getElementById('filtroMesDetalheCC');
+                                if (selectTipo.value === 'Gastos Consolidados') {
+                                    selectTipo.value = 'todos';
+                                    popularFiltroMesDetalheCC();
+                                }
+                                selectMes.value = mesClicado;
+                                renderizarTabelaDetalheMesCC();
+                            } else if (mesClicado && mesesConsolidados.includes(mesClicado)) {
+                                selectTipo.value = 'Gastos Consolidados';
+                                popularFiltroMesDetalheCC();
                                 selectMes.value = mesClicado;
                                 renderizarTabelaDetalheMesCC();
                             }
@@ -2177,23 +2238,146 @@
             });
         }
 
+        function aoMudarFiltroTipoAtivoCC() {
+            popularFiltroMesDetalheCC();
+            renderizarTabelaDetalheMesCC();
+        }
+
         function popularFiltroMesDetalheCC() {
             const select = document.getElementById('filtroMesDetalheCC');
+            const tipoFiltro = document.getElementById('filtroTipoAtivoCC').value;
             const valorAtual = select.value;
-            const { mesesProjetados } = estadoProjecaoCC;
+            const { mesesConsolidados, mesesProjetados } = estadoProjecaoCC;
 
-            select.innerHTML = '<option value="todos">Todos os Meses Projetados</option>';
-            mesesProjetados.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.innerText = formatarMesYYYYMMParaBR(m);
-                select.appendChild(opt);
+            if (tipoFiltro === 'Gastos Consolidados') {
+                const mesesConsDesc = [...mesesConsolidados].reverse();
+                select.innerHTML = '<option value="todos">Todos os Meses Consolidados</option>';
+                mesesConsDesc.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.innerText = formatarMesYYYYMMParaBR(m);
+                    select.appendChild(opt);
+                });
+
+                if (valorAtual === 'todos' || mesesConsolidados.includes(valorAtual)) {
+                    select.value = valorAtual;
+                } else if (mesesConsDesc.length > 0) {
+                    select.value = mesesConsDesc[0];
+                }
+            } else {
+                select.innerHTML = '<option value="todos">Todos os Meses Projetados</option>';
+                mesesProjetados.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.innerText = formatarMesYYYYMMParaBR(m);
+                    select.appendChild(opt);
+                });
+
+                if (valorAtual === 'todos' || mesesProjetados.includes(valorAtual)) {
+                    select.value = valorAtual;
+                } else if (mesesProjetados.length > 0) {
+                    select.value = mesesProjetados[0];
+                }
+            }
+        }
+
+        function obterTipoExibicaoItemCC(it) {
+            if (it.origem === 'Gasto Consolidado') return 'Gasto Consolidado';
+            if (it.origem === 'Fixo Cartão') return 'Fixo';
+            if (it.origem === 'Fixo (Lançado)') return 'Fixo (Lançado)';
+            if (it.origem === 'Parcela') return 'Parcelado';
+            if (it.origem === 'Parcela (Lançada)') return 'Parcelado (Lançado)';
+            return it.origem || 'Lançado';
+        }
+
+        function limparFiltrosColunasCC() {
+            const ids = [
+                'filtroColMesCC',
+                'filtroColTipoCC',
+                'filtroColDescricaoCC',
+                'filtroColParcelaCC',
+                'filtroColCategoriaCC',
+                'filtroColSubcategoriaCC',
+                'filtroColTerminoCC',
+                'filtroColValorCC'
+            ];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            renderizarTabelaDetalheMesCC();
+        }
+
+        function popularOpcoesFiltrosColunasCC(linhasBase) {
+            const preencherSelectCol = (idSelect, valoresList, formatador = v => v, preservarOrdem = false) => {
+                const select = document.getElementById(idSelect);
+                if (!select) return;
+                const valorSelecionado = select.value;
+
+                const unicos = Array.from(new Set(valoresList.filter(v => v !== '' && v !== null && v !== undefined)));
+                if (!preservarOrdem) {
+                    unicos.sort((a, b) => String(a).localeCompare(String(b), 'pt-BR', { numeric: true }));
+                }
+
+                let htmlOpts = '<option value="">Todos</option>';
+                unicos.forEach(v => {
+                    const valStr = String(v);
+                    const escapedVal = valStr.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedLabel = String(formatador(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    htmlOpts += `<option value="${escapedVal}">${escapedLabel}</option>`;
+                });
+
+                select.innerHTML = htmlOpts;
+
+                if (valorSelecionado !== '' && unicos.map(String).includes(valorSelecionado)) {
+                    select.value = valorSelecionado;
+                } else {
+                    select.value = '';
+                }
+
+                if (select.value !== '') {
+                    select.classList.add('border-amber-400', 'text-amber-200');
+                    select.classList.remove('border-gray-600', 'text-gray-200');
+                } else {
+                    select.classList.remove('border-amber-400', 'text-amber-200');
+                    select.classList.add('border-gray-600', 'text-gray-200');
+                }
+            };
+
+            const mesesOrdenados = Array.from(new Set(linhasBase.map(it => it.mes))).sort();
+            const valoresNumericosOrdenados = Array.from(new Set(linhasBase.map(it => it.valor.toFixed(2))))
+                .sort((a, b) => parseFloat(b) - parseFloat(a));
+
+            preencherSelectCol('filtroColMesCC', mesesOrdenados, m => formatarMesYYYYMMParaBR(m), true);
+            preencherSelectCol('filtroColTipoCC', linhasBase.map(it => it.tipoExibicao));
+            preencherSelectCol('filtroColDescricaoCC', linhasBase.map(it => it.descricao));
+            preencherSelectCol('filtroColParcelaCC', linhasBase.map(it => it.parcela));
+            preencherSelectCol('filtroColCategoriaCC', linhasBase.map(it => it.categoria));
+            preencherSelectCol('filtroColSubcategoriaCC', linhasBase.map(it => it.subcategoria || 'Geral'));
+            preencherSelectCol('filtroColTerminoCC', linhasBase.map(it => it.termino || '—'));
+            preencherSelectCol('filtroColValorCC', valoresNumericosOrdenados, v => formatarMoeda(parseFloat(v)), true);
+
+            const temAlgumFiltroColuna = [
+                'filtroColMesCC',
+                'filtroColTipoCC',
+                'filtroColDescricaoCC',
+                'filtroColParcelaCC',
+                'filtroColCategoriaCC',
+                'filtroColSubcategoriaCC',
+                'filtroColTerminoCC',
+                'filtroColValorCC'
+            ].some(id => {
+                const el = document.getElementById(id);
+                return el && el.value !== '';
             });
 
-            if (valorAtual === 'todos' || mesesProjetados.includes(valorAtual)) {
-                select.value = valorAtual;
-            } else if (mesesProjetados.length > 0) {
-                select.value = mesesProjetados[0];
+            const btnLimpar = document.getElementById('btnLimparFiltrosColunasCC');
+            if (btnLimpar) {
+                if (temAlgumFiltroColuna) {
+                    btnLimpar.classList.remove('hidden');
+                } else {
+                    btnLimpar.classList.add('hidden');
+                }
             }
         }
 
@@ -2201,31 +2385,67 @@
             const tbody = document.getElementById('tabelaDetalheMesCC');
             const mesFiltro = document.getElementById('filtroMesDetalheCC').value;
             const tipoFiltro = document.getElementById('filtroTipoAtivoCC').value;
-            const { mesesProjetados, detalhesProjecaoCCPorMes } = estadoProjecaoCC;
+            const { mesesConsolidados, detalhesConsolidadosCCPorMes, mesesProjetados, detalhesProjecaoCCPorMes } = estadoProjecaoCC;
 
-            const mesesAlvo = mesFiltro === 'todos' ? mesesProjetados : [mesFiltro];
-            const linhas = [];
+            const ehModoConsolidado = tipoFiltro === 'Gastos Consolidados';
+            const fonteMeses = ehModoConsolidado ? mesesConsolidados : mesesProjetados;
+            const fonteDetalhes = ehModoConsolidado ? detalhesConsolidadosCCPorMes : detalhesProjecaoCCPorMes;
+
+            const mesesAlvo = mesFiltro === 'todos' ? fonteMeses : [mesFiltro];
+            const linhasBase = [];
 
             mesesAlvo.forEach(m => {
-                const itens = detalhesProjecaoCCPorMes[m] || [];
+                const itens = fonteDetalhes[m] || [];
                 itens.forEach(it => {
                     const ehFixo = it.origem === 'Fixo Cartão' || it.origem === 'Fixo (Lançado)';
                     const ehParcelado = it.origem === 'Parcela' || it.origem === 'Parcela (Lançada)';
 
                     if (tipoFiltro === 'Parcelado' && !ehParcelado) return;
                     if (tipoFiltro === 'Fixo Cartão' && !ehFixo) return;
+                    if (tipoFiltro === 'Parcelas Futuras' && !(it.ehFuturo && it.origem === 'Parcela')) return;
+                    if (tipoFiltro === 'Fixos no Cartão' && !(it.ehFuturo && it.origem === 'Fixo Cartão')) return;
+                    if (tipoFiltro === 'Já Lançados Futuros' && !(!it.ehFuturo && it.origem !== 'Gasto Consolidado')) return;
 
-                    linhas.push({ mes: m, ...it });
+                    linhasBase.push({
+                        mes: m,
+                        ...it,
+                        tipoExibicao: obterTipoExibicaoItemCC(it)
+                    });
                 });
             });
 
-            linhas.sort((a, b) => a.mes.localeCompare(b.mes) || b.valor - a.valor);
+            linhasBase.sort((a, b) => a.mes.localeCompare(b.mes) || b.valor - a.valor);
+
+            popularOpcoesFiltrosColunasCC(linhasBase);
+
+            const fColMes = document.getElementById('filtroColMesCC').value;
+            const fColTipo = document.getElementById('filtroColTipoCC').value;
+            const fColDescricao = document.getElementById('filtroColDescricaoCC').value;
+            const fColParcela = document.getElementById('filtroColParcelaCC').value;
+            const fColCategoria = document.getElementById('filtroColCategoriaCC').value;
+            const fColSubcategoria = document.getElementById('filtroColSubcategoriaCC').value;
+            const fColTermino = document.getElementById('filtroColTerminoCC').value;
+            const fColValor = document.getElementById('filtroColValorCC').value;
+
+            const linhas = linhasBase.filter(it => {
+                if (fColMes && it.mes !== fColMes) return false;
+                if (fColTipo && it.tipoExibicao !== fColTipo) return false;
+                if (fColDescricao && it.descricao !== fColDescricao) return false;
+                if (fColParcela && it.parcela !== fColParcela) return false;
+                if (fColCategoria && it.categoria !== fColCategoria) return false;
+                if (fColSubcategoria && (it.subcategoria || 'Geral') !== fColSubcategoria) return false;
+                if (fColTermino && (it.termino || '—') !== fColTermino) return false;
+                if (fColValor && it.valor.toFixed(2) !== fColValor) return false;
+                return true;
+            });
 
             tbody.innerHTML = '';
 
             if (linhas.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400">Nenhum item encontrado para os filtros selecionados.</td></tr>`;
-                document.getElementById('lblSubtotalMesDetalheCC').innerText = 'Total previsto: R$ 0,00';
+                document.getElementById('lblSubtotalMesDetalheCC').innerText = ehModoConsolidado
+                    ? 'Total consolidado: R$ 0,00'
+                    : 'Total previsto: R$ 0,00';
                 return;
             }
 
@@ -2233,12 +2453,14 @@
             linhas.forEach(it => {
                 subtotal += it.valor;
                 let badgeTipo;
-                if (it.origem === 'Fixo Cartão' || it.origem === 'Fixo (Lançado)') {
-                    badgeTipo = `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.origem === 'Fixo (Lançado)' ? 'Fixo (Lançado)' : 'Fixo'}</span>`;
+                if (it.origem === 'Gasto Consolidado') {
+                    badgeTipo = `<span class="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">Gasto Consolidado</span>`;
+                } else if (it.origem === 'Fixo Cartão' || it.origem === 'Fixo (Lançado)') {
+                    badgeTipo = `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.tipoExibicao}</span>`;
                 } else if (it.origem === 'Parcela' || it.origem === 'Parcela (Lançada)') {
-                    badgeTipo = `<span class="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">Parcelado</span>`;
+                    badgeTipo = `<span class="bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.tipoExibicao}</span>`;
                 } else {
-                    badgeTipo = `<span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.origem}</span>`;
+                    badgeTipo = `<span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-semibold whitespace-nowrap">${it.tipoExibicao}</span>`;
                 }
 
                 const tr = document.createElement('tr');
@@ -2256,10 +2478,21 @@
                 tbody.appendChild(tr);
             });
 
-            const tituloPeriodo = mesFiltro === 'todos' ? 'Período Projetado' : formatarMesYYYYMMParaBR(mesFiltro);
-            const sufixoTipo = tipoFiltro === 'Parcelado' ? ' • Somente Parcelados' : (tipoFiltro === 'Fixo Cartão' ? ' • Somente Fixos' : '');
+            const rotuloBase = ehModoConsolidado ? 'Total consolidado' : 'Total previsto';
+            const tituloPeriodo = mesFiltro === 'todos'
+                ? (ehModoConsolidado ? 'Período Consolidado' : 'Período Projetado')
+                : formatarMesYYYYMMParaBR(mesFiltro);
+            const rotulosTipo = {
+                'Parcelado': ' • Somente Parcelados',
+                'Fixo Cartão': ' • Somente Fixos',
+                'Gastos Consolidados': ' • Gastos Consolidados',
+                'Parcelas Futuras': ' • Parcelas Futuras',
+                'Fixos no Cartão': ' • Fixos no Cartão',
+                'Já Lançados Futuros': ' • Já Lançados Futuros'
+            };
+            const sufixoTipo = rotulosTipo[tipoFiltro] || '';
             document.getElementById('lblSubtotalMesDetalheCC').innerText =
-                `Total previsto (${tituloPeriodo}${sufixoTipo}): ${formatarMoeda(subtotal)} (${linhas.length} ${linhas.length === 1 ? 'item' : 'itens'})`;
+                `${rotuloBase} (${tituloPeriodo}${sufixoTipo}): ${formatarMoeda(subtotal)} (${linhas.length} ${linhas.length === 1 ? 'item' : 'itens'})`;
         }
 
         // ======================== DEMAIS GRÁFICOS ========================
