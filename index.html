@@ -608,6 +608,7 @@
         }
 
         function mostrarDashboard() {
+            primeiraCargaFiltro = true;
             document.getElementById('telaLogin').classList.add('hidden');
             document.getElementById('conteudoDashboard').classList.remove('hidden');
             carregarDadosDaNuvem();
@@ -939,8 +940,9 @@
             const selectFixos = document.getElementById('filtroMesFixos');
             const valorAtual = select.value;
             const valorFixosAtual = selectFixos.value;
+            const mesVigente = obterDataHojeLocalISO().substring(0, 7);
             
-            const mesesSet = new Set();
+            const mesesSet = new Set([mesVigente]);
             transacoes.forEach(t => {
                 if (t.data && t.data.length >= 7) {
                     mesesSet.add(t.data.substring(0, 7));
@@ -967,10 +969,9 @@
                 selectFixos.appendChild(optFixo);
             });
 
-            if (primeiraCargaFiltro && mesesOrdenados.length > 0) {
-                const ultimoMesComLancamento = mesesOrdenados[0];
-                select.value = ultimoMesComLancamento;
-                selectFixos.value = ultimoMesComLancamento;
+            if (primeiraCargaFiltro) {
+                select.value = mesVigente;
+                selectFixos.value = mesVigente;
                 primeiraCargaFiltro = false;
             } else {
                 if (mesesOrdenados.includes(valorAtual) || valorAtual === 'todos') {
