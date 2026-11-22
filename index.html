@@ -251,8 +251,9 @@
             <!-- GRÁFICO: Evolução do Saldo Acumulado -->
             <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
-                    <div>
+                    <div class="space-y-1">
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado</h3>
+                        <p id="lblResumoProjecaoSaldo" class="text-[11px] text-gray-400"></p>
                     </div>
                     <div class="flex flex-col items-start xl:items-end gap-2.5">
                         <div class="flex items-center gap-2 bg-gray-700/60 px-3 py-1.5 rounded-xl border border-gray-600">
@@ -1551,10 +1552,10 @@
 
             popularFiltroCategoriasSub(transacoesPeriodo);
             atualizarGraficos(transacoesPeriodo, lblMes);
+            atualizarModuloComprometimentoCartao(false);
             atualizarGraficoSaldoAcumulado();
             atualizarGraficoGastosFixosMensal();
             atualizarGraficoCascataFixos();
-            atualizarModuloComprometimentoCartao();
             atualizarGraficoSubcategorias();
             atualizarGraficosTop10(transacoesPeriodo, lblMes);
         }
@@ -1716,7 +1717,7 @@
 
         // ======================== COMPROMETIMENTO E PREVISÕES DO CARTÃO ========================
 
-        function atualizarModuloComprometimentoCartao() {
+        function atualizarModuloComprometimentoCartao(sincronizarSaldo = true) {
             const horizonteSelecionado = document.getElementById('filtroHorizonteCC').value;
             const incluirFixos = document.getElementById('checkIncluirFixosCC').checked;
 
@@ -2083,6 +2084,11 @@
             // 8. Popular dropdown de meses na tabela consolidada e renderizar
             popularFiltroMesDetalheCC();
             renderizarTabelaDetalheMesCC();
+
+            // 9. Atualizar gráfico de Saldo Acumulado caso tenha havido mudança nos parâmetros do cartão
+            if (sincronizarSaldo) {
+                atualizarGraficoSaldoAcumulado();
+            }
         }
 
         function renderizarGraficoProjecaoCartao() {
@@ -2326,8 +2332,8 @@
                 let htmlOpts = '<option value="">Todos</option>';
                 unicos.forEach(v => {
                     const valStr = String(v);
-                    const escapedVal = valStr.replace(/&/g, '&').replace(/"/g, '"').replace(/</g, '<').replace(/>/g, '>');
-                    const escapedLabel = String(formatador(v)).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                    const escapedVal = valStr.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedLabel = String(formatador(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     htmlOpts += `<option value="${escapedVal}">${escapedLabel}</option>`;
                 });
 
@@ -2503,7 +2509,90 @@
             }
         }
 
-        // ======================== DEMAIS GRÁFICOS ========================
+        // ======================== PROJEÇÃO REALISTA DE SALDO ACUMULADO (OPÇÃO 2) ========================
+
+        function calcularParametrosProjecaoSaldo(mesAtualStr) {
+            // 1. Média de Entradas dos últimos 12 meses (excluindo meses atípicos de férias / 13º salário)
+            const rendaPorMes = {};
+            transacoes.forEach(t => {
+                if (!t.data || t.data.length < 7) return;
+                const mes = t.data.substring(0, 7);
+                if (ehRendaReal(t)) {
+                    rendaPorMes[mes] = (rendaPorMes[mes] || 0) + t.valor;
+                }
+            });
+
+            const limiteInicio12m = somarMesesYYYYMM(mesAtualStr, -12);
+            let entradas12m = Object.entries(rendaPorMes)
+                .filter(([mes, val]) => mes >= limiteInicio12m && mes < mesAtualStr && val > 0)
+                .map(([mes, valor]) => ({ mes, valor }))
+                .sort((a, b) => a.mes.localeCompare(b.mes));
+
+            // Fallback caso ainda não haja meses anteriores fechados, usa o próprio mês atual se houver entrada
+            if (entradas12m.length === 0 && (rendaPorMes[mesAtualStr] || 0) > 0) {
+                entradas12m = [{ mes: mesAtualStr, valor: rendaPorMes[mesAtualStr] }];
+            }
+
+            let entradaMediaPrevista = 0;
+            let mesesExcluidosOutlier = [];
+
+            if (entradas12m.length > 0) {
+                const ordenadosVal = [...entradas12m.map(e => e.valor)].sort((a, b) => a - b);
+                const n = ordenadosVal.length;
+                const mediana = n % 2 === 1
+                    ? ordenadosVal[Math.floor(n / 2)]
+                    : (ordenadosVal[n / 2 - 1] + ordenadosVal[n / 2]) / 2;
+
+                // Meses com entrada > 25% acima da mediana (típico de férias / 13º salário) são desconsiderados
+                const limiteOutlier = n === 2
+                    ? ordenadosVal[0] * 1.30
+                    : mediana * 1.25;
+
+                const normais = entradas12m.filter(e => e.valor <= limiteOutlier);
+                mesesExcluidosOutlier = entradas12m.filter(e => e.valor > limiteOutlier).map(e => e.mes);
+
+                const baseCalculo = normais.length > 0 ? normais : entradas12m;
+                const somaNormais = baseCalculo.reduce((acc, item) => acc + item.valor, 0);
+                entradaMediaPrevista = Number((somaNormais / baseCalculo.length).toFixed(2));
+            }
+
+            // 2. Despesas Fixas Recorrentes em Débito / Pix (excluindo cartão de crédito para não duplicar)
+            const calcularFixosDebitoPixDoMes = (mesAlvo) => {
+                const negs = [];
+                const poss = [];
+                transacoes.forEach(t => {
+                    if (!t.data || !t.data.startsWith(mesAlvo)) return;
+                    if (ehTransacaoCartao(t)) return;
+                    if (ehRendaReal(t) || ehMovimentoInvestimento(t)) return;
+                    const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
+                    if (!ehFixo) return;
+
+                    if (t.valor < 0) negs.push(Math.abs(t.valor));
+                    else if (t.valor > 0) poss.push(t.valor);
+                });
+
+                for (let i = negs.length - 1; i >= 0; i--) {
+                    const idxPos = poss.indexOf(negs[i]);
+                    if (idxPos !== -1) {
+                        negs.splice(i, 1);
+                        poss.splice(idxPos, 1);
+                    }
+                }
+                return Number(negs.reduce((acc, v) => acc + v, 0).toFixed(2));
+            };
+
+            const mesAnteriorStr = somarMesesYYYYMM(mesAtualStr, -1);
+            const fixosDebitoMesAtual = calcularFixosDebitoPixDoMes(mesAtualStr);
+            const fixosDebitoMesAnterior = calcularFixosDebitoPixDoMes(mesAnteriorStr);
+            const fixosDebitoPixPrevisto = Math.max(fixosDebitoMesAtual, fixosDebitoMesAnterior);
+
+            return {
+                entradaMediaPrevista,
+                qtdMesesBaseEntrada: entradas12m.length - mesesExcluidosOutlier.length,
+                mesesExcluidosOutlier,
+                fixosDebitoPixPrevisto
+            };
+        }
 
         function atualizarGraficoSaldoAcumulado() {
             const hojeStr = obterDataHojeLocalISO();
@@ -2536,21 +2625,27 @@
                 }
             });
 
-            const mesesSet = new Set([mesAtualStr]);
+            // Meses históricos até o mês atual
+            const mesesHistoricosSet = new Set([mesAtualStr]);
             transacoes.forEach(t => {
                 if (t.data && t.data.length >= 7) {
-                    mesesSet.add(t.data.substring(0, 7));
+                    const m = t.data.substring(0, 7);
+                    if (m <= mesAtualStr) {
+                        mesesHistoricosSet.add(m);
+                    }
                 }
             });
-            const mesesOrdenados = Array.from(mesesSet).sort();
+            const mesesHistoricosOrdenados = Array.from(mesesHistoricosSet).sort();
 
             const labels = [];
             const valores = [];
+            const detalhesTooltipPorIndice = [];
             const coresPontos = [];
             const raiosPontos = [];
             let indiceHoje = -1;
+            let saldoAcumuladoCorrente = saldoInicial;
 
-            mesesOrdenados.forEach(mes => {
+            mesesHistoricosOrdenados.forEach(mes => {
                 const [ano, mm] = mes.split('-');
                 const anoCurto = ano.slice(-2);
                 if (mes < mesAtualStr) {
@@ -2563,6 +2658,7 @@
                     const valMes = Number((saldoInicial + somaMes).toFixed(2));
                     labels.push(`${mm}/${anoCurto}`);
                     valores.push(valMes);
+                    detalhesTooltipPorIndice.push(null);
                     coresPontos.push(valMes < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(4);
                 } else if (mes === mesAtualStr) {
@@ -2570,6 +2666,7 @@
                     const [, , dd] = hojeStr.split('-');
                     labels.push(`Hoje (${dd}/${mm})`);
                     valores.push(saldoHoje);
+                    detalhesTooltipPorIndice.push(null);
                     coresPontos.push('#38bdf8');
                     raiosPontos.push(6);
                     indiceHoje = labels.length - 1;
@@ -2583,22 +2680,87 @@
                     const saldoFimMesAtual = Number((saldoInicial + somaFimMesAtual).toFixed(2));
                     labels.push(`Prev. Fim ${mm}/${anoCurto}`);
                     valores.push(saldoFimMesAtual);
+                    detalhesTooltipPorIndice.push(null);
                     coresPontos.push(saldoFimMesAtual < 0 ? '#f43f5e' : '#34d399');
                     raiosPontos.push(5);
-                } else {
-                    let somaFuturo = 0;
-                    transacoes.forEach(t => {
-                        if (t.data && t.data.substring(0, 7) <= mes) {
-                            somaFuturo += t.valor;
-                        }
-                    });
-                    const saldoFuturo = Number((saldoInicial + somaFuturo).toFixed(2));
-                    labels.push(`Prev. ${mm}/${anoCurto}`);
-                    valores.push(saldoFuturo);
-                    coresPontos.push(saldoFuturo < 0 ? '#f43f5e' : '#34d399');
-                    raiosPontos.push(4);
+                    saldoAcumuladoCorrente = saldoFimMesAtual;
                 }
             });
+
+            // Projeção realista para os próximos 3 meses (Opção 2: Entradas médias 12m sem picos + Fatura CC prevista + Fixos Débito/Pix)
+            const paramsProjecao = calcularParametrosProjecaoSaldo(mesAtualStr);
+            const {
+                entradaMediaPrevista,
+                qtdMesesBaseEntrada,
+                mesesExcluidosOutlier,
+                fixosDebitoPixPrevisto
+            } = paramsProjecao;
+
+            const HORIZONTE_MESES_SALDO = 3;
+            for (let k = 1; k <= HORIZONTE_MESES_SALDO; k++) {
+                const mesFuturo = somarMesesYYYYMM(mesAtualStr, k);
+                const [anoF, mmF] = mesFuturo.split('-');
+                const anoCurtoF = anoF.slice(-2);
+
+                // 1. Entradas previstas (respeita caso já haja salário lançado maior no mês futuro, sem duplicar)
+                let rendaJaLancadaFuturo = 0;
+                let fixosDebitoJaLancadosFuturo = 0;
+                let variaveisDebitoJaLancadosFuturo = 0;
+
+                transacoes.forEach(t => {
+                    if (!t.data || !t.data.startsWith(mesFuturo)) return;
+                    if (ehRendaReal(t)) {
+                        rendaJaLancadaFuturo += t.valor;
+                    } else if (!ehTransacaoCartao(t) && !ehMovimentoInvestimento(t)) {
+                        const ehFixo = t.fixo && t.fixo.toUpperCase().trim() === 'FIXO';
+                        if (ehFixo) {
+                            if (t.valor < 0) fixosDebitoJaLancadosFuturo += Math.abs(t.valor);
+                            else fixosDebitoJaLancadosFuturo -= t.valor;
+                        } else {
+                            if (t.valor < 0) variaveisDebitoJaLancadosFuturo += Math.abs(t.valor);
+                            else variaveisDebitoJaLancadosFuturo -= t.valor;
+                        }
+                    }
+                });
+
+                const entradaMesPrevista = Math.max(entradaMediaPrevista, rendaJaLancadaFuturo);
+
+                // 2. Fatura prevista do Cartão de Crédito (já consolidada com parcelas + fixos + já lançados futuros)
+                const itensCCFuturo = (estadoProjecaoCC.detalhesProjecaoCCPorMes && estadoProjecaoCC.detalhesProjecaoCCPorMes[mesFuturo]) || [];
+                const faturaCCMesPrevista = Number(itensCCFuturo.reduce((acc, it) => acc + (Number(it.valor) || 0), 0).toFixed(2));
+
+                // 3. Despesas Fixas Débito/Pix previstas (sem duplicar eventuais fixos já lançados no mês futuro)
+                const fixosDebitoMesPrevisto = Number((
+                    Math.max(fixosDebitoPixPrevisto, fixosDebitoJaLancadosFuturo) +
+                    Math.max(0, variaveisDebitoJaLancadosFuturo)
+                ).toFixed(2));
+
+                const resultadoLiquidoMes = Number((entradaMesPrevista - faturaCCMesPrevista - fixosDebitoMesPrevisto).toFixed(2));
+                saldoAcumuladoCorrente = Number((saldoAcumuladoCorrente + resultadoLiquidoMes).toFixed(2));
+
+                labels.push(`Prev. ${mmF}/${anoCurtoF}`);
+                valores.push(saldoAcumuladoCorrente);
+                detalhesTooltipPorIndice.push({
+                    entrada: entradaMesPrevista,
+                    cartao: faturaCCMesPrevista,
+                    fixosDebito: fixosDebitoMesPrevisto,
+                    resultadoMes: resultadoLiquidoMes
+                });
+                coresPontos.push(saldoAcumuladoCorrente < 0 ? '#f43f5e' : '#34d399');
+                raiosPontos.push(4.5);
+            }
+
+            // Atualizar subtítulo explicativo da premissa de projeção de 3 meses
+            const lblResumo = document.getElementById('lblResumoProjecaoSaldo');
+            if (lblResumo) {
+                const infoOutliers = mesesExcluidosOutlier.length > 0
+                    ? ` (excl. ${mesesExcluidosOutlier.map(formatarMesCurtoBR).join(', ')})`
+                    : '';
+                lblResumo.innerHTML =
+                    `<i class="fa-solid fa-wand-magic-sparkles text-emerald-400 mr-1"></i>` +
+                    `Projeção 3 meses: Entrada média 12m (${qtdMesesBaseEntrada}m${infoOutliers}) <strong class="text-emerald-400">${formatarMoeda(entradaMediaPrevista)}</strong> ` +
+                    `• Fixos Débito/Pix <strong class="text-cyan-400">${formatarMoeda(fixosDebitoPixPrevisto)}</strong> + Fatura Cartão prevista`;
+            }
 
             const saldoHojeExibir = indiceHoje >= 0 ? valores[indiceHoje] : SALDO_BASE_CALIBRACAO;
             const saldoFimMesExibir = indiceHoje >= 0 && valores[indiceHoje + 1] !== undefined ? valores[indiceHoje + 1] : saldoHojeExibir;
@@ -2712,7 +2874,19 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `Saldo Acumulado: ${formatarInteiroSemRS(context.parsed.y)}`;
+                                    const idx = context.dataIndex;
+                                    const det = detalhesTooltipPorIndice[idx];
+                                    if (!det) {
+                                        return `Saldo Acumulado: ${formatarMoeda(context.parsed.y)}`;
+                                    }
+                                    const sinalRes = det.resultadoMes >= 0 ? '+' : '';
+                                    return [
+                                        `Saldo Acumulado Projetado: ${formatarMoeda(context.parsed.y)}`,
+                                        `+ Entrada Prevista (Média 12m): ${formatarMoeda(det.entrada)}`,
+                                        `- Fatura Cartão Prevista: ${formatarMoeda(det.cartao)}`,
+                                        `- Fixos Débito/Pix Previstos: ${formatarMoeda(det.fixosDebito)}`,
+                                        `= Variação Líquida no Mês: ${sinalRes}${formatarMoeda(det.resultadoMes)}`
+                                    ];
                                 }
                             }
                         }
