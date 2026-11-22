@@ -395,9 +395,7 @@
                                 <i class="fa-solid fa-filter-circle-xmark text-[11px]"></i> Limpar Filtros Colunas
                             </button>
                             <select id="filtroTipoAtivoCC" onchange="aoMudarFiltroTipoAtivoCC()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-2.5 py-1 border border-gray-600 focus:outline-none focus:border-purple-400">
-                                <option value="todos">Todos (Parcelas + Fixos)</option>
-                                <option value="Parcelado">Somente Parcelados</option>
-                                <option value="Fixo Cartão">Somente Fixos Cartão</option>
+                                <option value="todos">Todos</option>
                                 <option value="Gastos Consolidados">Gastos Consolidados</option>
                                 <option value="Parcelas Futuras">Parcelas Futuras</option>
                                 <option value="Fixos no Cartão">Fixos no Cartão</option>
@@ -2328,8 +2326,8 @@
                 let htmlOpts = '<option value="">Todos</option>';
                 unicos.forEach(v => {
                     const valStr = String(v);
-                    const escapedVal = valStr.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    const escapedLabel = String(formatador(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const escapedVal = valStr.replace(/&/g, '&').replace(/"/g, '"').replace(/</g, '<').replace(/>/g, '>');
+                    const escapedLabel = String(formatador(v)).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
                     htmlOpts += `<option value="${escapedVal}">${escapedLabel}</option>`;
                 });
 
@@ -2403,11 +2401,6 @@
             mesesAlvo.forEach(m => {
                 const itens = fonteDetalhes[m] || [];
                 itens.forEach(it => {
-                    const ehFixo = it.origem === 'Fixo Cartão' || it.origem === 'Fixo (Lançado)';
-                    const ehParcelado = it.origem === 'Parcela' || it.origem === 'Parcela (Lançada)';
-
-                    if (tipoFiltro === 'Parcelado' && !ehParcelado) return;
-                    if (tipoFiltro === 'Fixo Cartão' && !ehFixo) return;
                     if (tipoFiltro === 'Parcelas Futuras' && !(it.ehFuturo && it.origem === 'Parcela')) return;
                     if (tipoFiltro === 'Fixos no Cartão' && !(it.ehFuturo && it.origem === 'Fixo Cartão')) return;
                     if (tipoFiltro === 'Já Lançados Futuros' && !(!it.ehFuturo && it.origem !== 'Gasto Consolidado')) return;
@@ -2494,8 +2487,6 @@
                 ? (ehModoConsolidado ? 'Período Consolidado' : 'Período Projetado')
                 : formatarMesYYYYMMParaBR(mesFiltro);
             const rotulosTipo = {
-                'Parcelado': ' • Somente Parcelados',
-                'Fixo Cartão': ' • Somente Fixos',
                 'Gastos Consolidados': ' • Gastos Consolidados',
                 'Parcelas Futuras': ' • Parcelas Futuras',
                 'Fixos no Cartão': ' • Fixos no Cartão',
