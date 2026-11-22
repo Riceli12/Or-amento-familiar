@@ -253,7 +253,6 @@
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
                     <div class="space-y-1.5">
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado</h3>
-                        <p id="lblResumoProjecaoSaldo" class="text-[11px] text-gray-400"></p>
                         <!-- Controle de Provisões Sazonais para os 3 meses projetados -->
                         <div class="flex flex-wrap items-center gap-2 bg-gray-700/50 px-2.5 py-1.5 rounded-xl border border-gray-600/80 w-fit mt-1">
                             <span class="text-[11px] font-semibold text-amber-300 whitespace-nowrap" title="Informe previsões extras sazonais (Natal, férias, IPVA, IPTU, material escolar)">
@@ -2837,16 +2836,12 @@
             const paramsProjecao = calcularParametrosProjecaoSaldo(mesAtualStr);
             const {
                 entradaMediaPrevista,
-                qtdMesesBaseEntrada,
-                mesesExcluidosOutlier,
                 fixosDebitoPixPrevisto,
                 variaveisDebitoPixPrevisto,
-                mediaHistoricaFaturaCC,
-                qtdMesesBase6m
+                mediaHistoricaFaturaCC
             } = paramsProjecao;
 
             const HORIZONTE_MESES_SALDO = 3;
-            let totalProvisoesSazonais3m = 0;
 
             for (let k = 1; k <= HORIZONTE_MESES_SALDO; k++) {
                 const mesFuturo = somarMesesYYYYMM(mesAtualStr, k);
@@ -2862,7 +2857,6 @@
                 if (inputProvEl && document.activeElement !== inputProvEl) {
                     inputProvEl.value = provisaoSazonalMes > 0 ? provisaoSazonalMes.toFixed(2) : '';
                 }
-                totalProvisoesSazonais3m += provisaoSazonalMes;
 
                 // 1. Entradas previstas (respeita caso já haja salário lançado maior no mês futuro, sem duplicar)
                 let rendaJaLancadaFuturo = 0;
@@ -2921,23 +2915,6 @@
                 });
                 coresPontos.push(saldoAcumuladoCorrente < 0 ? '#f43f5e' : '#34d399');
                 raiosPontos.push(4.5);
-            }
-
-            // Atualizar subtítulo explicativo da premissa realista de projeção de 3 meses
-            const lblResumo = document.getElementById('lblResumoProjecaoSaldo');
-            if (lblResumo) {
-                const infoOutliers = mesesExcluidosOutlier.length > 0
-                    ? ` (excl. ${mesesExcluidosOutlier.map(formatarMesCurtoBR).join(', ')})`
-                    : '';
-                const infoSazonal = totalProvisoesSazonais3m > 0
-                    ? ` + Sazonal <strong class="text-amber-300">${formatarMoeda(totalProvisoesSazonais3m)}</strong> (3m)`
-                    : '';
-                lblResumo.innerHTML =
-                    `<i class="fa-solid fa-wand-magic-sparkles text-emerald-400 mr-1"></i>` +
-                    `Projeção Realista 3m: Entrada média 12m (${qtdMesesBaseEntrada}m${infoOutliers}) <strong class="text-emerald-400">${formatarMoeda(entradaMediaPrevista)}</strong> ` +
-                    `• Fixos Déb/Pix <strong class="text-cyan-400">${formatarMoeda(fixosDebitoPixPrevisto)}</strong> ` +
-                    `+ Var. Déb/Pix (${qtdMesesBase6m}m) <strong class="text-sky-300">${formatarMoeda(variaveisDebitoPixPrevisto)}</strong> ` +
-                    `+ Cartão (piso ${qtdMesesBase6m}m <strong class="text-purple-300">${formatarMoeda(mediaHistoricaFaturaCC)}</strong>)${infoSazonal}`;
             }
 
             const saldoHojeExibir = indiceHoje >= 0 ? valores[indiceHoje] : SALDO_BASE_CALIBRACAO;
