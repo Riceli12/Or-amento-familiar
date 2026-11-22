@@ -419,7 +419,12 @@
                                     <th class="p-2">Categoria</th>
                                     <th class="p-2">Subcategoria</th>
                                     <th class="p-2 text-center">Término</th>
-                                    <th class="p-2 text-right">Valor</th>
+                                    <th class="p-2 text-right">
+                                        <div class="flex flex-col items-end whitespace-nowrap">
+                                            <span>VALOR</span>
+                                            <span id="lblSubtotalValorCC" class="text-[11px] font-semibold text-emerald-400 normal-case mt-0.5">Subtotal: R$ 0,00</span>
+                                        </div>
+                                    </th>
                                 </tr>
                                 <tr class="bg-gray-700/40 border-t border-gray-700">
                                     <th class="p-1.5"><select id="filtroColMesCC" onchange="renderizarTabelaDetalheMesCC()" class="w-full bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-gray-200 focus:outline-none focus:border-purple-400 font-normal normal-case"><option value="">Todos</option></select></th>
@@ -2447,6 +2452,11 @@
                 document.getElementById('lblSubtotalMesDetalheCC').innerText = ehModoConsolidado
                     ? 'Total consolidado: R$ 0,00'
                     : 'Total previsto: R$ 0,00';
+                const lblSubtotalColCC = document.getElementById('lblSubtotalValorCC');
+                if (lblSubtotalColCC) {
+                    lblSubtotalColCC.innerText = 'Subtotal: R$ 0,00';
+                    lblSubtotalColCC.className = 'text-[11px] font-semibold text-emerald-400 normal-case mt-0.5 whitespace-nowrap';
+                }
                 return;
             }
 
@@ -2494,6 +2504,12 @@
             const sufixoTipo = rotulosTipo[tipoFiltro] || '';
             document.getElementById('lblSubtotalMesDetalheCC').innerText =
                 `${rotuloBase} (${tituloPeriodo}${sufixoTipo}): ${formatarMoeda(subtotal)} (${linhas.length} ${linhas.length === 1 ? 'item' : 'itens'})`;
+
+            const lblSubtotalColCC = document.getElementById('lblSubtotalValorCC');
+            if (lblSubtotalColCC) {
+                lblSubtotalColCC.innerText = `Subtotal: ${formatarMoeda(subtotal)}`;
+                lblSubtotalColCC.className = `text-[11px] font-semibold normal-case mt-0.5 whitespace-nowrap ${subtotal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
         }
 
         // ======================== DEMAIS GRÁFICOS ========================
