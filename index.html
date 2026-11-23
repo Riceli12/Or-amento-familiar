@@ -498,6 +498,17 @@
                     <button type="button" id="btnLimparFiltrosHistorico" onclick="limparFiltrosColunasHistorico()" class="hidden bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer flex items-center gap-1">
                         <i class="fa-solid fa-filter-circle-xmark text-[11px]"></i> Limpar Filtros
                     </button>
+                    <div id="filtroTipoHistoricoGrupo" class="inline-flex items-center bg-gray-900/80 p-1 rounded-xl border border-gray-600/80" role="group" aria-label="Filtrar lançamentos por Entradas ou Saídas">
+                        <button type="button" id="btnFiltroTipoTodos" onclick="alterarFiltroTipoHistorico('todos')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer bg-gray-700 text-white shadow-sm">
+                            Todos
+                        </button>
+                        <button type="button" id="btnFiltroTipoEntradas" onclick="alterarFiltroTipoHistorico('entradas')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-emerald-300 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-up text-[10px]"></i> Entradas
+                        </button>
+                        <button type="button" id="btnFiltroTipoSaidas" onclick="alterarFiltroTipoHistorico('saidas')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-rose-300 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-down text-[10px]"></i> Saídas
+                        </button>
+                    </div>
                     <span id="contadorTransacoes" class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full whitespace-nowrap">0 registros</span>
                 </div>
             </div>
@@ -599,6 +610,7 @@
         let graficoTop10CatObj = null;
         let graficoTop10SubObj = null;
         let diasSelecionadosExcel = null;
+        let filtroTipoHistorico = 'todos';
 
         // Estado global da projeção e consolidado do cartão de crédito
         let estadoProjecaoCC = {
@@ -1241,8 +1253,38 @@
             atualizarDashboard();
         }
 
+        function atualizarVisualBotoesTipoHistorico() {
+            const btnTodos = document.getElementById('btnFiltroTipoTodos');
+            const btnEntradas = document.getElementById('btnFiltroTipoEntradas');
+            const btnSaidas = document.getElementById('btnFiltroTipoSaidas');
+            if (!btnTodos || !btnEntradas || !btnSaidas) return;
+
+            const baseClasse = 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1';
+
+            btnTodos.className = filtroTipoHistorico === 'todos'
+                ? 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer bg-gray-700 text-white shadow-sm'
+                : 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-gray-200';
+
+            btnEntradas.className = filtroTipoHistorico === 'entradas'
+                ? `${baseClasse} bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 shadow-sm`
+                : `${baseClasse} text-gray-400 hover:text-emerald-300`;
+
+            btnSaidas.className = filtroTipoHistorico === 'saidas'
+                ? `${baseClasse} bg-rose-600/30 text-rose-300 border border-rose-500/50 shadow-sm`
+                : `${baseClasse} text-gray-400 hover:text-rose-300`;
+        }
+
+        function alterarFiltroTipoHistorico(tipo) {
+            filtroTipoHistorico = tipo;
+            atualizarVisualBotoesTipoHistorico();
+            atualizarDashboard();
+        }
+
         function limparFiltrosColunasHistorico() {
             diasSelecionadosExcel = null;
+            filtroTipoHistorico = 'todos';
+            atualizarVisualBotoesTipoHistorico();
+
             const lblBtn = document.getElementById('labelFiltroDataBtn');
             const icone = document.getElementById('iconeFiltroDataAtivo');
             if (lblBtn) lblBtn.innerText = "Todas as Datas";
@@ -1266,7 +1308,7 @@
                 { idSelect: 'filtroValor', idTh: 'thHistValor' }
             ];
 
-            let temAlgumFiltroAtivo = false;
+            let temAlgumFiltroAtivo = filtroTipoHistorico !== 'todos';
 
             const btnData = document.getElementById('btnFiltroData');
             const thData = document.getElementById('thHistData');
@@ -1590,7 +1632,13 @@
                 return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
             });
 
-            popularOpcoesFiltrosColunas(transacoesPeriodo);
+            const transacoesPeriodoTipo = transacoesPeriodo.filter(t => {
+                if (filtroTipoHistorico === 'entradas') return t.valor > 0;
+                if (filtroTipoHistorico === 'saidas') return t.valor < 0;
+                return true;
+            });
+
+            popularOpcoesFiltrosColunas(transacoesPeriodoTipo);
             atualizarDestaqueFiltrosHistorico();
 
             const fForma = document.getElementById('filtroForma').value;
@@ -1601,7 +1649,7 @@
             const fFixo = document.getElementById('filtroFixo').value;
             const fValor = document.getElementById('filtroValor').value;
 
-            const transacoesFiltradas = transacoesPeriodo.filter(t => {
+            const transacoesFiltradas = transacoesPeriodoTipo.filter(t => {
                 const categoriaVal = t.categoria || 'OUTROS';
                 const subcategoriaVal = t.subcategoria || 'Geral';
                 const parcelaVal = (t.parcela_cc || '').trim();
