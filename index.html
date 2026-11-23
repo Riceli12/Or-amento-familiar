@@ -498,15 +498,22 @@
                     <button type="button" id="btnLimparFiltrosHistorico" onclick="limparFiltrosColunasHistorico()" class="hidden bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer flex items-center gap-1">
                         <i class="fa-solid fa-filter-circle-xmark text-[11px]"></i> Limpar Filtros
                     </button>
-                    <div id="filtroTipoHistoricoGrupo" class="inline-flex items-center bg-gray-900/80 p-1 rounded-xl border border-gray-600/80" role="group" aria-label="Filtrar lançamentos por Entradas ou Saídas">
-                        <button type="button" id="btnFiltroTipoTodos" onclick="alterarFiltroTipoHistorico('todos')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer bg-gray-700 text-white shadow-sm">
+                    <div id="filtroTipoHistoricoGrupo" class="inline-flex flex-wrap items-center bg-gray-900/80 p-1 rounded-xl border border-gray-600/80 gap-0.5" role="group" aria-label="Filtrar lançamentos por Entradas, Saídas ou Fora dos Subtotais">
+                        <button type="button" id="btnFiltroTipoTodos" onclick="alterarFiltroTipoHistorico('todos')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer bg-gray-700 text-white shadow-sm whitespace-nowrap">
                             Todos
                         </button>
-                        <button type="button" id="btnFiltroTipoEntradas" onclick="alterarFiltroTipoHistorico('entradas')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-emerald-300 flex items-center gap-1">
+                        <button type="button" id="btnFiltroTipoEntradas" onclick="alterarFiltroTipoHistorico('entradas')" title="Lançamentos que somam em Total de Entradas" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-emerald-300 flex items-center gap-1 whitespace-nowrap">
                             <i class="fa-solid fa-arrow-trend-up text-[10px]"></i> Entradas
                         </button>
-                        <button type="button" id="btnFiltroTipoSaidas" onclick="alterarFiltroTipoHistorico('saidas')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-rose-300 flex items-center gap-1">
+                        <button type="button" id="btnFiltroTipoSaidas" onclick="alterarFiltroTipoHistorico('saidas')" title="Lançamentos que compõem Total de Saídas (incluindo créditos/estornos que abatem o subtotal)" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-rose-300 flex items-center gap-1 whitespace-nowrap">
                             <i class="fa-solid fa-arrow-trend-down text-[10px]"></i> Saídas
+                        </button>
+                        <span class="h-4 w-px bg-gray-700 mx-0.5 hidden sm:inline-block"></span>
+                        <button type="button" id="btnFiltroTipoForaEntradas" onclick="alterarFiltroTipoHistorico('fora_entradas')" title="Valores positivos que não entram em Total de Entradas (ex: investimentos, estornos, reembolsos)" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-teal-300 flex items-center gap-1 whitespace-nowrap">
+                            <i class="fa-solid fa-plus text-[10px]"></i> Fora de Entradas
+                        </button>
+                        <button type="button" id="btnFiltroTipoForaSaidas" onclick="alterarFiltroTipoHistorico('fora_saidas')" title="Valores negativos de investimentos ou compensados que não entram no líquido de Total de Saídas" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-amber-300 flex items-center gap-1 whitespace-nowrap">
+                            <i class="fa-solid fa-minus text-[10px]"></i> Fora de Saídas
                         </button>
                     </div>
                     <span id="contadorTransacoes" class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full whitespace-nowrap">0 registros</span>
@@ -871,6 +878,59 @@
         function ehMovimentoInvestimento(t) {
             const cat = (t.categoria || '').toUpperCase().trim();
             return cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO';
+        }
+
+        function obterIdsNegativosForaDeSaidas(dadosPeriodo) {
+            const idsFora = new Set();
+            const porCategoria = {};
+
+            dadosPeriodo.forEach((t, idx) => {
+                const chaveItem = (t.id !== undefined && t.id !== null) ? `id_${t.id}` : `idx_${idx}`;
+                t._chaveInternaFiltro = chaveItem;
+
+                if (t.valor < 0 && ehMovimentoInvestimento(t)) {
+                    idsFora.add(chaveItem);
+                }
+
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+                if (ehMovimentoInvestimento(t)) return;
+
+                if (!porCategoria[cat]) porCategoria[cat] = { negs: [], poss: [] };
+                if (t.valor < 0) {
+                    porCategoria[cat].negs.push({ chave: chaveItem, absVal: Math.abs(t.valor) });
+                } else if (t.valor > 0 && !ehRendaReal(t)) {
+                    porCategoria[cat].poss.push(t.valor);
+                }
+            });
+
+            Object.values(porCategoria).forEach(({ negs, poss }) => {
+                if (poss.length === 0 || negs.length === 0) return;
+                const possRestantes = [...poss];
+
+                // 1º passo: correspondência exata de valor (estorno/reembolso integral)
+                for (let i = negs.length - 1; i >= 0; i--) {
+                    const idxExato = possRestantes.findIndex(p => Math.abs(p - negs[i].absVal) < 0.01);
+                    if (idxExato !== -1) {
+                        idsFora.add(negs[i].chave);
+                        possRestantes.splice(idxExato, 1);
+                    }
+                }
+
+                // 2º passo: créditos positivos remanescentes na mesma categoria que abatem saídas
+                let creditoSobra = possRestantes.reduce((acc, v) => acc + v, 0);
+                if (creditoSobra > 0.01) {
+                    for (let i = 0; i < negs.length; i++) {
+                        if (idsFora.has(negs[i].chave)) continue;
+                        if (negs[i].absVal <= creditoSobra + 0.01) {
+                            idsFora.add(negs[i].chave);
+                            creditoSobra -= negs[i].absVal;
+                        }
+                    }
+                }
+            });
+
+            return idsFora;
         }
 
         function calcularSaldoLiquidoMensalInvestimentos(listaTransacoes) {
@@ -1257,13 +1317,15 @@
             const btnTodos = document.getElementById('btnFiltroTipoTodos');
             const btnEntradas = document.getElementById('btnFiltroTipoEntradas');
             const btnSaidas = document.getElementById('btnFiltroTipoSaidas');
+            const btnForaEntradas = document.getElementById('btnFiltroTipoForaEntradas');
+            const btnForaSaidas = document.getElementById('btnFiltroTipoForaSaidas');
             if (!btnTodos || !btnEntradas || !btnSaidas) return;
 
-            const baseClasse = 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1';
+            const baseClasse = 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 whitespace-nowrap';
 
             btnTodos.className = filtroTipoHistorico === 'todos'
-                ? 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer bg-gray-700 text-white shadow-sm'
-                : 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-gray-200';
+                ? 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer bg-gray-700 text-white shadow-sm whitespace-nowrap'
+                : 'px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer text-gray-400 hover:text-gray-200 whitespace-nowrap';
 
             btnEntradas.className = filtroTipoHistorico === 'entradas'
                 ? `${baseClasse} bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 shadow-sm`
@@ -1272,6 +1334,18 @@
             btnSaidas.className = filtroTipoHistorico === 'saidas'
                 ? `${baseClasse} bg-rose-600/30 text-rose-300 border border-rose-500/50 shadow-sm`
                 : `${baseClasse} text-gray-400 hover:text-rose-300`;
+
+            if (btnForaEntradas) {
+                btnForaEntradas.className = filtroTipoHistorico === 'fora_entradas'
+                    ? `${baseClasse} bg-teal-600/30 text-teal-300 border border-teal-500/50 shadow-sm`
+                    : `${baseClasse} text-gray-400 hover:text-teal-300`;
+            }
+
+            if (btnForaSaidas) {
+                btnForaSaidas.className = filtroTipoHistorico === 'fora_saidas'
+                    ? `${baseClasse} bg-amber-600/30 text-amber-300 border border-amber-500/50 shadow-sm`
+                    : `${baseClasse} text-gray-400 hover:text-amber-300`;
+            }
         }
 
         function alterarFiltroTipoHistorico(tipo) {
@@ -1632,9 +1706,21 @@
                 return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
             });
 
+            const idsNegativosForaDeSaidas = obterIdsNegativosForaDeSaidas(transacoesPeriodo);
+
             const transacoesPeriodoTipo = transacoesPeriodo.filter(t => {
-                if (filtroTipoHistorico === 'entradas') return t.valor > 0;
-                if (filtroTipoHistorico === 'saidas') return t.valor < 0;
+                if (filtroTipoHistorico === 'entradas') {
+                    return t.valor > 0 && ehRendaReal(t);
+                }
+                if (filtroTipoHistorico === 'saidas') {
+                    return t.valor < 0 || (t.valor > 0 && !ehRendaReal(t));
+                }
+                if (filtroTipoHistorico === 'fora_entradas') {
+                    return t.valor > 0 && !ehRendaReal(t);
+                }
+                if (filtroTipoHistorico === 'fora_saidas') {
+                    return t.valor < 0 && idsNegativosForaDeSaidas.has(t._chaveInternaFiltro);
+                }
                 return true;
             });
 
