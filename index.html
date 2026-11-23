@@ -253,22 +253,48 @@
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-4">
                     <div class="space-y-1.5">
                         <h3 class="text-md font-semibold text-gray-300">Evolução do Saldo Acumulado</h3>
-                        <!-- Controle de Provisões Sazonais para os 3 meses projetados -->
-                        <div class="flex flex-wrap items-center gap-2 bg-gray-700/50 px-2.5 py-1.5 rounded-xl border border-gray-600/80 w-fit mt-1">
-                            <span class="text-[11px] font-semibold text-amber-300 whitespace-nowrap" title="Informe previsões extras sazonais (Natal, férias, IPVA, IPTU, material escolar)">
-                                <i class="fa-solid fa-calendar-plus mr-1"></i>Provisões Sazonais (Extras):
-                            </span>
-                            <div class="flex items-center gap-1">
-                                <label id="lblProvSazonal1" for="inputProvSazonal1" class="text-[11px] text-gray-300 font-semibold">Mês 1:</label>
-                                <input type="number" step="0.01" min="0" id="inputProvSazonal1" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-rose-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-amber-400">
+                        <!-- Controle de Provisões Sazonais (Receitas e Despesas Extras) para os 3 meses projetados -->
+                        <div class="bg-gray-700/50 px-3 py-2 rounded-xl border border-gray-600/80 w-fit mt-1 space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-semibold text-amber-300 whitespace-nowrap" title="Informe previsões extras sazonais ainda não lançadas (13º salário, férias, bônus, Natal, IPVA, IPTU, material escolar)">
+                                    <i class="fa-solid fa-calendar-plus mr-1"></i>Provisões Sazonais (Extras):
+                                </span>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <label id="lblProvSazonal2" for="inputProvSazonal2" class="text-[11px] text-gray-300 font-semibold">Mês 2:</label>
-                                <input type="number" step="0.01" min="0" id="inputProvSazonal2" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-rose-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-amber-400">
+                            <!-- Linha de Receitas Sazonais (+) -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-[11px] font-semibold text-emerald-400 w-24 flex items-center gap-1 whitespace-nowrap" title="Receitas extras previstas (13º salário, férias, bônus, restituição)">
+                                    <i class="fa-solid fa-circle-plus text-[10px]"></i> Receitas (+):
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <label id="lblProvReceita1" for="inputProvReceita1" class="text-[11px] text-gray-300 font-semibold">Mês 1:</label>
+                                    <input type="number" step="0.01" min="0" id="inputProvReceita1" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-emerald-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-emerald-400">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <label id="lblProvReceita2" for="inputProvReceita2" class="text-[11px] text-gray-300 font-semibold">Mês 2:</label>
+                                    <input type="number" step="0.01" min="0" id="inputProvReceita2" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-emerald-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-emerald-400">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <label id="lblProvReceita3" for="inputProvReceita3" class="text-[11px] text-gray-300 font-semibold">Mês 3:</label>
+                                    <input type="number" step="0.01" min="0" id="inputProvReceita3" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-emerald-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-emerald-400">
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <label id="lblProvSazonal3" for="inputProvSazonal3" class="text-[11px] text-gray-300 font-semibold">Mês 3:</label>
-                                <input type="number" step="0.01" min="0" id="inputProvSazonal3" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-rose-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-amber-400">
+                            <!-- Linha de Despesas Sazonais (-) -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-[11px] font-semibold text-rose-400 w-24 flex items-center gap-1 whitespace-nowrap" title="Despesas extras previstas (Natal, viagens, IPVA, IPTU, material escolar)">
+                                    <i class="fa-solid fa-circle-minus text-[10px]"></i> Despesas (-):
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    <label id="lblProvDespesa1" for="inputProvDespesa1" class="text-[11px] text-gray-300 font-semibold">Mês 1:</label>
+                                    <input type="number" step="0.01" min="0" id="inputProvDespesa1" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-rose-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-rose-400">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <label id="lblProvDespesa2" for="inputProvDespesa2" class="text-[11px] text-gray-300 font-semibold">Mês 2:</label>
+                                    <input type="number" step="0.01" min="0" id="inputProvDespesa2" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-rose-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-rose-400">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <label id="lblProvDespesa3" for="inputProvDespesa3" class="text-[11px] text-gray-300 font-semibold">Mês 3:</label>
+                                    <input type="number" step="0.01" min="0" id="inputProvDespesa3" placeholder="0,00" onchange="alterarProvisoesSazonais()" class="bg-gray-800 text-rose-300 font-bold text-xs rounded-lg px-2 py-0.5 w-24 text-right border border-gray-600 focus:outline-none focus:border-rose-400">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -785,17 +811,46 @@
             }
         }
 
+        function obterProvisaoSazonalMes(mesYYYYMM) {
+            const registro = provisoesSazonaisMapa[mesYYYYMM];
+            if (registro === null || registro === undefined) {
+                return { receita: 0, despesa: 0 };
+            }
+            if (typeof registro === 'number') {
+                return {
+                    receita: registro < 0 ? Number(Math.abs(registro).toFixed(2)) : 0,
+                    despesa: registro > 0 ? Number(registro.toFixed(2)) : 0
+                };
+            }
+            if (typeof registro === 'object') {
+                return {
+                    receita: Math.max(0, Number((parseFloat(registro.receita) || 0).toFixed(2))),
+                    despesa: Math.max(0, Number((parseFloat(registro.despesa) || 0).toFixed(2)))
+                };
+            }
+            return { receita: 0, despesa: 0 };
+        }
+
         async function alterarProvisoesSazonais() {
             const hojeStr = obterDataHojeLocalISO();
             const mesAtualStr = hojeStr.substring(0, 7);
 
             for (let k = 1; k <= 3; k++) {
                 const mesFuturo = somarMesesYYYYMM(mesAtualStr, k);
-                const inputEl = document.getElementById(`inputProvSazonal${k}`);
-                if (!inputEl) continue;
-                const val = parseFloat(inputEl.value);
-                if (!isNaN(val) && val > 0) {
-                    provisoesSazonaisMapa[mesFuturo] = Number(val.toFixed(2));
+                const inputRec = document.getElementById(`inputProvReceita${k}`);
+                const inputDesp = document.getElementById(`inputProvDespesa${k}`);
+
+                const valRec = inputRec ? parseFloat(inputRec.value) : 0;
+                const valDesp = inputDesp ? parseFloat(inputDesp.value) : 0;
+
+                const receitaLimpa = (!isNaN(valRec) && valRec > 0) ? Number(valRec.toFixed(2)) : 0;
+                const despesaLimpa = (!isNaN(valDesp) && valDesp > 0) ? Number(valDesp.toFixed(2)) : 0;
+
+                if (receitaLimpa > 0 || despesaLimpa > 0) {
+                    provisoesSazonaisMapa[mesFuturo] = {
+                        receita: receitaLimpa,
+                        despesa: despesaLimpa
+                    };
                 } else {
                     delete provisoesSazonaisMapa[mesFuturo];
                 }
@@ -3009,14 +3064,22 @@
                 const [anoF, mmF] = mesFuturo.split('-');
                 const anoCurtoF = anoF.slice(-2);
 
-                // Sincroniza rótulo e valor do input de Provisão Sazonal correspondente ao mês futuro
-                const lblProvEl = document.getElementById(`lblProvSazonal${k}`);
-                const inputProvEl = document.getElementById(`inputProvSazonal${k}`);
-                if (lblProvEl) lblProvEl.innerText = `${mmF}/${anoCurtoF}:`;
+                // Sincroniza rótulos e valores dos inputs de Provisões Sazonais (Receitas e Despesas)
+                const lblRecEl = document.getElementById(`lblProvReceita${k}`);
+                const inputRecEl = document.getElementById(`inputProvReceita${k}`);
+                const lblDespEl = document.getElementById(`lblProvDespesa${k}`);
+                const inputDespEl = document.getElementById(`inputProvDespesa${k}`);
 
-                const provisaoSazonalMes = Number((parseFloat(provisoesSazonaisMapa[mesFuturo]) || 0).toFixed(2));
-                if (inputProvEl && document.activeElement !== inputProvEl) {
-                    inputProvEl.value = provisaoSazonalMes > 0 ? provisaoSazonalMes.toFixed(2) : '';
+                if (lblRecEl) lblRecEl.innerText = `${mmF}/${anoCurtoF}:`;
+                if (lblDespEl) lblDespEl.innerText = `${mmF}/${anoCurtoF}:`;
+
+                const { receita: provisaoReceitaMes, despesa: provisaoDespesaMes } = obterProvisaoSazonalMes(mesFuturo);
+
+                if (inputRecEl && document.activeElement !== inputRecEl) {
+                    inputRecEl.value = provisaoReceitaMes > 0 ? provisaoReceitaMes.toFixed(2) : '';
+                }
+                if (inputDespEl && document.activeElement !== inputDespEl) {
+                    inputDespEl.value = provisaoDespesaMes > 0 ? provisaoDespesaMes.toFixed(2) : '';
                 }
 
                 // 1. Entradas previstas (respeita caso já haja salário lançado maior no mês futuro, sem duplicar)
@@ -3054,10 +3117,11 @@
 
                 const resultadoLiquidoMes = Number((
                     entradaMesPrevista
+                    + provisaoReceitaMes
                     - faturaCCMesPrevista
                     - fixosDebitoMesPrevisto
                     - variaveisDebitoMesPrevisto
-                    - provisaoSazonalMes
+                    - provisaoDespesaMes
                 ).toFixed(2));
 
                 saldoAcumuladoCorrente = Number((saldoAcumuladoCorrente + resultadoLiquidoMes).toFixed(2));
@@ -3066,12 +3130,13 @@
                 valores.push(saldoAcumuladoCorrente);
                 detalhesTooltipPorIndice.push({
                     entrada: entradaMesPrevista,
+                    provisaoReceita: provisaoReceitaMes,
                     cartao: faturaCCMesPrevista,
                     cartaoComprometido: faturaCCComprometida,
                     usouPisoCartao,
                     fixosDebito: fixosDebitoMesPrevisto,
                     variaveisDebito: variaveisDebitoMesPrevisto,
-                    provisaoSazonal: provisaoSazonalMes,
+                    provisaoDespesa: provisaoDespesaMes,
                     resultadoMes: resultadoLiquidoMes
                 });
                 coresPontos.push(saldoAcumuladoCorrente < 0 ? '#f43f5e' : '#34d399');
@@ -3201,13 +3266,18 @@
                                         : ' (Comprometida)';
                                     const linhasTooltip = [
                                         `Saldo Acumulado Projetado: ${formatarMoeda(context.parsed.y)}`,
-                                        `+ Entrada Prevista (Média 12m): ${formatarMoeda(det.entrada)}`,
+                                        `+ Entrada Prevista (Média 12m): ${formatarMoeda(det.entrada)}`
+                                    ];
+                                    if (det.provisaoReceita > 0) {
+                                        linhasTooltip.push(`+ Receita Sazonal (Extra): ${formatarMoeda(det.provisaoReceita)}`);
+                                    }
+                                    linhasTooltip.push(
                                         `- Fatura Cartão Prevista: ${formatarMoeda(det.cartao)}${infoPisoCC}`,
                                         `- Fixos Débito/Pix Previstos: ${formatarMoeda(det.fixosDebito)}`,
                                         `- Variáveis Débito/Pix (Média 6m): ${formatarMoeda(det.variaveisDebito)}`
-                                    ];
-                                    if (det.provisaoSazonal > 0) {
-                                        linhasTooltip.push(`- Provisão Sazonal (Extra): ${formatarMoeda(det.provisaoSazonal)}`);
+                                    );
+                                    if (det.provisaoDespesa > 0) {
+                                        linhasTooltip.push(`- Despesa Sazonal (Extra): ${formatarMoeda(det.provisaoDespesa)}`);
                                     }
                                     linhasTooltip.push(`= Variação Líquida no Mês: ${sinalRes}${formatarMoeda(det.resultadoMes)}`);
                                     return linhasTooltip;
