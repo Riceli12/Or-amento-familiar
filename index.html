@@ -494,7 +494,12 @@
         <div class="bg-gray-800 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md overflow-hidden relative">
             <div class="p-3 sm:p-4 border-b border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <h3 class="text-md font-semibold text-gray-300">Histórico de Lançamentos</h3>
-                <span id="contadorTransacoes" class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full whitespace-nowrap">0 registros</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" id="btnLimparFiltrosHistorico" onclick="limparFiltrosColunasHistorico()" class="hidden bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs rounded-lg px-2.5 py-1 font-semibold transition cursor-pointer flex items-center gap-1">
+                        <i class="fa-solid fa-filter-circle-xmark text-[11px]"></i> Limpar Filtros
+                    </button>
+                    <span id="contadorTransacoes" class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full whitespace-nowrap">0 registros</span>
+                </div>
             </div>
             
             <!-- POPUP ESTILO EXCEL PARA FILTRAR DATA -->
@@ -521,14 +526,14 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-700/50 text-gray-400 text-xs uppercase tracking-wider">
-                            <th class="p-2.5 sm:p-3">Data</th>
-                            <th class="p-2.5 sm:p-3">Forma Pagto</th>
-                            <th class="p-2.5 sm:p-3">Parcela CC</th>
-                            <th class="p-2.5 sm:p-3">Descrição</th>
-                            <th class="p-2.5 sm:p-3">Categoria</th>
-                            <th class="p-2.5 sm:p-3">Subcategoria</th>
-                            <th class="p-2.5 sm:p-3">Fixo</th>
-                            <th class="p-2.5 sm:p-3 text-right">
+                            <th id="thHistData" class="p-2.5 sm:p-3 transition-colors">Data</th>
+                            <th id="thHistForma" class="p-2.5 sm:p-3 transition-colors">Forma Pagto</th>
+                            <th id="thHistParcela" class="p-2.5 sm:p-3 transition-colors">Parcela CC</th>
+                            <th id="thHistDescricao" class="p-2.5 sm:p-3 transition-colors">Descrição</th>
+                            <th id="thHistCategoria" class="p-2.5 sm:p-3 transition-colors">Categoria</th>
+                            <th id="thHistSubcategoria" class="p-2.5 sm:p-3 transition-colors">Subcategoria</th>
+                            <th id="thHistFixo" class="p-2.5 sm:p-3 transition-colors">Fixo</th>
+                            <th id="thHistValor" class="p-2.5 sm:p-3 text-right transition-colors">
                                 <div class="flex flex-col items-end whitespace-nowrap">
                                     <span>VALOR</span>
                                     <span id="lblSubtotalValor" class="text-[11px] font-semibold text-emerald-400 normal-case mt-0.5">Subtotal: R$ 0,00</span>
@@ -538,7 +543,7 @@
                         </tr>
                         <tr class="bg-gray-700/30 border-t border-gray-700">
                             <th class="p-1.5 sm:p-2">
-                                <button type="button" onclick="abrirFiltroExcelDireto(event)" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 flex justify-between items-center focus:outline-none focus:border-emerald-500 font-normal cursor-pointer">
+                                <button type="button" id="btnFiltroData" onclick="abrirFiltroExcelDireto(event)" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-200 flex justify-between items-center focus:outline-none focus:border-emerald-500 font-normal cursor-pointer">
                                     <span id="labelFiltroDataBtn">Todas as Datas</span>
                                     <i class="fa-solid fa-filter text-emerald-400 text-[10px]" id="iconeFiltroDataAtivo"></i>
                                 </button>
@@ -854,6 +859,24 @@
         function ehMovimentoInvestimento(t) {
             const cat = (t.categoria || '').toUpperCase().trim();
             return cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO';
+        }
+
+        function calcularSaldoLiquidoMensalInvestimentos(listaTransacoes) {
+            const porMes = {};
+            listaTransacoes.forEach(t => {
+                const mes = (t.data && t.data.length >= 7) ? t.data.substring(0, 7) : 'SEM_MES';
+                if (!porMes[mes]) porMes[mes] = { neg: 0, pos: 0 };
+                if (t.valor < 0) porMes[mes].neg += Math.abs(t.valor);
+                else if (t.valor > 0) porMes[mes].pos += t.valor;
+            });
+            let totalLiquidoSaida = 0;
+            Object.values(porMes).forEach(({ neg, pos }) => {
+                const saldoMes = neg - pos;
+                if (saldoMes > 0) {
+                    totalLiquidoSaida += saldoMes;
+                }
+            });
+            return totalLiquidoSaida;
         }
 
         function ehTransacaoCartao(t) {
@@ -1218,6 +1241,89 @@
             atualizarDashboard();
         }
 
+        function limparFiltrosColunasHistorico() {
+            diasSelecionadosExcel = null;
+            const lblBtn = document.getElementById('labelFiltroDataBtn');
+            const icone = document.getElementById('iconeFiltroDataAtivo');
+            if (lblBtn) lblBtn.innerText = "Todas as Datas";
+            if (icone) icone.className = "fa-solid fa-filter text-emerald-400 text-[10px]";
+
+            ['filtroForma', 'filtroParcela', 'filtroDescricao', 'filtroCategoria', 'filtroSubcategoria', 'filtroFixo', 'filtroValor'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            atualizarDashboard();
+        }
+
+        function atualizarDestaqueFiltrosHistorico() {
+            const mapaColunas = [
+                { idSelect: 'filtroForma', idTh: 'thHistForma' },
+                { idSelect: 'filtroParcela', idTh: 'thHistParcela' },
+                { idSelect: 'filtroDescricao', idTh: 'thHistDescricao' },
+                { idSelect: 'filtroCategoria', idTh: 'thHistCategoria' },
+                { idSelect: 'filtroSubcategoria', idTh: 'thHistSubcategoria' },
+                { idSelect: 'filtroFixo', idTh: 'thHistFixo' },
+                { idSelect: 'filtroValor', idTh: 'thHistValor' }
+            ];
+
+            let temAlgumFiltroAtivo = false;
+
+            const btnData = document.getElementById('btnFiltroData');
+            const thData = document.getElementById('thHistData');
+            const dataFiltrada = diasSelecionadosExcel !== null;
+            if (dataFiltrada) temAlgumFiltroAtivo = true;
+
+            if (btnData) {
+                if (dataFiltrada) {
+                    btnData.classList.add('border-amber-400', 'text-amber-200', 'font-semibold');
+                    btnData.classList.remove('border-gray-600', 'text-gray-200', 'font-normal');
+                } else {
+                    btnData.classList.remove('border-amber-400', 'text-amber-200', 'font-semibold');
+                    btnData.classList.add('border-gray-600', 'text-gray-200', 'font-normal');
+                }
+            }
+            if (thData) {
+                if (dataFiltrada) {
+                    thData.classList.add('text-amber-300');
+                } else {
+                    thData.classList.remove('text-amber-300');
+                }
+            }
+
+            mapaColunas.forEach(({ idSelect, idTh }) => {
+                const select = document.getElementById(idSelect);
+                const th = document.getElementById(idTh);
+                const ativo = select && select.value !== '';
+                if (ativo) temAlgumFiltroAtivo = true;
+
+                if (select) {
+                    if (ativo) {
+                        select.classList.add('border-amber-400', 'text-amber-200', 'font-semibold');
+                        select.classList.remove('border-gray-600', 'text-gray-200', 'font-normal');
+                    } else {
+                        select.classList.remove('border-amber-400', 'text-amber-200', 'font-semibold');
+                        select.classList.add('border-gray-600', 'text-gray-200', 'font-normal');
+                    }
+                }
+                if (th) {
+                    if (ativo) {
+                        th.classList.add('text-amber-300');
+                    } else {
+                        th.classList.remove('text-amber-300');
+                    }
+                }
+            });
+
+            const btnLimpar = document.getElementById('btnLimparFiltrosHistorico');
+            if (btnLimpar) {
+                if (temAlgumFiltroAtivo) {
+                    btnLimpar.classList.remove('hidden');
+                } else {
+                    btnLimpar.classList.add('hidden');
+                }
+            }
+        }
+
         function popularOpcoesFiltrosColunas(dadosPeriodo) {
             const preencherSelect = (idSelect, valoresSet, formatador = v => v, customItensHTML = '') => {
                 const select = document.getElementById(idSelect);
@@ -1230,13 +1336,15 @@
                 valoresOrdenados.forEach(v => {
                     if (v !== '' && v !== undefined && v !== null && v !== 'Vazio') {
                         const optVal = String(v);
-                        html += `<option value="${optVal}">${formatador(v)}</option>`;
+                        const escapedVal = optVal.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const escapedLabel = String(formatador(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        html += `<option value="${escapedVal}">${escapedLabel}</option>`;
                     }
                 });
 
                 select.innerHTML = html;
 
-                if (valorSelecionado !== '' && (valoresOrdenados.includes(valorSelecionado) || valorSelecionado === 'COM_PARCELA' || valorSelecionado === 'Vazio')) {
+                if (valorSelecionado !== '' && (valoresOrdenados.map(String).includes(valorSelecionado) || valorSelecionado === 'COM_PARCELA' || valorSelecionado === 'Vazio')) {
                     select.value = valorSelecionado;
                 } else {
                     select.value = "";
@@ -1483,6 +1591,7 @@
             });
 
             popularOpcoesFiltrosColunas(transacoesPeriodo);
+            atualizarDestaqueFiltrosHistorico();
 
             const fForma = document.getElementById('filtroForma').value;
             const fParcela = document.getElementById('filtroParcela').value;
@@ -3295,7 +3404,8 @@
             const catMapObj = {};
             dadosPeriodo.forEach(t => {
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
+                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [], transacoes: [] };
+                catMapObj[cat].transacoes.push(t);
                 if (t.valor < 0) {
                     catMapObj[cat].negativas.push(Math.abs(t.valor));
                 } else if (t.valor > 0) {
@@ -3311,9 +3421,7 @@
                 let poss = [...catMapObj[cat].positivas];
 
                 if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    const totalPos = poss.reduce((a, b) => a + b, 0);
-                    const saldoInv = totalNeg - totalPos;
+                    const saldoInv = calcularSaldoLiquidoMensalInvestimentos(catMapObj[cat].transacoes);
                     if (saldoInv > 0) {
                         catMapFinal[cat] = saldoInv;
                     }
@@ -3381,7 +3489,8 @@
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
                 if (cat === categoriaSelecionada) {
                     const subcat = t.subcategoria || 'Geral';
-                    if (!subcatObj[subcat]) subcatObj[subcat] = { negativas: [], positivas: [] };
+                    if (!subcatObj[subcat]) subcatObj[subcat] = { negativas: [], positivas: [], transacoes: [] };
+                    subcatObj[subcat].transacoes.push(t);
                     if (t.valor < 0) subcatObj[subcat].negativas.push(Math.abs(t.valor));
                     else if (t.valor > 0) subcatObj[subcat].positivas.push(t.valor);
                 }
@@ -3395,9 +3504,7 @@
                 let poss = [...subcatObj[subcat].positivas];
 
                 if (categoriaSelecionada === 'INVESTIMENTOS' || categoriaSelecionada === 'INVESTIMENTO') {
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    const totalPos = poss.reduce((a, b) => a + b, 0);
-                    const saldoSub = totalNeg - totalPos;
+                    const saldoSub = calcularSaldoLiquidoMensalInvestimentos(subcatObj[subcat].transacoes);
                     if (saldoSub > 0) {
                         subcatFinal[subcat] = saldoSub;
                         totalCategoria += saldoSub;
@@ -3462,7 +3569,8 @@
             const catMapObj = {};
             dadosPeriodo.forEach(t => {
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [] };
+                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [], transacoes: [] };
+                catMapObj[cat].transacoes.push(t);
                 if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
                 else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
             });
@@ -3475,9 +3583,7 @@
                 let poss = [...catMapObj[cat].positivas];
 
                 if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    const totalPos = poss.reduce((a, b) => a + b, 0);
-                    const saldoInv = totalNeg - totalPos;
+                    const saldoInv = calcularSaldoLiquidoMensalInvestimentos(catMapObj[cat].transacoes);
                     if (saldoInv > 0) catMapFinal[cat] = saldoInv;
                 } else {
                     for (let i = negs.length - 1; i >= 0; i--) {
@@ -3529,21 +3635,33 @@
                 if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
 
                 const sub = t.subcategoria || 'Geral';
-                if (!subMapObj[sub]) subMapObj[sub] = { negativas: [], positivas: [] };
-                if (t.valor < 0) subMapObj[sub].negativas.push(Math.abs(t.valor));
-                else if (t.valor > 0) subMapObj[sub].positivas.push(t.valor);
+                const ehInv = ehMovimentoInvestimento(t) || sub.toLowerCase().includes('investimento');
+                if (!subMapObj[sub]) subMapObj[sub] = { negativas: [], positivas: [], transacoesInv: [] };
+                if (ehInv) {
+                    subMapObj[sub].transacoesInv.push(t);
+                } else {
+                    if (t.valor < 0) subMapObj[sub].negativas.push(Math.abs(t.valor));
+                    else if (t.valor > 0) subMapObj[sub].positivas.push(t.valor);
+                }
             });
 
             const subMapFinal = {};
             Object.keys(subMapObj).forEach(sub => {
+                let totalSub = 0;
+
+                if (subMapObj[sub].transacoesInv.length > 0) {
+                    totalSub += calcularSaldoLiquidoMensalInvestimentos(subMapObj[sub].transacoesInv);
+                }
+
                 let negs = [...subMapObj[sub].negativas];
                 let poss = [...subMapObj[sub].positivas];
                 for (let i = negs.length - 1; i >= 0; i--) {
                     const idxPos = poss.indexOf(negs[i]);
                     if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
                 }
-                const totalNeg = negs.reduce((a, b) => a + b, 0);
-                if (totalNeg > 0) subMapFinal[sub] = totalNeg;
+                totalSub += negs.reduce((a, b) => a + b, 0);
+
+                if (totalSub > 0) subMapFinal[sub] = totalSub;
             });
 
             const top10Sub = Object.entries(subMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
