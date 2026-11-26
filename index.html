@@ -490,6 +490,32 @@
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraCategorias"></canvas></div>
             </div>
 
+            <!-- GRÁFICO: Saídas por Categoria — Evolução Mensal (Todos os Meses) -->
+            <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                    <div>
+                        <h3 id="tituloGraficoCategoriasMensal" class="text-md font-semibold text-gray-300">Saídas por Categoria — Evolução Mensal (Todos os Meses)</h3>
+                        <p id="subtituloGraficoCategoriasMensal" class="text-xs text-gray-400">Visão consolidada mês a mês por categoria</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div id="cardMediaCategoriaMensal" class="hidden bg-amber-500/20 border border-amber-500/50 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                            <i class="fa-solid fa-chart-simple text-amber-400 text-xs"></i>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase tracking-wider text-gray-300 font-bold">Média Mensal</span>
+                                <strong id="lblMediaCategoriaMensal" class="text-xs sm:text-sm font-extrabold text-amber-300 leading-tight">R$ 0,00</strong>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="filtroCategoriaMensal" class="text-xs font-semibold text-gray-400">Categoria:</label>
+                            <select id="filtroCategoriaMensal" onchange="atualizarGraficoCategoriasMensal()" class="bg-gray-700 text-gray-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500 border border-gray-600">
+                                <option value="todos">TODOS</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative h-[420px] sm:h-[460px] w-full"><canvas id="graficoCategoriasMensal"></canvas></div>
+            </div>
+
             <!-- GRÁFICO: Detalhamento de Subcategorias -->
             <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
@@ -632,6 +658,7 @@
         let graficoCascataFixosCatObj = null;
         let graficoProjecaoCartaoObj = null;
         let graficoBarraCategoriasObj = null;
+        let graficoCategoriasMensalObj = null;
         let graficoBarraSubcategoriasObj = null;
         let graficoTop10CatObj = null;
         let graficoTop10SubObj = null;
@@ -1504,6 +1531,38 @@
             }
         }
 
+        function popularFiltroCategoriasMensal() {
+            const selectCat = document.getElementById('filtroCategoriaMensal');
+            if (!selectCat) return;
+            const catAtual = selectCat.value || 'todos';
+
+            const catsSet = new Set();
+            transacoes.forEach(t => {
+                if (!t.data) return;
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+                if (t.valor < 0) {
+                    catsSet.add(cat);
+                }
+            });
+
+            const catsOrdenadas = Array.from(catsSet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+            selectCat.innerHTML = '<option value="todos">TODOS</option>';
+            catsOrdenadas.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                selectCat.appendChild(opt);
+            });
+
+            if (catAtual === 'todos' || catsOrdenadas.includes(catAtual)) {
+                selectCat.value = catAtual;
+            } else {
+                selectCat.value = 'todos';
+            }
+        }
+
         async function adicionarTransacao(e) {
             e.preventDefault();
             const val = parseFloat(document.getElementById('valor').value);
@@ -1861,7 +1920,9 @@
             document.getElementById('tituloGraficoCategorias').innerText = `Saídas por Categoria (${lblMes})`;
 
             popularFiltroCategoriasSub(transacoesPeriodo);
+            popularFiltroCategoriasMensal();
             atualizarGraficos(transacoesPeriodo, lblMes);
+            atualizarGraficoCategoriasMensal();
             atualizarModuloComprometimentoCartao(false);
             atualizarGraficoSaldoAcumulado();
             atualizarGraficoGastosFixosMensal();
@@ -3595,6 +3656,291 @@
                 },
                 plugins: [pluginValoresNasBarra]
             });
+        }
+
+        const pluginTotalEmpilhadoCategoriasMensal = {
+            id: 'pluginTotalEmpilhadoCategoriasMensal',
+            afterDatasetsDraw(chart) {
+                const { ctx, data } = chart;
+                const numPontos = data.labels ? data.labels.length : 0;
+                if (numPontos === 0) return;
+
+                ctx.save();
+                ctx.font = 'bold 10.5px sans-serif';
+                ctx.fillStyle = '#e5e7eb';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+
+                for (let i = 0; i < numPontos; i++) {
+                    let somaColuna = 0;
+                    let menorY = null;
+                    let posX = null;
+
+                    data.datasets.forEach((ds, dsIdx) => {
+                        if (ds.type === 'line') return;
+                        const meta = chart.getDatasetMeta(dsIdx);
+                        if (meta && !meta.hidden && meta.data[i]) {
+                            const val = Number(ds.data[i]) || 0;
+                            somaColuna += val;
+                            if (val > 0) {
+                                const barY = meta.data[i].y;
+                                if (menorY === null || barY < menorY) {
+                                    menorY = barY;
+                                }
+                            }
+                            if (posX === null) posX = meta.data[i].x;
+                        }
+                    });
+
+                    if (somaColuna > 0 && menorY !== null && posX !== null) {
+                        ctx.fillText(formatarInteiroSemRS(somaColuna), posX, menorY - 4);
+                    }
+                }
+                ctx.restore();
+            }
+        };
+
+        function atualizarGraficoCategoriasMensal() {
+            const canvas = document.getElementById('graficoCategoriasMensal');
+            if (!canvas) return;
+
+            const selectCat = document.getElementById('filtroCategoriaMensal');
+            const filtroSelecionado = selectCat ? selectCat.value : 'todos';
+
+            const paletaCategorias = [
+                '#38bdf8', '#34d399', '#fbbf24', '#a78bfa',
+                '#f43f5e', '#fb923c', '#e879f9', '#22d3ee',
+                '#a3e635', '#f87171', '#818cf8', '#2dd4bf',
+                '#facc15', '#c084fc', '#fb7185', '#60a5fa'
+            ];
+
+            // Agrupa todas as transações por mês e categoria (considerando todo o histórico)
+            const mesesSet = new Set();
+            const brutoPorMesCat = {};
+
+            transacoes.forEach(t => {
+                if (!t.data || t.data.length < 7) return;
+                const mes = t.data.substring(0, 7);
+                mesesSet.add(mes);
+
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+
+                if (!brutoPorMesCat[mes]) brutoPorMesCat[mes] = {};
+                if (!brutoPorMesCat[mes][cat]) {
+                    brutoPorMesCat[mes][cat] = { negativas: [], positivas: [], transacoes: [] };
+                }
+
+                brutoPorMesCat[mes][cat].transacoes.push(t);
+                if (t.valor < 0) {
+                    brutoPorMesCat[mes][cat].negativas.push(Math.abs(t.valor));
+                } else if (t.valor > 0) {
+                    brutoPorMesCat[mes][cat].positivas.push(t.valor);
+                }
+            });
+
+            const meses = Array.from(mesesSet).sort();
+            const labelsMeses = meses.map(m => formatarMesCurtoBR(m));
+
+            const liquidoPorMesCat = {};
+            const totalAnualPorCat = {};
+
+            meses.forEach(mes => {
+                liquidoPorMesCat[mes] = {};
+                const catsNoMes = brutoPorMesCat[mes] || {};
+
+                Object.keys(catsNoMes).forEach(cat => {
+                    const registro = catsNoMes[cat];
+                    let valorLiquido = 0;
+
+                    if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
+                        valorLiquido = calcularSaldoLiquidoMensalInvestimentos(registro.transacoes);
+                    } else {
+                        const negs = [...registro.negativas];
+                        const poss = [...registro.positivas];
+                        for (let i = negs.length - 1; i >= 0; i--) {
+                            const idxPos = poss.indexOf(negs[i]);
+                            if (idxPos !== -1) {
+                                negs.splice(i, 1);
+                                poss.splice(idxPos, 1);
+                            }
+                        }
+                        valorLiquido = negs.reduce((a, b) => a + b, 0);
+                    }
+
+                    if (valorLiquido > 0) {
+                        const valArredondado = Number(valorLiquido.toFixed(2));
+                        liquidoPorMesCat[mes][cat] = valArredondado;
+                        totalAnualPorCat[cat] = (totalAnualPorCat[cat] || 0) + valArredondado;
+                    }
+                });
+            });
+
+            // Ordena categorias do maior gasto total para o menor para manter cores e empilhamento consistentes
+            const categoriasOrdenadasPorTotal = Object.entries(totalAnualPorCat)
+                .sort((a, b) => b[1] - a[1])
+                .map(item => item[0]);
+
+            const corPorCategoria = {};
+            categoriasOrdenadasPorTotal.forEach((cat, idx) => {
+                corPorCategoria[cat] = paletaCategorias[idx % paletaCategorias.length];
+            });
+
+            const tituloEl = document.getElementById('tituloGraficoCategoriasMensal');
+            const subtituloEl = document.getElementById('subtituloGraficoCategoriasMensal');
+            const cardMediaEl = document.getElementById('cardMediaCategoriaMensal');
+            const lblMediaEl = document.getElementById('lblMediaCategoriaMensal');
+
+            if (graficoCategoriasMensalObj) graficoCategoriasMensalObj.destroy();
+            const ctx = canvas.getContext('2d');
+
+            if (filtroSelecionado === 'todos') {
+                if (cardMediaEl) cardMediaEl.classList.add('hidden');
+                if (tituloEl) tituloEl.innerText = 'Saídas por Categoria — Evolução Mensal (Todos os Meses)';
+                if (subtituloEl) subtituloEl.innerText = 'Todas as categorias empilhadas mês a mês (clique na legenda para ocultar/exibir)';
+
+                const datasetsEmpilhados = categoriasOrdenadasPorTotal.map(cat => ({
+                    label: cat,
+                    data: meses.map(m => (liquidoPorMesCat[m] && liquidoPorMesCat[m][cat]) ? liquidoPorMesCat[m][cat] : 0),
+                    backgroundColor: corPorCategoria[cat],
+                    borderRadius: 3,
+                    stack: 'saidasMensal'
+                }));
+
+                const totaisPorMes = meses.map(m =>
+                    categoriasOrdenadasPorTotal.reduce((acc, cat) => acc + ((liquidoPorMesCat[m] && liquidoPorMesCat[m][cat]) || 0), 0)
+                );
+                const maxTotalMes = Math.max(...totaisPorMes, 100);
+
+                graficoCategoriasMensalObj = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsMeses,
+                        datasets: datasetsEmpilhados
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 14, bottom: 0, left: 0, right: 0 } },
+                        interaction: {
+                            mode: 'index',
+                            intersect: true
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { color: '#e5e7eb', boxWidth: 12, padding: 10, font: { size: 10.5, weight: 'bold' } }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: true,
+                                itemSort: function(a, b) {
+                                    return (b.parsed.y || 0) - (a.parsed.y || 0);
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        if (!context.parsed.y || context.parsed.y <= 0) return null;
+                                        return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        if (!tooltipItems || tooltipItems.length === 0) return '';
+                                        const total = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
+                                        return `Total do Mês: ${formatarMoeda(total)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: { color: '#9ca3af', font: { size: 11 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                display: false,
+                                grid: { display: false },
+                                stacked: true,
+                                max: maxTotalMes * 1.15
+                            }
+                        }
+                    },
+                    plugins: [pluginTotalEmpilhadoCategoriasMensal]
+                });
+            } else {
+                const catFiltroUpper = filtroSelecionado.toUpperCase().trim();
+                const valoresCategoria = meses.map(m => (liquidoPorMesCat[m] && liquidoPorMesCat[m][catFiltroUpper]) ? liquidoPorMesCat[m][catFiltroUpper] : 0);
+                const somaCategoria = valoresCategoria.reduce((acc, v) => acc + v, 0);
+                const mediaCategoria = meses.length > 0 ? (somaCategoria / meses.length) : 0;
+                const linhaMediaData = meses.map(() => Number(mediaCategoria.toFixed(2)));
+                const corCategoria = corPorCategoria[catFiltroUpper] || '#38bdf8';
+
+                if (cardMediaEl) cardMediaEl.classList.remove('hidden');
+                if (lblMediaEl) lblMediaEl.innerText = formatarMoeda(mediaCategoria);
+                if (tituloEl) tituloEl.innerText = `Saídas Mensais — ${catFiltroUpper}`;
+                if (subtituloEl) subtituloEl.innerText = `Evolução mensal isolada da categoria ${catFiltroUpper} ao longo de todos os meses`;
+
+                const maxValCat = Math.max(...valoresCategoria, mediaCategoria, 100);
+
+                graficoCategoriasMensalObj = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsMeses,
+                        datasets: [
+                            {
+                                type: 'line',
+                                label: `Média Mensal (${catFiltroUpper})`,
+                                data: linhaMediaData,
+                                borderColor: '#fbbf24',
+                                backgroundColor: '#fbbf24',
+                                borderWidth: 2,
+                                borderDash: [6, 6],
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                fill: false,
+                                order: 0
+                            },
+                            {
+                                type: 'bar',
+                                label: catFiltroUpper,
+                                data: valoresCategoria,
+                                backgroundColor: corCategoria,
+                                borderRadius: 6,
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 14, bottom: 0, left: 0, right: 0 } },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { color: '#e5e7eb', boxWidth: 12, padding: 10, font: { size: 11, weight: 'bold' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#9ca3af', font: { size: 11 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                display: false,
+                                grid: { display: false },
+                                max: maxValCat * 1.15
+                            }
+                        }
+                    },
+                    plugins: [pluginTotalEmpilhadoCategoriasMensal]
+                });
+            }
         }
 
         function atualizarGraficoSubcategorias() {
