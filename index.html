@@ -490,12 +490,11 @@
                 <div class="relative h-[450px] w-full"><canvas id="graficoBarraCategorias"></canvas></div>
             </div>
 
-            <!-- GRÁFICO: Saídas por Categoria — Evolução Mensal (Todos os Meses) -->
+            <!-- GRÁFICO: Saídas por Categoria — Evolução Mensal -->
             <div class="bg-gray-800 px-1.5 py-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-700 shadow-md w-full">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
                     <div>
-                        <h3 id="tituloGraficoCategoriasMensal" class="text-md font-semibold text-gray-300">Saídas por Categoria — Evolução Mensal (Todos os Meses)</h3>
-                        <p id="subtituloGraficoCategoriasMensal" class="text-xs text-gray-400">Visão consolidada mês a mês por categoria</p>
+                        <h3 id="tituloGraficoCategoriasMensal" class="text-md font-semibold text-gray-300">Saídas por Categoria — Evolução Mensal</h3>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <div id="cardMediaCategoriaMensal" class="hidden bg-amber-500/20 border border-amber-500/50 px-3 py-1.5 rounded-xl flex items-center gap-2">
@@ -1539,8 +1538,8 @@
             const catsSet = new Set();
             transacoes.forEach(t => {
                 if (!t.data) return;
+                if (ehRendaReal(t)) return;
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
                 if (t.valor < 0) {
                     catsSet.add(cat);
                 }
@@ -3584,46 +3583,22 @@
                 plugins: [pluginValoresEmCimaDaColunaInteiro]
             });
 
-            const catMapObj = {};
-            dadosPeriodo.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [], transacoes: [] };
-                catMapObj[cat].transacoes.push(t);
-                if (t.valor < 0) {
-                    catMapObj[cat].negativas.push(Math.abs(t.valor));
-                } else if (t.valor > 0) {
-                    catMapObj[cat].positivas.push(t.valor);
-                }
-            });
-
             const catMapFinal = {};
-            Object.keys(catMapObj).forEach(cat => {
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
+            dadosPeriodo.forEach(t => {
+                if (ehRendaReal(t)) return;
+                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
+                if (!catMapFinal[cat]) catMapFinal[cat] = 0;
 
-                let negs = [...catMapObj[cat].negativas];
-                let poss = [...catMapObj[cat].positivas];
-
-                if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                    const saldoInv = calcularSaldoLiquidoMensalInvestimentos(catMapObj[cat].transacoes);
-                    if (saldoInv > 0) {
-                        catMapFinal[cat] = saldoInv;
-                    }
-                } else {
-                    for (let i = negs.length - 1; i >= 0; i--) {
-                        const idxPos = poss.indexOf(negs[i]);
-                        if (idxPos !== -1) {
-                            negs.splice(i, 1);
-                            poss.splice(idxPos, 1);
-                        }
-                    }
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    if (totalNeg > 0) {
-                        catMapFinal[cat] = totalNeg;
-                    }
+                if (t.valor < 0) {
+                    catMapFinal[cat] += Math.abs(t.valor);
+                } else if (t.valor > 0) {
+                    catMapFinal[cat] -= t.valor;
                 }
             });
 
-            const catEntidadesOrdenadas = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]);
+            const catEntidadesOrdenadas = Object.entries(catMapFinal)
+                .filter(([, val]) => val > 0)
+                .sort((a, b) => b[1] - a[1]);
             const categoriasNomes = catEntidadesOrdenadas.map(item => item[0]);
             const categoriasValores = catEntidadesOrdenadas.map(item => item[1]);
 
@@ -3714,7 +3689,7 @@
                 '#facc15', '#c084fc', '#fb7185', '#60a5fa'
             ];
 
-            // Agrupa todas as transações por mês e categoria (considerando todo o histórico)
+            // Agrupa todas as transações por mês e categoria seguindo exatamente as regras do Fluxo Mensal
             const mesesSet = new Set();
             const brutoPorMesCat = {};
 
@@ -3723,19 +3698,16 @@
                 const mes = t.data.substring(0, 7);
                 mesesSet.add(mes);
 
+                if (ehRendaReal(t)) return;
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
 
                 if (!brutoPorMesCat[mes]) brutoPorMesCat[mes] = {};
-                if (!brutoPorMesCat[mes][cat]) {
-                    brutoPorMesCat[mes][cat] = { negativas: [], positivas: [], transacoes: [] };
-                }
+                if (!brutoPorMesCat[mes][cat]) brutoPorMesCat[mes][cat] = 0;
 
-                brutoPorMesCat[mes][cat].transacoes.push(t);
                 if (t.valor < 0) {
-                    brutoPorMesCat[mes][cat].negativas.push(Math.abs(t.valor));
+                    brutoPorMesCat[mes][cat] += Math.abs(t.valor);
                 } else if (t.valor > 0) {
-                    brutoPorMesCat[mes][cat].positivas.push(t.valor);
+                    brutoPorMesCat[mes][cat] -= t.valor;
                 }
             });
 
@@ -3750,24 +3722,7 @@
                 const catsNoMes = brutoPorMesCat[mes] || {};
 
                 Object.keys(catsNoMes).forEach(cat => {
-                    const registro = catsNoMes[cat];
-                    let valorLiquido = 0;
-
-                    if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                        valorLiquido = calcularSaldoLiquidoMensalInvestimentos(registro.transacoes);
-                    } else {
-                        const negs = [...registro.negativas];
-                        const poss = [...registro.positivas];
-                        for (let i = negs.length - 1; i >= 0; i--) {
-                            const idxPos = poss.indexOf(negs[i]);
-                            if (idxPos !== -1) {
-                                negs.splice(i, 1);
-                                poss.splice(idxPos, 1);
-                            }
-                        }
-                        valorLiquido = negs.reduce((a, b) => a + b, 0);
-                    }
-
+                    const valorLiquido = catsNoMes[cat];
                     if (valorLiquido > 0) {
                         const valArredondado = Number(valorLiquido.toFixed(2));
                         liquidoPorMesCat[mes][cat] = valArredondado;
@@ -3787,7 +3742,6 @@
             });
 
             const tituloEl = document.getElementById('tituloGraficoCategoriasMensal');
-            const subtituloEl = document.getElementById('subtituloGraficoCategoriasMensal');
             const cardMediaEl = document.getElementById('cardMediaCategoriaMensal');
             const lblMediaEl = document.getElementById('lblMediaCategoriaMensal');
 
@@ -3796,14 +3750,13 @@
 
             if (filtroSelecionado === 'todos') {
                 if (cardMediaEl) cardMediaEl.classList.add('hidden');
-                if (tituloEl) tituloEl.innerText = 'Saídas por Categoria — Evolução Mensal (Todos os Meses)';
-                if (subtituloEl) subtituloEl.innerText = 'Todas as categorias empilhadas mês a mês (clique na legenda para ocultar/exibir)';
+                if (tituloEl) tituloEl.innerText = 'Saídas por Categoria — Evolução Mensal';
 
                 const datasetsEmpilhados = categoriasOrdenadasPorTotal.map(cat => ({
                     label: cat,
                     data: meses.map(m => (liquidoPorMesCat[m] && liquidoPorMesCat[m][cat]) ? liquidoPorMesCat[m][cat] : 0),
                     backgroundColor: corPorCategoria[cat],
-                    borderRadius: 3,
+                    borderRadius: 6,
                     stack: 'saidasMensal'
                 }));
 
@@ -3821,7 +3774,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        layout: { padding: { top: 14, bottom: 0, left: 0, right: 0 } },
+                        layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
                         interaction: {
                             mode: 'index',
                             intersect: true
@@ -3829,7 +3782,7 @@
                         plugins: {
                             legend: {
                                 display: true,
-                                labels: { color: '#e5e7eb', boxWidth: 12, padding: 10, font: { size: 10.5, weight: 'bold' } }
+                                labels: { color: '#9ca3af', boxWidth: 12, padding: 10, font: { size: 10.5, weight: 'bold' } }
                             },
                             tooltip: {
                                 mode: 'index',
@@ -3840,12 +3793,12 @@
                                 callbacks: {
                                     label: function(context) {
                                         if (!context.parsed.y || context.parsed.y <= 0) return null;
-                                        return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                        return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
                                     },
                                     footer: function(tooltipItems) {
                                         if (!tooltipItems || tooltipItems.length === 0) return '';
                                         const total = tooltipItems.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
-                                        return `Total do Mês: ${formatarMoeda(total)}`;
+                                        return `Total do Mês: ${formatarInteiroSemRS(total)}`;
                                     }
                                 }
                             }
@@ -3860,7 +3813,7 @@
                                 display: false,
                                 grid: { display: false },
                                 stacked: true,
-                                max: maxTotalMes * 1.15
+                                max: maxTotalMes * 1.14
                             }
                         }
                     },
@@ -3877,7 +3830,6 @@
                 if (cardMediaEl) cardMediaEl.classList.remove('hidden');
                 if (lblMediaEl) lblMediaEl.innerText = formatarMoeda(mediaCategoria);
                 if (tituloEl) tituloEl.innerText = `Saídas Mensais — ${catFiltroUpper}`;
-                if (subtituloEl) subtituloEl.innerText = `Evolução mensal isolada da categoria ${catFiltroUpper} ao longo de todos os meses`;
 
                 const maxValCat = Math.max(...valoresCategoria, mediaCategoria, 100);
 
@@ -3912,16 +3864,16 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        layout: { padding: { top: 14, bottom: 0, left: 0, right: 0 } },
+                        layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
                         plugins: {
                             legend: {
                                 display: true,
-                                labels: { color: '#e5e7eb', boxWidth: 12, padding: 10, font: { size: 11, weight: 'bold' } }
+                                labels: { color: '#9ca3af', boxWidth: 12, padding: 10, font: { size: 11, weight: 'bold' } }
                             },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return `${context.dataset.label}: ${formatarMoeda(context.parsed.y)}`;
+                                        return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
                                     }
                                 }
                             }
@@ -3934,7 +3886,7 @@
                             y: {
                                 display: false,
                                 grid: { display: false },
-                                max: maxValCat * 1.15
+                                max: maxValCat * 1.14
                             }
                         }
                     },
