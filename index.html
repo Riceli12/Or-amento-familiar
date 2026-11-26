@@ -1540,7 +1540,7 @@
                 if (!t.data) return;
                 if (ehRendaReal(t)) return;
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (t.valor < 0) {
+                if (t.valor !== 0) {
                     catsSet.add(cat);
                 }
             });
@@ -1940,11 +1940,17 @@
                 ctx.textBaseline = 'middle';
 
                 chart.getDatasetMeta(0).data.forEach((barra, index) => {
-                    const valorNum = data.datasets[0].data[index];
+                    const valorNum = Number(data.datasets[0].data[index]) || 0;
                     const valorFormatado = formatarInteiroSemRS(valorNum);
-                    const xPos = barra.x + 8;
-                    const yPos = barra.y;
-                    ctx.fillText(valorFormatado, xPos, yPos);
+                    if (valorNum < 0) {
+                        ctx.textAlign = 'right';
+                        ctx.fillStyle = '#fb7185';
+                        ctx.fillText(valorFormatado, barra.x - 8, barra.y);
+                    } else {
+                        ctx.textAlign = 'left';
+                        ctx.fillStyle = '#e5e7eb';
+                        ctx.fillText(valorFormatado, barra.x + 8, barra.y);
+                    }
                 });
                 ctx.restore();
             }
@@ -3597,10 +3603,13 @@
             });
 
             const catEntidadesOrdenadas = Object.entries(catMapFinal)
-                .filter(([, val]) => val > 0)
+                .map(([cat, val]) => [cat, Number(val.toFixed(2))])
+                .filter(([, val]) => val !== 0)
                 .sort((a, b) => b[1] - a[1]);
             const categoriasNomes = catEntidadesOrdenadas.map(item => item[0]);
             const categoriasValores = catEntidadesOrdenadas.map(item => item[1]);
+            const minCatBarra = Math.min(...categoriasValores, 0);
+            const maxCatBarra = Math.max(...categoriasValores, 100);
 
             if (graficoBarraCategoriasObj) graficoBarraCategoriasObj.destroy();
             const ctxBarra = document.getElementById('graficoBarraCategorias').getContext('2d');
@@ -3619,13 +3628,18 @@
                     indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
+                    layout: { padding: { right: 48, left: minCatBarra < 0 ? 48 : 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
                     },
                     scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...categoriasValores, 100) * 1.15 },
+                        x: {
+                            display: false,
+                            grid: { display: false },
+                            min: minCatBarra < 0 ? minCatBarra * 1.18 : 0,
+                            max: maxCatBarra * 1.15
+                        },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
                     }
                 },
@@ -3635,6 +3649,21 @@
 
         const pluginTotalEmpilhadoCategoriasMensal = {
             id: 'pluginTotalEmpilhadoCategoriasMensal',
+            beforeDatasetsDraw(chart) {
+                const { ctx, chartArea, scales } = chart;
+                if (!scales || !scales.y || !chartArea || scales.y.min >= 0) return;
+                const yZero = scales.y.getPixelForValue(0);
+                if (yZero >= chartArea.top && yZero <= chartArea.bottom) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(156, 163, 175, 0.35)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(chartArea.left, yZero);
+                    ctx.lineTo(chartArea.right, yZero);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            },
             afterDatasetsDraw(chart) {
                 const { ctx, data } = chart;
                 const numPontos = data.labels ? data.labels.length : 0;
@@ -3642,13 +3671,12 @@
 
                 ctx.save();
                 ctx.font = 'bold 10.5px sans-serif';
-                ctx.fillStyle = '#e5e7eb';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
 
                 for (let i = 0; i < numPontos; i++) {
                     let somaColuna = 0;
                     let menorY = null;
+                    let maiorY = null;
                     let posX = null;
 
                     data.datasets.forEach((ds, dsIdx) => {
@@ -3657,18 +3685,29 @@
                         if (meta && !meta.hidden && meta.data[i]) {
                             const val = Number(ds.data[i]) || 0;
                             somaColuna += val;
+                            const barY = meta.data[i].y;
                             if (val > 0) {
-                                const barY = meta.data[i].y;
                                 if (menorY === null || barY < menorY) {
                                     menorY = barY;
+                                }
+                            } else if (val < 0) {
+                                if (maiorY === null || barY > maiorY) {
+                                    maiorY = barY;
                                 }
                             }
                             if (posX === null) posX = meta.data[i].x;
                         }
                     });
 
-                    if (somaColuna > 0 && menorY !== null && posX !== null) {
-                        ctx.fillText(formatarInteiroSemRS(somaColuna), posX, menorY - 4);
+                    const somaArredondada = Number(somaColuna.toFixed(2));
+                    if (somaArredondada > 0 && menorY !== null && posX !== null) {
+                        ctx.fillStyle = '#e5e7eb';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(formatarInteiroSemRS(somaArredondada), posX, menorY - 4);
+                    } else if (somaArredondada < 0 && maiorY !== null && posX !== null) {
+                        ctx.fillStyle = '#fb7185';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText(formatarInteiroSemRS(somaArredondada), posX, maiorY + 4);
                     }
                 }
                 ctx.restore();
@@ -3689,7 +3728,8 @@
                 '#facc15', '#c084fc', '#fb7185', '#60a5fa'
             ];
 
-            // Agrupa todas as transações por mês e categoria seguindo exatamente as regras do Fluxo Mensal
+            // Agrupa todas as transações por mês e categoria abatendo saldos positivos nos negativos,
+            // idêntico ao critério do Fluxo Mensal de Entradas e Saídas
             const mesesSet = new Set();
             const brutoPorMesCat = {};
 
@@ -3722,11 +3762,10 @@
                 const catsNoMes = brutoPorMesCat[mes] || {};
 
                 Object.keys(catsNoMes).forEach(cat => {
-                    const valorLiquido = catsNoMes[cat];
-                    if (valorLiquido > 0) {
-                        const valArredondado = Number(valorLiquido.toFixed(2));
+                    const valArredondado = Number(catsNoMes[cat].toFixed(2));
+                    if (valArredondado !== 0) {
                         liquidoPorMesCat[mes][cat] = valArredondado;
-                        totalAnualPorCat[cat] = (totalAnualPorCat[cat] || 0) + valArredondado;
+                        totalAnualPorCat[cat] = Number(((totalAnualPorCat[cat] || 0) + valArredondado).toFixed(2));
                     }
                 });
             });
@@ -3760,10 +3799,20 @@
                     stack: 'saidasMensal'
                 }));
 
-                const totaisPorMes = meses.map(m =>
-                    categoriasOrdenadasPorTotal.reduce((acc, cat) => acc + ((liquidoPorMesCat[m] && liquidoPorMesCat[m][cat]) || 0), 0)
+                const totaisPositivosPorMes = meses.map(m =>
+                    categoriasOrdenadasPorTotal.reduce((acc, cat) => {
+                        const v = (liquidoPorMesCat[m] && liquidoPorMesCat[m][cat]) || 0;
+                        return acc + (v > 0 ? v : 0);
+                    }, 0)
                 );
-                const maxTotalMes = Math.max(...totaisPorMes, 100);
+                const totaisNegativosPorMes = meses.map(m =>
+                    categoriasOrdenadasPorTotal.reduce((acc, cat) => {
+                        const v = (liquidoPorMesCat[m] && liquidoPorMesCat[m][cat]) || 0;
+                        return acc + (v < 0 ? v : 0);
+                    }, 0)
+                );
+                const maxTotalMes = Math.max(...totaisPositivosPorMes, 100);
+                const minTotalMes = Math.min(...totaisNegativosPorMes, 0);
 
                 graficoCategoriasMensalObj = new Chart(ctx, {
                     type: 'bar',
@@ -3774,7 +3823,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
+                        layout: { padding: { top: 8, bottom: minTotalMes < 0 ? 12 : 0, left: 0, right: 0 } },
                         interaction: {
                             mode: 'index',
                             intersect: true
@@ -3792,7 +3841,7 @@
                                 },
                                 callbacks: {
                                     label: function(context) {
-                                        if (!context.parsed.y || context.parsed.y <= 0) return null;
+                                        if (!context.parsed.y || context.parsed.y === 0) return null;
                                         return `${context.dataset.label}: ${formatarInteiroSemRS(context.parsed.y)}`;
                                     },
                                     footer: function(tooltipItems) {
@@ -3813,6 +3862,7 @@
                                 display: false,
                                 grid: { display: false },
                                 stacked: true,
+                                min: minTotalMes < 0 ? minTotalMes * 1.18 : 0,
                                 max: maxTotalMes * 1.14
                             }
                         }
@@ -3832,6 +3882,7 @@
                 if (tituloEl) tituloEl.innerText = `Saídas Mensais — ${catFiltroUpper}`;
 
                 const maxValCat = Math.max(...valoresCategoria, mediaCategoria, 100);
+                const minValCat = Math.min(...valoresCategoria, mediaCategoria, 0);
 
                 graficoCategoriasMensalObj = new Chart(ctx, {
                     type: 'bar',
@@ -3864,7 +3915,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        layout: { padding: { top: 8, bottom: 0, left: 0, right: 0 } },
+                        layout: { padding: { top: 8, bottom: minValCat < 0 ? 16 : 0, left: 0, right: 0 } },
                         plugins: {
                             legend: {
                                 display: true,
@@ -3886,6 +3937,7 @@
                             y: {
                                 display: false,
                                 grid: { display: false },
+                                min: minValCat < 0 ? minValCat * 1.18 : 0,
                                 max: maxValCat * 1.14
                             }
                         }
@@ -3904,44 +3956,25 @@
                 return (periodoFiltro === 'todos' || t.data.startsWith(periodoFiltro));
             });
 
-            let subcatObj = {};
+            const subcatBruto = {};
             dadosPeriodo.forEach(t => {
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
                 if (cat === categoriaSelecionada) {
                     const subcat = t.subcategoria || 'Geral';
-                    if (!subcatObj[subcat]) subcatObj[subcat] = { negativas: [], positivas: [], transacoes: [] };
-                    subcatObj[subcat].transacoes.push(t);
-                    if (t.valor < 0) subcatObj[subcat].negativas.push(Math.abs(t.valor));
-                    else if (t.valor > 0) subcatObj[subcat].positivas.push(t.valor);
+                    if (!subcatBruto[subcat]) subcatBruto[subcat] = 0;
+                    if (t.valor < 0) subcatBruto[subcat] += Math.abs(t.valor);
+                    else if (t.valor > 0 && !ehRendaReal(t)) subcatBruto[subcat] -= t.valor;
                 }
             });
 
             const subcatFinal = {};
             let totalCategoria = 0;
 
-            Object.keys(subcatObj).forEach(subcat => {
-                let negs = [...subcatObj[subcat].negativas];
-                let poss = [...subcatObj[subcat].positivas];
-
-                if (categoriaSelecionada === 'INVESTIMENTOS' || categoriaSelecionada === 'INVESTIMENTO') {
-                    const saldoSub = calcularSaldoLiquidoMensalInvestimentos(subcatObj[subcat].transacoes);
-                    if (saldoSub > 0) {
-                        subcatFinal[subcat] = saldoSub;
-                        totalCategoria += saldoSub;
-                    }
-                } else {
-                    for (let i = negs.length - 1; i >= 0; i--) {
-                        const idxPos = poss.indexOf(negs[i]);
-                        if (idxPos !== -1) {
-                            negs.splice(i, 1);
-                            poss.splice(idxPos, 1);
-                        }
-                    }
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    if (totalNeg > 0) {
-                        subcatFinal[subcat] = totalNeg;
-                        totalCategoria += totalNeg;
-                    }
+            Object.keys(subcatBruto).forEach(subcat => {
+                const saldoSub = Number(subcatBruto[subcat].toFixed(2));
+                if (saldoSub !== 0) {
+                    subcatFinal[subcat] = saldoSub;
+                    totalCategoria = Number((totalCategoria + saldoSub).toFixed(2));
                 }
             });
 
@@ -3950,6 +3983,8 @@
             const labelsCascata = [`[TOTAL] ${document.getElementById('filtroCategoriaSub').value}`, ...subcatOrdenadas.map(item => `   •  ${item[0]}`)];
             const valoresCascata = [totalCategoria, ...subcatOrdenadas.map(item => item[1])];
             const coresCascata = [COR_CASCATA_TOTAL, ...subcatOrdenadas.map(() => COR_CASCATA_ITEM)];
+            const minValCascata = Math.min(...valoresCascata, 0);
+            const maxValCascata = Math.max(...valoresCascata, 100);
 
             document.getElementById('tituloGraficoSubcategorias').innerText = `Detalhamento de Subcategorias`;
 
@@ -3971,13 +4006,18 @@
                     indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
-                    layout: { padding: { right: 44, left: 0, top: 0, bottom: 0 } },
+                    layout: { padding: { right: 48, left: minValCascata < 0 ? 48 : 0, top: 0, bottom: 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: { callbacks: { label: ctx => formatarInteiroSemRS(ctx.parsed.x) } }
                     },
                     scales: {
-                        x: { display: false, grid: { display: false }, max: Math.max(...valoresCascata, 100) * 1.15 },
+                        x: {
+                            display: false,
+                            grid: { display: false },
+                            min: minValCascata < 0 ? minValCascata * 1.18 : 0,
+                            max: maxValCascata * 1.15
+                        },
                         y: { ticks: { color: '#e5e7eb', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
                     }
                 },
@@ -3986,33 +4026,19 @@
         }
 
         function atualizarGraficosTop10(dadosPeriodo, lblMes) {
-            const catMapObj = {};
+            const catMapBruto = {};
             dadosPeriodo.forEach(t => {
+                if (ehRendaReal(t)) return;
                 const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (!catMapObj[cat]) catMapObj[cat] = { negativas: [], positivas: [], transacoes: [] };
-                catMapObj[cat].transacoes.push(t);
-                if (t.valor < 0) catMapObj[cat].negativas.push(Math.abs(t.valor));
-                else if (t.valor > 0) catMapObj[cat].positivas.push(t.valor);
+                if (!catMapBruto[cat]) catMapBruto[cat] = 0;
+                if (t.valor < 0) catMapBruto[cat] += Math.abs(t.valor);
+                else if (t.valor > 0) catMapBruto[cat] -= t.valor;
             });
 
             const catMapFinal = {};
-            Object.keys(catMapObj).forEach(cat => {
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
-
-                let negs = [...catMapObj[cat].negativas];
-                let poss = [...catMapObj[cat].positivas];
-
-                if (cat === 'INVESTIMENTOS' || cat === 'INVESTIMENTO') {
-                    const saldoInv = calcularSaldoLiquidoMensalInvestimentos(catMapObj[cat].transacoes);
-                    if (saldoInv > 0) catMapFinal[cat] = saldoInv;
-                } else {
-                    for (let i = negs.length - 1; i >= 0; i--) {
-                        const idxPos = poss.indexOf(negs[i]);
-                        if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
-                    }
-                    const totalNeg = negs.reduce((a, b) => a + b, 0);
-                    if (totalNeg > 0) catMapFinal[cat] = totalNeg;
-                }
+            Object.keys(catMapBruto).forEach(cat => {
+                const saldoCat = Number(catMapBruto[cat].toFixed(2));
+                if (saldoCat > 0) catMapFinal[cat] = saldoCat;
             });
 
             const top10Cat = Object.entries(catMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
@@ -4049,39 +4075,19 @@
                 plugins: [pluginValoresNasBarra]
             });
 
-            const subMapObj = {};
+            const subMapBruto = {};
             dadosPeriodo.forEach(t => {
-                const cat = (t.categoria || 'OUTROS').toUpperCase().trim();
-                if (cat === 'RENDA' || cat === 'SALÁRIO' || cat === 'SALARIO' || cat === 'RECEITA' || cat === 'RECEITAS') return;
-
+                if (ehRendaReal(t)) return;
                 const sub = t.subcategoria || 'Geral';
-                const ehInv = ehMovimentoInvestimento(t) || sub.toLowerCase().includes('investimento');
-                if (!subMapObj[sub]) subMapObj[sub] = { negativas: [], positivas: [], transacoesInv: [] };
-                if (ehInv) {
-                    subMapObj[sub].transacoesInv.push(t);
-                } else {
-                    if (t.valor < 0) subMapObj[sub].negativas.push(Math.abs(t.valor));
-                    else if (t.valor > 0) subMapObj[sub].positivas.push(t.valor);
-                }
+                if (!subMapBruto[sub]) subMapBruto[sub] = 0;
+                if (t.valor < 0) subMapBruto[sub] += Math.abs(t.valor);
+                else if (t.valor > 0) subMapBruto[sub] -= t.valor;
             });
 
             const subMapFinal = {};
-            Object.keys(subMapObj).forEach(sub => {
-                let totalSub = 0;
-
-                if (subMapObj[sub].transacoesInv.length > 0) {
-                    totalSub += calcularSaldoLiquidoMensalInvestimentos(subMapObj[sub].transacoesInv);
-                }
-
-                let negs = [...subMapObj[sub].negativas];
-                let poss = [...subMapObj[sub].positivas];
-                for (let i = negs.length - 1; i >= 0; i--) {
-                    const idxPos = poss.indexOf(negs[i]);
-                    if (idxPos !== -1) { negs.splice(i, 1); poss.splice(idxPos, 1); }
-                }
-                totalSub += negs.reduce((a, b) => a + b, 0);
-
-                if (totalSub > 0) subMapFinal[sub] = totalSub;
+            Object.keys(subMapBruto).forEach(sub => {
+                const saldoSub = Number(subMapBruto[sub].toFixed(2));
+                if (saldoSub > 0) subMapFinal[sub] = saldoSub;
             });
 
             const top10Sub = Object.entries(subMapFinal).sort((a, b) => b[1] - a[1]).slice(0, 10);
